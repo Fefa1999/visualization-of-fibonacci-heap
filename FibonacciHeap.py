@@ -19,6 +19,7 @@ class FibonacciHeap:
         self.merge_node_with_root_list(new_node)
         self.check_min_with_single_node(new_node)
         self.total_fib_nodes += 1
+        return new_node
 
     #updates min if node is smaller than current min
     def check_min_with_single_node(self, fib_node):
@@ -45,6 +46,7 @@ class FibonacciHeap:
         while True:
             next_node = start_node.right
             heap_two.remove_node_from_root_list(start_node)
+            heap_two.total_fib_nodes -= 1
             self.merge_node_with_root_list(start_node)
             if end_node == start_node:
                 break
@@ -90,6 +92,7 @@ class FibonacciHeap:
             fib_node.right.left = fib_node.left
             if fib_node == fib_node.parent.child:
                 fib_node.parent.child = fib_node.right
+        fib_node.parent.degree -= 1
         #reset linked nodes to itself and update parent
         fib_node.right = fib_node
         fib_node.left = fib_node
@@ -97,31 +100,32 @@ class FibonacciHeap:
 
     #Extract min and update heap
     def extract_min(self):
-        min_node = self.min_fib_node
-        #Add all children to to root list if any
-        if min_node.child is not None:
-            current_child = min_node.child.right
-            while True:
-                next_child = current_child.right
-                self.remove_node_from_child_list(current_child)
-                self.merge_node_with_root_list(current_child)
-                if min_node.child is None:
-                    break
-                current_child = next_child
+        if self.root_list is not None:
+            min_node = self.min_fib_node
+            #Add all children to to root list if any
+            if min_node.child is not None:
+                current_child = min_node.child.right
+                while True:
+                    next_child = current_child.right
+                    self.cut(current_child)
+                    if min_node.child is None:
+                        break
+                    current_child = next_child
 
-        #set new min to next 
-        self.min_fib_node = min_node.right 
+            #set new min to next 
+            self.min_fib_node = min_node.right 
 
-        #remove min node from root
-        self.remove_node_from_root_list(min_node)
-        self.total_fib_nodes -= 1
+            #remove min node from root
+            self.remove_node_from_root_list(min_node)
+            self.total_fib_nodes -= 1
 
-        #Consolidate and set new min unless root_list is only one root - the only child of the removed min
-        if self.root_list != self.root_list.right:
-            self.consolidate()
-            self.set_new_min_from_root_list()
+            #Consolidate and set new min unless root_list is only one root or empty - the only child of the removed min
+            if self.root_list is not None:
+                if self.root_list != self.root_list.right:
+                    self.consolidate()
+                    self.set_new_min_from_root_list()
 
-        return min_node
+            return min_node
 
     #Map heap until no root has same degree
     def consolidate(self):
@@ -156,6 +160,37 @@ class FibonacciHeap:
             fib_node_parent.degree += 1
             return fib_node_parent
     
+    #function to decrease key of a node - eg. 46 -> 12 
+    def decrease_key(self, node_to_decrease, new_value):
+        node_to_decrease.key = new_value
+        if node_to_decrease.parent is not None and node_to_decrease.parent.key > new_value:
+            parent = node_to_decrease.parent
+            self.cut(node_to_decrease)
+            self.cascading_cut(parent)
+        self.check_min_with_single_node(node_to_decrease)
+
+    #Cut node from child list to root 
+    def cut(self, node_to_cut):
+        self.remove_node_from_child_list(node_to_cut)
+        self.merge_node_with_root_list(node_to_cut)
+        if node_to_cut.marked:
+            node_to_cut.marked = False
+    
+    # handle parent of cut node in decrasing a key
+    def cascading_cut(self, decreased_node_parent):
+        if decreased_node_parent.parent is not None:
+            if not decreased_node_parent.marked:
+                decreased_node_parent.marked = True
+            else:
+                next_parent = decreased_node_parent.parent
+                self.cut(decreased_node_parent)
+                self.cascading_cut(next_parent)
+
+    def delete_node(self, node_to_delete):
+        self.decrease_key(node_to_delete, -float('inf'))
+        self.extract_min()
+
+    #Helper functions to print
     def printHeap(self):
         if self.root_list is not None:
             print()
@@ -172,12 +207,15 @@ class FibonacciHeap:
                 if current_node == firstNode:
                     flag = False
                 print("|")
-                print("---", current_node.key)
+                if current_node.marked:
+                    print("---", current_node.key, "+")
+                else:
+                    print("---", current_node.key)
                 if current_node.child is not None:
                     self.recursivePrint(current_node, 1)
                 current_node = current_node.right
                 print()
-    
+        
     def recursivePrint(self, node, degree):
         firstNode = node.child
         current_node = node.child.right
@@ -188,7 +226,10 @@ class FibonacciHeap:
             if current_node == firstNode:
                 flag = False
             print(s*degree, "|")
-            print(s*degree, "---", current_node.key)
+            if current_node.marked:
+                print(s*degree, "---", current_node.key, "+")
+            else: 
+                print(s*degree, "---", current_node.key)
             if current_node.child is not None:
                 self.recursivePrint(current_node, degree+2)
             current_node = current_node.right
@@ -196,28 +237,44 @@ class FibonacciHeap:
 # Function to create and run the Fibonacci heap
 def run():
     heap = FibonacciHeap()
-    heap_two = FibonacciHeap()
 
-    for i in range(10, 5, -1):
-        heap.insert(i)
-    for i in range(6):
-        heap_two.insert(i)
+    #for i in range(51):
+        #heap.insert(i)
+
+    heap.insert(0)
+    heap.insert(41)
+    heap.insert(38)
+    heap.insert(39)
+    heap.insert(18)
+    heap.insert(52)
+    heap.insert(21)
+    heap.insert(23)
+    heap.insert(7)
+    heap.insert(30)
+    d = heap.insert(17)
+    x = heap.insert(46)
+    heap.insert(24)
+    z = heap.insert(26)
+    y = heap.insert(35)
+
+    z.marked = True
 
     heap.extract_min().key
     heap.printHeap()
-    heap.extract_min().key
+    heap.decrease_key(x, 15)
     heap.printHeap()
-    heap.extract_min().key
+    heap.decrease_key(y, 5)
     heap.printHeap()
-    heap.extract_min().key
+    heap.delete_node(d)
     heap.printHeap()
-    heap.extract_min().key
-    heap.printHeap()
-    heap.extract_min().key
-    heap.printHeap()
-    heap.extract_min().key
-    heap.printHeap()
-    heap.extract_min().key
-    heap.printHeap()
+    '''heap.printHeap()
+    for i in range(450):
+        x = heap.extract_min()
+        if x is not None:
+            heap.printHeap()
+        else: 
+            print(x)
+            break'''
+
 # Run the function
 run()
