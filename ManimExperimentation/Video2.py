@@ -38,6 +38,7 @@ class firstExample2(Scene): #we will learn positioning.
         yellow_cirlce.align_to(orange_square, RIGHT)
         orange_circle.align_to(orange_square, UP+RIGHT)
         self.add(red_circle, yellow_cirlce, orange_circle)
+        
 
 
 

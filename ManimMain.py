@@ -1,52 +1,118 @@
 from manim import *
+from manim.typing import Point3D
 
 class main(Scene):
     def construct(self):
-
-        dot = createDot(self)
-        createChild(self, dot)
-
-        
+        defaultAddPoint = [-1*((frame.frame_width/2)-0.4),frame.frame_height/2-0.4, 0]
+        #self.add(Dot(defaultAddPoint,radius=0.2))
+        root = VGroup()
+        insertDot(self, root, defaultAddPoint, 1, True)
+        self.wait()
+        insertDot(self, root, defaultAddPoint, 2, True)
+        self.wait()
+        insertDot(self, root, defaultAddPoint, 3, True)
+        self.wait()
+        insertDot(self, root, defaultAddPoint, 4, True)
+        self.wait()
+        insertDot(self, root, defaultAddPoint, 5, True)
+        self.wait()
+        createChild(self, root[0], root[len(root)-1], True)
+        root.remove(root[len(root)-1])
+        insertDot(self, root, defaultAddPoint, 6, True)
+        self.wait()
+        insertDot(self, root, defaultAddPoint, 7, True)
+        self.wait()
+        createChild(self, root[0], root[len(root)-1], True)
+        root.remove(root[len(root)-1])
+        insertDot(self, root, defaultAddPoint, 8, True)
+        self.wait()
+        insertDot(self, root, defaultAddPoint, 9, True)
+        self.wait()
+        createChild(self, root[0], root[len(root)-1], True)
+        root.remove(root[len(root)-1])
+        insertDot(self, root, defaultAddPoint, 10, True)
+        self.wait()
+        insertDot(self, root, defaultAddPoint, 11, True)
+        self.wait()
+        self.wait(5)
         return
+    
+class newDot(Dot):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.children = []
+    def nadd(self, mobj: VMobject):
+        self.children.append(mobj)
 
-
-def createDot(slf: Scene): #need to be given self. returns dot
-    blue_dot = Dot(color=BLUE)
-    dot_label = Text("N").next_to(blue_dot, 0)
+def createDot(slf: Scene, point: Point3D, number: int):
+    blue_dot = newDot(point, radius=0.2, color=BLUE) #TODO add custome radius
+    dot_label = Text(str(number)).next_to(blue_dot, 0)
     dot_label.add_updater(
         lambda mobject: mobject.next_to(blue_dot, 0)
     )
-    slf.add(blue_dot, dot_label)
     blue_dot.number = dot_label
     return blue_dot
 
-def createChild(slf: Scene,parrentMojb: Mobject):
-    child = createDot(slf) 
-    child.move_to(parrentMojb.get_center() + DOWN)
-    pointer = Arrow(child, parrentMojb)
-    pointer.add_updater( # place arrow left of dot
-        lambda mob: mob.next_to(parrentMojb, child)
-    )
-    slf.add(child, pointer)
-    child.arrow = pointer
-    return child
+def insertDot(slf: Scene, group: VGroup, point: Point3D, number: int, fadeIn: bool):
+    dot = createDot(slf, point, number)
+    group.add(dot)
+    if fadeIn:
+        slf.play(FadeIn(dot, dot.number))
+    else:
+        slf.add(dot, dot.number)
+    rootDisperse(slf, group, fadeIn) #TODO custom height maybe
 
-def scaler(dt): #scales depending on number of mobjects
-    for mob in self.mobjects:
-        mob.set(width=2/(self.mobjects.size/2))
-    self.add_updater(scene_scaler)
+def rootDisperse(slf: Scene, group: VGroup, fadeIn: bool):
+    counter = 1
+    size = len(group)+2 #to create free endpoints
+    height = (frame.frame_height/2)-1
+    width = frame.frame_width
+    spacingArray = np.linspace(-1*width/2, width/2, size)
+    if fadeIn:
+        list = []
+        for d in group: 
+            list.append(d.animate.move_to([spacingArray[counter], height, 0], aligned_edge=UP))
+            counter += 1
+        slf.play(*list)
+    else:
+        for d in group: 
+            d.move_to([spacingArray[counter], height,0])
+            counter += 1
 
-def ValueTracker():
-    line = NumberLine(x_range=[-10, 10])
-    position = ValueTracker(0)
-    pointer = Vector(DOWN)
+def createChild(slf: Scene, parrentMojb: newDot, childMojb: newDot, isAnimation: bool):
+    parrentMojb.nadd(childMojb)
+    group = parrentMojb.children
+    pointer = Line(childMojb,parrentMojb)
     pointer.add_updater(
-        lambda mob: mob.next_to(
-            line.number_to_point(position.get_value()), UP
+        lambda mob: mob.put_start_and_end_on(childMojb.get_top(), parrentMojb.get_bottom()) #TODO add custome scaller
         )
-    )
-    pointer.update()
-    self.add(line, pointer)
-    self.wait()
-    self.play(position.animate.set_value(4))
-    self.play(position.animate.set_value(-2))
+    childMojb.arrow = pointer
+
+    counter = 1
+    size = len(group)+2 #to create free endpoints
+    print(size)
+    x = parrentMojb.get_x()
+    y = parrentMojb.get_y()
+    width = 4 #TODO custome width
+    spacingArray = np.linspace(-1*width/2, width/2, size)
+    if isAnimation:
+        list = []
+        for d in group: 
+            d.clear_updaters()
+            list.append(d.animate.move_to([spacingArray[counter]+x, y-1, 0]))
+            d.add_updater(
+                lambda mobject: d.move_to([spacingArray[counter]+parrentMojb.get_x(), parrentMojb.get_y()-1, 0])
+                )
+            #TODO add custome displacement
+            counter += 1
+        slf.play(*list)
+    else:
+        for d in group: 
+            d.move_to([spacingArray[counter]+x, y-1,0])
+            counter += 1
+
+    if animation:
+        slf.play(FadeIn(pointer))
+    else:
+        slf.add(pointer)
+    
