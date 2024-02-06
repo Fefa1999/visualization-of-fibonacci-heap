@@ -1,5 +1,4 @@
 import math 
-import array as arr
 class FibonacciHeap:
     root_list = None
     min_fib_node = None
@@ -48,6 +47,8 @@ class FibonacciHeap:
             heap_two.remove_node_from_root_list(start_node)
             heap_two.total_fib_nodes -= 1
             self.merge_node_with_root_list(start_node)
+            self.check_min_with_single_node(start_node)
+            self.total_fib_nodes += 1
             if end_node == start_node:
                 break
             start_node = next_node
@@ -233,48 +234,3 @@ class FibonacciHeap:
             if current_node.child is not None:
                 self.recursivePrint(current_node, degree+2)
             current_node = current_node.right
-
-# Function to create and run the Fibonacci heap
-def run():
-    heap = FibonacciHeap()
-
-    #for i in range(51):
-        #heap.insert(i)
-
-    heap.insert(0)
-    heap.insert(41)
-    heap.insert(38)
-    heap.insert(39)
-    heap.insert(18)
-    heap.insert(52)
-    heap.insert(21)
-    heap.insert(23)
-    heap.insert(7)
-    heap.insert(30)
-    d = heap.insert(17)
-    x = heap.insert(46)
-    heap.insert(24)
-    z = heap.insert(26)
-    y = heap.insert(35)
-
-    z.marked = True
-
-    heap.extract_min().key
-    heap.printHeap()
-    heap.decrease_key(x, 15)
-    heap.printHeap()
-    heap.decrease_key(y, 5)
-    heap.printHeap()
-    heap.delete_node(d)
-    heap.printHeap()
-    '''heap.printHeap()
-    for i in range(450):
-        x = heap.extract_min()
-        if x is not None:
-            heap.printHeap()
-        else: 
-            print(x)
-            break'''
-
-# Run the function
-run()
