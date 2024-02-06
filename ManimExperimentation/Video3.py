@@ -1,3 +1,4 @@
+from typing import Callable
 from manim import *
 
 
@@ -5,6 +6,10 @@ from manim import *
 #We have worked with run_time of animation. with fx self.play(Create(ax) run_time=3,Create(curve), run_time=5)
 
 from manim import ManimColor
+from manim.animation.animation import DEFAULT_ANIMATION_LAG_RATIO, DEFAULT_ANIMATION_RUN_TIME
+from manim.mobject.mobject import Mobject
+from manim.scene.scene import Scene
+from manim.utils.rate_functions import smooth
 
 class firstExample3(Scene):
     def construct(self):
@@ -141,3 +146,59 @@ class eigthExample3(Scene):
         d = Dot(color=WHITE)
         self.add(d)
         self.play(UpdateFromAlphaFunc(d, spiral_out, run_time=5))
+
+
+#Animation
+#No function or constructor is called in animations until the self.play is run.
+#Here begin() prepares the frist animation frame : stores mobject copy in self.starting_mobject
+#Then interpolate_mobject(alpha) - brings self.mobject to the state of a%. So alpha 0.5 will bring your animation to the 50% completion frame. Default it deligates to submobjects
+#interpolate_submobject(sub, sub_start, alpha) - same as above but for a specific submobject.
+#finish() - finishes the animation, aka produces the last frame
+#clean_up_from_scene(scene) - all remaining mobjects and scene cleanup. (e.g. removing mobjects) -like fadeout or removing axiliory objects
+
+#implementing your own animation class 
+#One should override interpolate_mobject or interpolate_submoject
+#Compare how other animation in the libare are implemented - Good luck
+
+class Disperse(Animation):
+    def __init__(self, mobject, dot_radius=0.05, dot_number=100, **kwargs):
+        super().__init__(mobject, **kwargs)
+        self.dot_radius = dot_radius
+        self.dot_number = dot_number
+    
+    def begin(self):
+        dots = VGroup(
+            *[Dot(radius=self.dot_radius).move_to(self.mobject.point_from_proportion(p))
+              for p in np.linspace(0, 1, self.dot_number)]
+        )
+        for dot in dots:
+            dot.initial_position = dot.get_center()
+            dot.shift_vector = 2*(dot.get_center() - self.mobject.get_center())
+        dots.set_opacity(0)
+        self.mobject.add(dots)
+        self.dots = dots #For later retrival
+        super().begin()
+        
+    def clean_up_from_scene(self, scene):
+        super().clean_up_from_scene(scene)
+        scene.remove(self.dots)
+        
+    def interpolate_mobject(self, alpha):
+        alpha = self.rate_func(alpha)  # manually apply rate function
+        if alpha <= 0.5:
+            self.mobject.set_opacity(1 - 2*alpha, family=False) #Doesn't affect child mobject aka dots. This is due to the family
+            self.dots.set_opacity(2*alpha)
+        else:
+            self.mobject.set_opacity(0)
+            self.dots.set_opacity(2*(1 - alpha))
+            for dot in self.dots:
+                dot.move_to(dot.initial_position + 2*(alpha-0.5)*dot.shift_vector)
+                
+class CustomAnimationExample(Scene):
+    def construct(self):
+        st = Star(color=YELLOW, fill_opacity=1).scale(3)
+        self.add(st)
+        self.wait()
+        self.play(Disperse(st, dot_number=200, run_time=4))
+            
+            
