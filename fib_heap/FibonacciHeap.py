@@ -153,7 +153,7 @@ class FibonacciHeap:
 
     #Link to nodes toegether - one will become child, other parent 
     def link_nodes(self, fib_node_one, fib_node_two):
-            fib_node_child = fib_node_one if fib_node_one.key > fib_node_two.key else fib_node_two
+            fib_node_child = fib_node_one if fib_node_one.key >= fib_node_two.key else fib_node_two
             fib_node_parent = fib_node_one if fib_node_two.key > fib_node_one.key else fib_node_two
             self.remove_node_from_root_list(fib_node_child)
             self.merge_node_with_child_list(fib_node_child, fib_node_parent)
@@ -234,3 +234,17 @@ class FibonacciHeap:
             if current_node.child is not None:
                 self.recursivePrint(current_node, degree+2)
             current_node = current_node.right
+
+def run():
+    heap = FibonacciHeap()
+
+    #for i in range(64):
+    heap.insert(5)
+    heap.insert(4)
+    heap.insert(3)
+    heap.insert(2)
+    heap.insert(1)
+
+    heap.extract_min()
+    heap.printHeap()
+run()
