@@ -1,4 +1,5 @@
 import math 
+
 class FibonacciHeap:
     root_list = None
     min_fib_node = None
@@ -235,16 +236,3 @@ class FibonacciHeap:
                 self.recursivePrint(current_node, degree+2)
             current_node = current_node.right
 
-def run():
-    heap = FibonacciHeap()
-
-    #for i in range(64):
-    heap.insert(5)
-    heap.insert(4)
-    heap.insert(3)
-    heap.insert(2)
-    heap.insert(1)
-
-    heap.extract_min()
-    heap.printHeap()
-run()

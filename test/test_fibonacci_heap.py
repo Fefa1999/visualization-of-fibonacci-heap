@@ -1,9 +1,9 @@
 import unittest
-import FibonacciHeap
+from Fibonacci_heap.FibonacciHeap import FibonacciHeap
 
 class TestFibonacciHeap(unittest.TestCase):
     def setUp(self):
-        self.heap = FibonacciHeap.FibonacciHeap()
+        self.heap = FibonacciHeap()
     
     def test_insert(self):
         self.heap.insert(3)
@@ -74,7 +74,7 @@ class TestFibonacciHeap(unittest.TestCase):
         self.heap.insert(3)
         self.heap.insert(1)
         self.heap.insert(2)
-        heap_1 = FibonacciHeap.FibonacciHeap()
+        heap_1 = FibonacciHeap()
         heap_1.insert(0)
         heap_1.insert(4)
         heap_1.insert(5)
@@ -116,6 +116,8 @@ class TestFibonacciHeap(unittest.TestCase):
         self.heap.extract_min()
         self.assertEqual(self.heap.total_fib_nodes, 0, "Total nodes should be 0")
     
+    #Extract with 4 niodes of same key 
+    
     def test_extract_min_with_empty_heap(self):
         node = self.heap.extract_min()
         self.assertEqual(node, None, "return should be None")
@@ -125,6 +127,6 @@ class TestFibonacciHeap(unittest.TestCase):
         self.heap.insert(2)
         self.heap.decrease_key(node, 1)
         self.assertEqual(self.heap.returnMin().key, 1, "Minimum key after decreasing should be 1")
-
+    
 if __name__ == '__main__':
     unittest.main()
