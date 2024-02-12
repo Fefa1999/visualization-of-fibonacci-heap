@@ -46,8 +46,6 @@ class newDot(Dot):
         super().__init__(*args, **kwargs)
         self.children = VGroup()
 
-    def nadd(self, mobj: VMobject):
-        self.children.add(mobj)
 
 #Creates a dot with a location, and return it withour adding it to scene.
 def createDot(point: Point3D, number: int, id: int):
@@ -83,7 +81,7 @@ def rootDisperse(slf: Scene, group: VGroup, fadeIn: bool):   #Should move from s
 
 
 def createChild(slf: Scene, parrentMojb: newDot, childMojb: newDot, isAnimation: bool):
-    parrentMojb.nadd(childMojb)
+    parrentMojb.children.add(childMojb)
     pointer = Line(childMojb,parrentMojb)
     pointer.add_updater(
         lambda mob: mob.put_start_and_end_on(childMojb.get_top(), parrentMojb.get_bottom()) #TODO add custome scaller
