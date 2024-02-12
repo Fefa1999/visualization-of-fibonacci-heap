@@ -6,7 +6,22 @@ class main(Scene):
         defaultAddPoint = [-1*((frame.frame_width/2)-0.4),frame.frame_height/2-0.4, 0]
         #self.add(Dot(defaultAddPoint,radius=0.2))
         root = VGroup()
-        insertDot(self, root, defaultAddPoint, 1, True)
+        
+        a = insertDot(self, root, defaultAddPoint, 1, True)
+        b = insertDot(self, root, defaultAddPoint, 2, True)
+        createChild(self, a, b, True)
+        root.remove(root[len(root)-1])
+        self.wait()
+        c = insertDot(self, root, defaultAddPoint, 3, True)
+        d = insertDot(self, root, defaultAddPoint, 4, True)
+        createChild(self, c, d, True)
+        root.remove(root[len(root)-1])
+        createChild(self, a, c, True)
+        root.remove(root[len(root)-1])
+        self.wait()
+
+
+        """insertDot(self, root, defaultAddPoint, 1, True)
         self.wait()
         insertDot(self, root, defaultAddPoint, 2, True)
         self.wait()
@@ -14,7 +29,7 @@ class main(Scene):
         self.wait()
         insertDot(self, root, defaultAddPoint, 4, True)
         self.wait()
-        insertDot(self, root, defaultAddPoint, 5, True)
+        x = insertDot(self, root, defaultAddPoint, 5, True)
         self.wait()
         createChild(self, root[0], root[len(root)-1], True)
         root.remove(root[len(root)-1])
@@ -34,9 +49,10 @@ class main(Scene):
         self.wait()
         insertDot(self, root, defaultAddPoint, 11, True)
         self.wait()
-        self.wait(5)
+        self.wait(5)"""
         return
     
+#New dot class. A manim dot with children.
 class newDot(Dot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -44,9 +60,9 @@ class newDot(Dot):
     def nadd(self, mobj: VMobject):
         self.children.append(mobj)
 
-def createDot(slf: Scene, point: Point3D, number: int):
-    blue_dot = newDot(point, radius=0.2, color=BLUE) #TODO add custome radius
-    dot_label = Text(str(number)).next_to(blue_dot, 0)
+def createDot(point: Point3D, number: int):
+    blue_dot = newDot(point, radius=0.2, color=BLUE) #TODO add custome radius - was 0.2
+    dot_label = Text(str(number)).next_to(blue_dot, 0) #TODO add custome scaler for text size
     dot_label.add_updater(
         lambda mobject: mobject.next_to(blue_dot, 0)
     )
@@ -54,15 +70,16 @@ def createDot(slf: Scene, point: Point3D, number: int):
     return blue_dot
 
 def insertDot(slf: Scene, group: VGroup, point: Point3D, number: int, fadeIn: bool):
-    dot = createDot(slf, point, number)
-    group.add(dot)
+    dot = createDot(point, number)
+    group.add(dot)   #Gets inserted into root vgroup... should it be here?
     if fadeIn:
         slf.play(FadeIn(dot, dot.number))
     else:
         slf.add(dot, dot.number)
-    rootDisperse(slf, group, fadeIn) #TODO custom height maybe
+    rootDisperse(slf, group, fadeIn) #TODO custom height maybe should it be here 
+    return dot
 
-def rootDisperse(slf: Scene, group: VGroup, fadeIn: bool):
+def rootDisperse(slf: Scene, group: VGroup, fadeIn: bool):   #Should move move from start point based on radius
     counter = 1
     size = len(group)+2 #to create free endpoints
     height = (frame.frame_height/2)-1
@@ -100,9 +117,12 @@ def createChild(slf: Scene, parrentMojb: newDot, childMojb: newDot, isAnimation:
         for d in group: 
             d.clear_updaters()
             list.append(d.animate.move_to([spacingArray[counter]+x, y-1, 0]))
+            """ 
+            #DOESNT WORK sad smiley
             d.add_updater(
                 lambda mobject: d.move_to([spacingArray[counter]+parrentMojb.get_x(), parrentMojb.get_y()-1, 0])
                 )
+            """
             #TODO add custome displacement
             counter += 1
         slf.play(*list)
@@ -111,7 +131,7 @@ def createChild(slf: Scene, parrentMojb: newDot, childMojb: newDot, isAnimation:
             d.move_to([spacingArray[counter]+x, y-1,0])
             counter += 1
 
-    if animation:
+    if isAnimation:
         slf.play(FadeIn(pointer))
     else:
         slf.add(pointer)
