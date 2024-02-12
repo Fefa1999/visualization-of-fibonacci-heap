@@ -4,6 +4,7 @@ class FibonacciHeap:
     root_list = None
     min_fib_node = None
     total_fib_nodes = 0
+    scene = None
 
     class FibonacciHeapNode:
         def __init__(self, key):
@@ -19,7 +20,7 @@ class FibonacciHeap:
         self.merge_node_with_root_list(new_node)
         self.check_min_with_single_node(new_node)
         self.total_fib_nodes += 1
-        return new_node
+        self.scene.add_circle()
 
     #updates min if node is smaller than current min
     def check_min_with_single_node(self, fib_node):
