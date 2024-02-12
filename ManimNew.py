@@ -1,5 +1,6 @@
 from manim import *
 from manim.typing import Point3D
+from manim.typing import Vector3
 
 class main(Scene):
     def construct(self):
@@ -25,17 +26,22 @@ class main(Scene):
        
         createChild(self, a, b, True)
         root.remove(b)
+        insertDot(self, root, defaultAddPoint, 6, True, number_of_nodes)
         createChild(self, a, c, True)
         root.remove(c)
-        createChild(self, a, e, True)
+        insertDot(self, root, defaultAddPoint, 7, True, number_of_nodes)
+        createChild(self, b, e, True)
         root.remove(e)
         
 
         d = insertDot(self, root, defaultAddPoint, 5, True, number_of_nodes)
         createChild(self, b, d, True)
         root.remove(d)
-        insertDot(self, root, defaultAddPoint, 6, True, number_of_nodes)
-        insertDot(self, root, defaultAddPoint, 7, True, number_of_nodes)
+        
+        f = insertDot(self, root, defaultAddPoint, 10, True, number_of_nodes)
+        createChild(self, a, f, True)
+        root.remove(f)
+
         insertDot(self, root, defaultAddPoint, 8, True, number_of_nodes)
         self.wait(10)
 
@@ -45,6 +51,23 @@ class newDot(Dot):
         self.id = id
         super().__init__(*args, **kwargs)
         self.children = VGroup()
+        self.parrent = Mobject()
+
+def arrange_where_buffer_is_subtree_width(
+    self,
+    direction: Vector3 = RIGHT,
+    center: bool = True,
+    **kwargs,
+):
+    for m1, m2 in zip(self.submobjects, self.submobjects[1:]):
+        m2.next_to(m1, direction, (m2.children.width + m1.radius*2), **kwargs)
+    if center:
+        self.center()
+    return self
+
+VGroup.arrange_where_buffer_is_subtree_width = arrange_where_buffer_is_subtree_width
+
+    
 
 
 #Creates a dot with a location, and return it withour adding it to scene.
@@ -55,7 +78,6 @@ def createDot(point: Point3D, number: int, id: int):
         lambda mobject: mobject.next_to(blue_dot, 0)
     )
     blue_dot.number = dot_label
-    print(blue_dot.id)
     return blue_dot
 
 #Inserts the dot onto the scene and adds it to a vgroup (Root), then calls for a repositioning of the nodes.
@@ -84,10 +106,9 @@ def createChild(slf: Scene, parrentMojb: newDot, childMojb: newDot, isAnimation:
     parrentMojb.children.add(childMojb)
     pointer = Line(childMojb,parrentMojb)
     pointer.add_updater(
-        lambda mob: mob.put_start_and_end_on(childMojb.get_top(), parrentMojb.get_bottom()) #TODO add custome scaller
+        lambda mob: mob.put_start_and_end_on(childMojb.get_top(), parrentMojb.get_bottom()) #TODO add custome scaller for width
         )
     childMojb.arrow = pointer
-    
     if isAnimation:
         animateChildren(slf, parrentMojb)
         slf.play(FadeIn(pointer))
@@ -95,16 +116,19 @@ def createChild(slf: Scene, parrentMojb: newDot, childMojb: newDot, isAnimation:
         moveChildren(slf, parrentMojb)
         slf.add(pointer)
 
-def animateChildren(slf: Scene, parrentMojb: newDot):
+def animateChildren(slf: Scene, parrentMojb: newDot): #need to be made into a transform method where it can collect all animation and then move.
     if len(parrentMojb.children)==0:
         return
+    slf.play(parrentMojb.children.animate.arrange_where_buffer_is_subtree_width(center= False).set_y(parrentMojb.get_y()-1).align_to(parrentMojb, RIGHT))
     for n in parrentMojb.children:
         animateChildren(slf, n)
-    slf.play(parrentMojb.children.animate.arrange(buff=parrentMojb.radius*4, center= False).set_x(parrentMojb.get_x()).set_y(parrentMojb.get_y()-1))
-
+    
 def moveChildren(slf: Scene, parrentMojb: newDot):
     if len(parrentMojb.children)==0:
         return
+    slf.add(parrentMojb.children.arrange_where_buffer_is_subtree_width(center= False).set_y(parrentMojb.get_y()-1).align_to(parrentMojb, RIGHT))
     for n in parrentMojb.children:
         moveChildren(slf, n)
-    slf.add(parrentMojb.children.arrange(buff=parrentMojb.radius*4, center= False).set_x(parrentMojb.get_x()).set_y(parrentMojb.get_y()-1))
+
+
+
