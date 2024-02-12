@@ -10,36 +10,36 @@ class main(Scene):
         root = VGroup()
 
         number_of_nodes+=1
-        a = insertDot(self, root, defaultAddPoint, 1, True, number_of_nodes)
+        a = insertDot(self, root, defaultAddPoint, 1, False, number_of_nodes)
         #self.wait()
         number_of_nodes+=1
-        b = insertDot(self, root, defaultAddPoint, 2, True, number_of_nodes)
+        b = insertDot(self, root, defaultAddPoint, 2, False, number_of_nodes)
         #self.wait()
         number_of_nodes+=1
-        insertDot(self, root, defaultAddPoint, 3, True, number_of_nodes)
+        insertDot(self, root, defaultAddPoint, 3, False, number_of_nodes)
         #self.wait()
         number_of_nodes+=1
-        c = insertDot(self, root, defaultAddPoint, 4, True, number_of_nodes)
+        c = insertDot(self, root, defaultAddPoint, 4, False, number_of_nodes)
         number_of_nodes+=1
-        e = insertDot(self, root, defaultAddPoint, 9, True, number_of_nodes)
+        e = insertDot(self, root, defaultAddPoint, 9, False, number_of_nodes)
         #self.wait(5)
        
-        createChild(self, a, b, True)
+        createChild(self, a, b, False)
         root.remove(b)
-        insertDot(self, root, defaultAddPoint, 6, True, number_of_nodes)
-        createChild(self, a, c, True)
+        insertDot(self, root, defaultAddPoint, 6, False, number_of_nodes)
+        createChild(self, a, c, False)
         root.remove(c)
-        insertDot(self, root, defaultAddPoint, 7, True, number_of_nodes)
-        createChild(self, b, e, True)
+        insertDot(self, root, defaultAddPoint, 7, False, number_of_nodes)
+        createChild(self, b, e, False)
         root.remove(e)
         
 
-        d = insertDot(self, root, defaultAddPoint, 5, True, number_of_nodes)
-        createChild(self, b, d, True)
+        d = insertDot(self, root, defaultAddPoint, 5, False, number_of_nodes)
+        createChild(self, b, d, False)
         root.remove(d)
         
-        f = insertDot(self, root, defaultAddPoint, 10, True, number_of_nodes)
-        createChild(self, a, f, True)
+        f = insertDot(self, root, defaultAddPoint, 10, False, number_of_nodes)
+        createChild(self, a, f, False)
         root.remove(f)
 
         insertDot(self, root, defaultAddPoint, 8, True, number_of_nodes)
@@ -66,8 +66,6 @@ def arrange_where_buffer_is_subtree_width(
     return self
 
 VGroup.arrange_where_buffer_is_subtree_width = arrange_where_buffer_is_subtree_width
-
-    
 
 
 #Creates a dot with a location, and return it withour adding it to scene.
@@ -98,7 +96,7 @@ def rootDisperse(slf: Scene, group: VGroup, fadeIn: bool):   #Should move from s
     if fadeIn:
         slf.play(group.animate.arrange(buff=(width/size)).set_y(height))  #TODO:Scale with the size of nodes children tree
     else:
-        group.arrange(buff=(width/(len(group.submobjects)+2)))
+        group.arrange(buff=(width/(len(group.submobjects)+2))).set_y(height)
 
 
 
