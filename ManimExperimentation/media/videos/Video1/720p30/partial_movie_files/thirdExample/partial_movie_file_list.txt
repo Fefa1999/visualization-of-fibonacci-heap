@@ -1,6 +1,0 @@
-# This file is used internally by FFMPEG.
-file 'file:C:/Users/aschi/OneDrive/Dokumenter/GitHub/visualization-of-fibonacci-heap/ManimExperimentation/media/videos/Video1/720p30/partial_movie_files/thirdExample/2016333726_3366394294_223132457.mp4'
-file 'file:C:/Users/aschi/OneDrive/Dokumenter/GitHub/visualization-of-fibonacci-heap/ManimExperimentation/media/videos/Video1/720p30/partial_movie_files/thirdExample/543634251_953704164_198849718.mp4'
-file 'file:C:/Users/aschi/OneDrive/Dokumenter/GitHub/visualization-of-fibonacci-heap/ManimExperimentation/media/videos/Video1/720p30/partial_movie_files/thirdExample/543634251_1141282389_1416229263.mp4'
-file 'file:C:/Users/aschi/OneDrive/Dokumenter/GitHub/visualization-of-fibonacci-heap/ManimExperimentation/media/videos/Video1/720p30/partial_movie_files/thirdExample/543634251_511105972_1134545589.mp4'
-file 'file:C:/Users/aschi/OneDrive/Dokumenter/GitHub/visualization-of-fibonacci-heap/ManimExperimentation/media/videos/Video1/720p30/partial_movie_files/thirdExample/543634251_759319184_3326459917.mp4'

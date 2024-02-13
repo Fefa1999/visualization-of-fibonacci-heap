@@ -1,3 +1,0 @@
-# This file is used internally by FFMPEG.
-file 'file:C:/Users/aschi/OneDrive/Dokumenter/GitHub/visualization-of-fibonacci-heap/ManimExperimentation/media/videos/Video3/720p30/partial_movie_files/thirdExample3/2016333726_1637052485_2358810818.mp4'
-file 'file:C:/Users/aschi/OneDrive/Dokumenter/GitHub/visualization-of-fibonacci-heap/ManimExperimentation/media/videos/Video3/720p30/partial_movie_files/thirdExample3/543634251_1141282389_2389565244.mp4'

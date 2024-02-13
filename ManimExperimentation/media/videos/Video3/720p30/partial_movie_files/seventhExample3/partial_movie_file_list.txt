@@ -1,9 +1,0 @@
-# This file is used internally by FFMPEG.
-file 'file:C:/Users/aschi/OneDrive/Dokumenter/GitHub/visualization-of-fibonacci-heap/ManimExperimentation/media/videos/Video3/720p30/partial_movie_files/seventhExample3/2016333726_123554531_1787424794.mp4'
-file 'file:C:/Users/aschi/OneDrive/Dokumenter/GitHub/visualization-of-fibonacci-heap/ManimExperimentation/media/videos/Video3/720p30/partial_movie_files/seventhExample3/543634251_948595850_4084595033.mp4'
-file 'file:C:/Users/aschi/OneDrive/Dokumenter/GitHub/visualization-of-fibonacci-heap/ManimExperimentation/media/videos/Video3/720p30/partial_movie_files/seventhExample3/543634251_600330128_391173919.mp4'
-file 'file:C:/Users/aschi/OneDrive/Dokumenter/GitHub/visualization-of-fibonacci-heap/ManimExperimentation/media/videos/Video3/720p30/partial_movie_files/seventhExample3/543634251_2323541333_3259872450.mp4'
-file 'file:C:/Users/aschi/OneDrive/Dokumenter/GitHub/visualization-of-fibonacci-heap/ManimExperimentation/media/videos/Video3/720p30/partial_movie_files/seventhExample3/543634251_2787993034_812846294.mp4'
-file 'file:C:/Users/aschi/OneDrive/Dokumenter/GitHub/visualization-of-fibonacci-heap/ManimExperimentation/media/videos/Video3/720p30/partial_movie_files/seventhExample3/543634251_1704852926_1378938985.mp4'
-file 'file:C:/Users/aschi/OneDrive/Dokumenter/GitHub/visualization-of-fibonacci-heap/ManimExperimentation/media/videos/Video3/720p30/partial_movie_files/seventhExample3/543634251_1364385609_2655735430.mp4'
-file 'file:C:/Users/aschi/OneDrive/Dokumenter/GitHub/visualization-of-fibonacci-heap/ManimExperimentation/media/videos/Video3/720p30/partial_movie_files/seventhExample3/543634251_1704852926_2907109281.mp4'
