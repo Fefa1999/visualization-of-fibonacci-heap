@@ -1,25 +1,71 @@
 from manim import *
+from Fibonacci_heap.FibonacciHeap import FibonacciHeap
+import math
 
-class MobjectPlacement(Scene):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.nodes = []  # List to keep track of nodes
-        self.initial_position = LEFT * 4  # Starting position for the first circle
-        self.shift_amount = RIGHT * 2  # Distance to shift nodes to the right
+class FibonacciHeapVisualization(MovingCameraScene):
+    scaler = 1
+    min_width_right = None
+    center = [6.5, -3, 0]
+    class CustomVGroup(VGroup):
+        def __init__(self, *mobjects, degree="", **kwargs):
+            super().__init__(*mobjects, **kwargs)
+            self.degree = degree
+    
+    def setup(self):
+        self.all_nodes = {}
+        self.root_list_nodes = {}  # List to keep track of the nodes in the root list
+        self.next_node_position = [0, 0, 0]  # Position for the next node to be placed before moving
+        self.root_group = VGroup()
+        self.play(
+            self.camera.frame.animate.move_to(self.center)
+        )
 
-    def add_circle(self):
-        # Create a new circle
-        new_circle = Circle(radius=1, color=BLUE)
-        # Position the new circle at the initial position
-        new_circle.move_to(self.initial_position)
+    def create_fibonacci_heap_node(self, fib_node):
+        """Creates a visual representation of a Fibonacci heap node."""
+        node = Circle(radius=0.25, color=BLUE)
+        node_text = Text(str(fib_node.value), font_size=24).move_to(node.get_center())
+        node_group = self.CustomVGroup(node, node_text, degree = fib_node.degree)
+        node_group.name = fib_node.id
+        self.all_nodes[node_group.name] = node_group
 
-        # Shift existing nodes to the right
-        for circle in self.nodes:
-            circle.animate.move_to()
+    def insert_into_root_list(self, node_group_name):
+        """Inserts a node into the root list and animates the process."""
+        if len(self.root_list_nodes) != 0:
+            for key in self.root_list_nodes:
+                node = self.root_list_nodes[key]
+                np = [node.get_center()[0]+1.5, node.get_center()[1], node.get_center()[2]]
+                node.move_to(np)
         
-        # Add the new circle to the scene and to the nodes list
-        self.play(Create(new_circle))
-        self.nodes.append(new_circle)
+        # Set initial position at the top center
+        self.all_nodes.get(node_group_name).move_to(self.next_node_position)
+        self.play(FadeIn( self.all_nodes.get(node_group_name)))
+
+        # Insert the new node at the beginning of the root list
+        self.root_list_nodes[node_group_name] = self.all_nodes.get(node_group_name)
+
+    def remove_from_root_list(self, node_group_name):
+        node = self.root_list_nodes.pop(node_group_name)
+        x_center = node.get_center()[0]
+        self.play(FadeOut(node))
+        if len(self.root_list_nodes) != 0:
+            for key in self.root_list_nodes:
+                node = self.root_list_nodes[key]
+                if node.get_center()[0] > x_center:
+                    np = [node.get_center()[0]-1.5, node.get_center()[1], node.get_center()[2]]
+                    node.move_to(np)
+
+    def link_nodes(self, node_group_name_child, node_group_name_parent):
+        
+        return
+
+
+    # def adjust_camera(self):
+    #     modifier = (len(self.root_list_nodes) / 8 ) + 1
+    #     self.play(
+    #         self.camera.frame.animate.scale(self.scaler+1).move_to([6.5*modifier, (3*modifier)*-1, 0])
+    #     )
+    #     self.scaler = self.scaler/2
+    #     return
 
     def construct(self):
-        return
+        self.setup()
