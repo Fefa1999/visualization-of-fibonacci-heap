@@ -20,39 +20,39 @@ class main(MovingCameraScene):
         e = insertDot(self, root, defaultAddPoint, 5, isAnimation, number_of_nodes)
         #self.wait(5)
        
-        createChild(self, root, a, b, isAnimation)
+        createChild(self, root, a.id, b, isAnimation)
 
-        createChild(self, root, a, c, isAnimation)
+        createChild(self, root, a.id, c, isAnimation)
 
-        createChild(self, root, b, e, isAnimation)
+        createChild(self, root, b.id, e, isAnimation)
 
         number_of_nodes+=1
         d = insertDot(self, root, defaultAddPoint, 6, isAnimation, number_of_nodes)
-        createChild(self, root, b, d, isAnimation)
+        createChild(self, root, b.id, d, isAnimation)
 
         number_of_nodes+=1
         f = insertDot(self, root, defaultAddPoint, 7, isAnimation, number_of_nodes)
-        createChild(self, root, a, f, isAnimation)
+        createChild(self, root, a.id, f, isAnimation)
 
         number_of_nodes+=1
         g = insertDot(self, root, defaultAddPoint, 8, isAnimation, number_of_nodes)
         number_of_nodes+=1
         h = insertDot(self, root, defaultAddPoint, 9, isAnimation, number_of_nodes)
-        createChild(self, root, g, h, isAnimation)
+        createChild(self, root, g.id, h, isAnimation)
 
-        isAnimation = True
+        isAnimation = False
 
         number_of_nodes+=1
         i = insertDot(self, root, defaultAddPoint, 10, isAnimation, number_of_nodes)
         number_of_nodes+=1
         j = insertDot(self, root, defaultAddPoint, 11, isAnimation, number_of_nodes)
-        createChild(self, root, i, j, isAnimation)
+        createChild(self, root, i.id, j, isAnimation)
 
-        createChild(self, root, g, i, isAnimation)
+        createChild(self, root, g.id, i, isAnimation)
 
         number_of_nodes+=1
         k = insertDot(self, root, defaultAddPoint, 12, isAnimation, number_of_nodes)
-        createChild(self, root, g, k, isAnimation)
+        createChild(self, root, g.id, k, isAnimation)
 
         isAnimation = False
         for x in range(5):
@@ -71,12 +71,12 @@ class newDot(Dot):
 
 def arrange_where_buffer_is_subtree_width(
     self,
-    direction: Vector3 = RIGHT,
+    direction: Vector3 = LEFT,
     center: bool = True,
     **kwargs,
 ):
     for m1, m2 in zip(self.submobjects, self.submobjects[1:]):
-        m2.next_to(m1, direction, (m2.children.width + m1.radius*2), **kwargs)
+        m2.next_to(m1, direction, (m2.widthOfChildren), **kwargs)
     if center:
         self.center()
     return self
@@ -183,7 +183,10 @@ def find_tree_width(dot: newDot):
 
 
 def createChild(slf: Scene, root: VGroup, parrentKey: int, childMojb: newDot, isAnimation: bool):
-    parrentMojb = root[getRootKeyIndex(parrentKey)]
+    rootParrentIndex = getRootKeyIndex(root, parrentKey)
+    if not isinstance(rootParrentIndex, int):
+        return
+    parrentMojb = root[rootParrentIndex]
     if isinstance(parrentMojb, newDot):
         parrentMojb.children.add(childMojb)
 
@@ -195,52 +198,80 @@ def createChild(slf: Scene, root: VGroup, parrentKey: int, childMojb: newDot, is
         childMojb.arrow = pointer
 
         root.remove(childMojb)
-        parrentMojb.widthOfChildren = parrentMojb.widthOfChildren + childMojb.widthOfChildren + parrentMojb.radius*2 #added padding
+        childWidth = int() 
+        if len(parrentMojb.children) == 1:
+            childWidth = 0
+        else:
+            childWidth = childMojb.widthOfChildren + parrentMojb.radius*2
+        parrentMojb.widthOfChildren = parrentMojb.widthOfChildren + childWidth
 
         if isAnimation:
-            
-            vg = animateChildren(slf, parrentMojb, parrentMojb)
+            vg = animateRoot(root, rootParrentIndex)
             if isinstance(vg, list):
                 slf.play(AnimationGroup(*[MoveToTarget(n) for n in vg], lag_ratio=0), FadeIn(pointer))
             slf.play(FadeIn(pointer)) #Move it up
         else:
-            moveChildren(slf, parrentMojb)
+            moveRoot(slf, root, rootParrentIndex)
             slf.add(pointer)
 
-def animateRoot(root: VGroup, rootIndexOfNewParrent: int):
-    if len(root)<2:
-        return
+
+def animateRoot(root: VGroup, rootIndexOfNewParrent: int): #Must be done smart. aka move the lesser tree. Or moving fixed distance if child is at the ends.
     returnList = list()
-    for n in range(len(root)-rootIndexOfNewParrent):
-        rootDot = root[n+rootIndexOfNewParrent]
-        if isinstance(rootDot, newDot):
-            rootDot.generate_target()
-            rootDot.target.set_x(root[n+rootIndexOfNewParrent-1].get_x()+rootDot.widthOfChildren+rootDot.radius*2)
-            returnList.append(rootDot)
-        #Call animate children 
+
+    #If the root node is the first -> no displament of any node nesesary
+    if rootIndexOfNewParrent == 0:
+        rootDot = root[rootIndexOfNewParrent]
+        ch = animateChildren(rootDot, rootDot)
+        if isinstance(ch, list):
+            returnList.extend(ch)
+
+    
+    def aux (root: VGroup, rootIndex: int, lastDotDestination: newDot):
+        if rootIndex == len(root):
+            return []
+
+        returnList2 = list()
+        currentDot = root[rootIndex]
+        if not isinstance(currentDot, newDot): #will be fixed by new vgroup
+            return []
+        currentDot.generate_target()
+        currentDot.target.set_x(lastDotDestination.get_x()+currentDot.widthOfChildren+currentDot.radius*2)
+        returnList2.append(currentDot)
+        if isinstance(currentDot.target, newDot):
+            ch = animateChildren(currentDot, currentDot.target)
+        if isinstance(ch, list):
+            returnList2.extend(ch)
+        
+        ac = aux(root, rootIndex+1, currentDot.target)
+
+        returnList2.extend(ac)
+
+        return returnList2
+
+    returnList.extend(aux(root, 1, root[0]))
     return returnList
-    #self.play(AnimationGroup(*[MoveToTarget(n) for n in returnList], lag_ratio=0))
+
 
 def moveRoot(self: Scene, root: VGroup, rootIndexOfNewParrent: int):
-    if len(root)<2:
-        return
-    returnList = list()
-    for n in range(len(root)-1):
-        rootDot = root[n+1]
-        if isinstance(rootDot, newDot):
-            mostLeftInTree: newDot
-            widthDif: float
-            if len(rootDot.children)>0:
-                mostLeftInTree = get_left_most_dot(rootDot.children)
-                widthDif = rootDot.get_x()-mostLeftInTree.get_x()
-            else:
-                mostLeftInTree = rootDot
-                widthDif = 0
-       
-            rootDot.next_to(root[0], buff=(widthDif+mostLeftInTree.radius*2))
+    if rootIndexOfNewParrent == 0:
+        rootDot = root[rootIndexOfNewParrent]
+        moveChildren(self, rootDot)
+
     
-    if isAnimation:
-        self.play(AnimationGroup(*[MoveToTarget(n) for n in returnList], lag_ratio=0))
+    def aux (root: VGroup, rootIndex: int, lastDotDestination: newDot):
+        if rootIndex == len(root):
+            return []
+        
+        currentDot = root[rootIndex]
+        if not isinstance(currentDot, newDot): #will be fixed by new vgroup
+            return []
+        currentDot.set_x(lastDotDestination.get_x()+currentDot.widthOfChildren+currentDot.radius*2)
+
+        moveChildren(self, currentDot)
+        
+        aux(root, rootIndex+1, currentDot)
+
+    (aux(root, 1, root[0]))
 
 def animateChildren(parrentMojb: newDot, parrentTarget: newDot): #need to be made into a transform method where it can collect all animation and then move.
     if len(parrentMojb.children)==0:
@@ -249,8 +280,8 @@ def animateChildren(parrentMojb: newDot, parrentTarget: newDot): #need to be mad
     parrentMojb.children.generate_target()
     parrentMojb.children.target.arrange_where_buffer_is_subtree_width(center= False).set_y(parrentTarget.get_y()-1).align_to(parrentTarget, RIGHT)
     VGroup_list.append(parrentMojb.children)
-    for n in range(len(parrentMojb.children.submobjects)):
-        ac = animateChildren(parrentMojb.children.submobjects[n], parrentMojb.children.target.submobjects[n])
+    for n in range(len(parrentMojb.children)):
+        ac = animateChildren(parrentMojb.children[n], parrentMojb.children.target[n])
         if isinstance(ac, list):
             VGroup_list= VGroup_list + ac
     return VGroup_list
@@ -264,3 +295,22 @@ def moveChildren(slf: Scene, parrentMojb: newDot):
 
 
 
+
+
+
+#NOT USED
+def displaceAllNodeToTheRight(root: VGroup, rootIndex: int, displacement: int):
+    returnlist = list
+    def aux(dot: newDot):
+        for n in dot.children:
+            returnlist.extend(aux(n))
+        dot.generate_target()
+        dot.target.set_x(dot.get_x()+displacement)
+        returnlist.append(dot)
+        return returnlist
+
+    for n in range(len(root)-rootIndex-1):
+        currentIndex = rootIndex+1+n
+        aux(root[currentIndex])
+
+    return returnlist
