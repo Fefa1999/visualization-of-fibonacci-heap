@@ -7,7 +7,7 @@ class main(MovingCameraScene):
         number_of_nodes = 0
         defaultAddPoint = [-2,1, 0]
         root = VGroup()
-        isAnimation = False
+        isAnimation = True
 
         number_of_nodes+=1
         a = insertDot(self, root, defaultAddPoint, 1, isAnimation, number_of_nodes)
@@ -40,7 +40,7 @@ class main(MovingCameraScene):
         h = insertDot(self, root, defaultAddPoint, 9, isAnimation, number_of_nodes)
         createChild(self, root, g.id, h, isAnimation)
 
-        isAnimation = False
+        isAnimation = True
 
         number_of_nodes+=1
         i = insertDot(self, root, defaultAddPoint, 10, isAnimation, number_of_nodes)
@@ -54,7 +54,7 @@ class main(MovingCameraScene):
         k = insertDot(self, root, defaultAddPoint, 12, isAnimation, number_of_nodes)
         createChild(self, root, g.id, k, isAnimation)
 
-        isAnimation = False
+        isAnimation = True
         for x in range(5):
             number_of_nodes+=1
             insertDot(self, root, defaultAddPoint, 13+x, isAnimation, number_of_nodes)
