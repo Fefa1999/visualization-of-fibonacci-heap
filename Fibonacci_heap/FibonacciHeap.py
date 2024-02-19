@@ -5,8 +5,6 @@ class FibonacciHeap:
     min_fib_node = None
     total_fib_nodes = 0
     id = 0
-    scene = None
-
     class FibonacciHeapNode:
         def __init__(self, value):
             self.id = None
@@ -21,7 +19,6 @@ class FibonacciHeap:
         new_node.left = new_node.right = new_node
         new_node.id = self.id
         self.id += 1
-        self.scene.create_fibonacci_heap_node(new_node)
         self.merge_node_with_root_list(new_node)
         self.check_min_with_single_node(new_node)
         self.total_fib_nodes += 1
@@ -68,7 +65,6 @@ class FibonacciHeap:
             self.root_list.left.right = node_to_insert 
             self.root_list.left = node_to_insert 
         self.root_list = node_to_insert
-        self.scene.insert_into_root_list(node_to_insert)
 
     #Removes node from root list 
     def remove_node_from_root_list(self, fib_node):
@@ -127,7 +123,6 @@ class FibonacciHeap:
             #remove min node from root
             self.remove_node_from_root_list(min_node)
             self.total_fib_nodes -= 1
-            self.scene.delete_node(min_node)
 
             #Consolidate and set new min unless root_list is only one root or empty - the only child of the removed min
             if self.root_list is not None:
@@ -168,7 +163,6 @@ class FibonacciHeap:
             self.merge_node_with_child_list(fib_node_child, fib_node_parent)
             fib_node_child.parent = fib_node_parent
             fib_node_parent.degree += 1
-            self.scene.link_up(fib_node_child, fib_node_parent)
             return fib_node_parent
 
     
