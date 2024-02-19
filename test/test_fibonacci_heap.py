@@ -20,24 +20,24 @@ class TestFibonacciHeap(unittest.TestCase):
         self.heap.insert(2)
         self.heap.merge_node_with_root_list(node)
         self.assertEqual(self.heap.root_list, node, "Inserted node should be the root_list entry point")
-        self.assertEqual(node.right.key, 2, "Circularity maintained in the doubly linked list")
-        self.assertEqual(node.left.key, 2, "Circularity maintained in the doubly linked list")
-        self.assertEqual(node.right.right.key, 1, "Circularity maintained in the doubly linked list")
-        self.assertEqual(node.left.left.key, 1, "Circularity maintained in the doubly linked list")
+        self.assertEqual(node.right.value, 2, "Circularity maintained in the doubly linked list")
+        self.assertEqual(node.left.value, 2, "Circularity maintained in the doubly linked list")
+        self.assertEqual(node.right.right.value, 1, "Circularity maintained in the doubly linked list")
+        self.assertEqual(node.left.left.value, 1, "Circularity maintained in the doubly linked list")
 
     def test_check_min_with_single_node(self):
         node = self.heap.FibonacciHeapNode(1)
         self.heap.insert(2)
-        self.assertEqual(self.heap.min_fib_node.key, 2, "Min node should be 2 before inserting new node")
+        self.assertEqual(self.heap.min_fib_node.value, 2, "Min node should be 2 before inserting new node")
         self.heap.check_min_with_single_node(node)
-        self.assertEqual(self.heap.min_fib_node.key, 1, "Min node should be 1 after inserting new node")
+        self.assertEqual(self.heap.min_fib_node.value, 1, "Min node should be 1 after inserting new node")
     
     def test_check_min_with_single_negative_node(self):
         node = self.heap.FibonacciHeapNode(-1)
         self.heap.insert(2)
-        self.assertEqual(self.heap.min_fib_node.key, 2, "Min node should be 2 before inserting new node")
+        self.assertEqual(self.heap.min_fib_node.value, 2, "Min node should be 2 before inserting new node")
         self.heap.check_min_with_single_node(node)
-        self.assertEqual(self.heap.min_fib_node.key, -1, "Min node should be 1 after inserting new node")
+        self.assertEqual(self.heap.min_fib_node.value, -1, "Min node should be 1 after inserting new node")
 
     def test_set_new_min_from_root_list(self):
         self.heap.insert(9)
@@ -47,11 +47,11 @@ class TestFibonacciHeap(unittest.TestCase):
         #fake a wrong min_node
         node = self.heap.FibonacciHeapNode(122)
         self.heap.min_fib_node = node
-        self.assertEqual(self.heap.min_fib_node.key, 122, "Min node should be 122 after inserting fake min_node")
+        self.assertEqual(self.heap.min_fib_node.value, 122, "Min node should be 122 after inserting fake min_node")
         self.heap.set_new_min_from_root_list()
-        self.assertEqual(self.heap.min_fib_node.key, 9, "Min node should be 9 after running method")
+        self.assertEqual(self.heap.min_fib_node.value, 9, "Min node should be 9 after running method")
 
-    def test_set_new_min_from_root_list_with_negative_key(self):
+    def test_set_new_min_from_root_list_with_negative_value(self):
         self.heap.insert(-9)
         self.heap.insert(0)
         self.heap.insert(33)
@@ -59,16 +59,16 @@ class TestFibonacciHeap(unittest.TestCase):
         #fake a wrong min_node
         node = self.heap.FibonacciHeapNode(122)
         self.heap.min_fib_node = node
-        self.assertEqual(self.heap.min_fib_node.key, 122, "Min node should be 122 after inserting fake min_node")
+        self.assertEqual(self.heap.min_fib_node.value, 122, "Min node should be 122 after inserting fake min_node")
         self.heap.set_new_min_from_root_list()
-        self.assertEqual(self.heap.min_fib_node.key, -9, "Min node should be -9 after running method")
+        self.assertEqual(self.heap.min_fib_node.value, -9, "Min node should be -9 after running method")
 
     def test_return_min(self):
         self.heap.insert(2)
         self.heap.insert(1)
         self.heap.insert(4)
         min_node = self.heap.returnMin()
-        self.assertEqual(min_node.key, 1, "The minimum key should be 1")
+        self.assertEqual(min_node.value, 1, "The minimum value should be 1")
 
     def test_merge_heaps(self):
         self.heap.insert(3)
@@ -80,7 +80,7 @@ class TestFibonacciHeap(unittest.TestCase):
         heap_1.insert(5)
         self.heap.merge_heaps(heap_1)
         self.assertEqual(self.heap.total_fib_nodes, 6, "Total nodes after merge should be 6")
-        self.assertEqual(self.heap.returnMin().key, 0, "Minimum node key after merge should be 0")
+        self.assertEqual(self.heap.returnMin().value, 0, "Minimum node value after merge should be 0")
         self.assertEqual(heap_1.root_list, None, "Other heap should be empty")
 
     def test_remove_node_from_root_list(self):
@@ -103,7 +103,7 @@ class TestFibonacciHeap(unittest.TestCase):
         self.heap.insert(17)
         self.heap.insert(223)
         min_node = self.heap.extract_min()
-        self.assertEqual(min_node.key, 1, "Extracted minimum key should be 1")
+        self.assertEqual(min_node.value, 1, "Extracted minimum value should be 1")
 
     def test_extract_min_sets_correct_total_nodes(self):
         self.heap.insert(3)
@@ -116,17 +116,17 @@ class TestFibonacciHeap(unittest.TestCase):
         self.heap.extract_min()
         self.assertEqual(self.heap.total_fib_nodes, 0, "Total nodes should be 0")
     
-    #Extract with 4 niodes of same key 
+    #Extract with 4 niodes of same value 
     
     def test_extract_min_with_empty_heap(self):
         node = self.heap.extract_min()
         self.assertEqual(node, None, "return should be None")
 
-    def test_decrease_key(self):
+    def test_decrease_value(self):
         node = self.heap.insert(3)
         self.heap.insert(2)
-        self.heap.decrease_key(node, 1)
-        self.assertEqual(self.heap.returnMin().key, 1, "Minimum key after decreasing should be 1")
+        self.heap.decrease_value(node, 1)
+        self.assertEqual(self.heap.returnMin().value, 1, "Minimum value after decreasing should be 1")
     
 if __name__ == '__main__':
     unittest.main()
