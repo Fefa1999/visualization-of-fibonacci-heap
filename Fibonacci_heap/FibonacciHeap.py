@@ -4,27 +4,32 @@ class FibonacciHeap:
     root_list = None
     min_fib_node = None
     total_fib_nodes = 0
+    id = 0
     scene = None
 
     class FibonacciHeapNode:
-        def __init__(self, key):
-            self.key = key
+        def __init__(self, value):
+            self.id = None
+            self.value = value
             self.parent = self.child = self.left = self.right = None
             self.degree = 0
             self.marked = False
     
     #create and insert a node in the root list in O(1) time
-    def insert(self, key):
-        new_node = self.FibonacciHeapNode(key)
+    def insert(self, value):
+        new_node = self.FibonacciHeapNode(value)
         new_node.left = new_node.right = new_node
+        new_node.id = self.id
+        self.id += 1
+        self.scene.create_fibonacci_heap_node(new_node)
         self.merge_node_with_root_list(new_node)
         self.check_min_with_single_node(new_node)
         self.total_fib_nodes += 1
-        self.scene.add_circle()
+        return new_node
 
     #updates min if node is smaller than current min
     def check_min_with_single_node(self, fib_node):
-        if self.min_fib_node is None or fib_node.key < self.min_fib_node.key:
+        if self.min_fib_node is None or fib_node.value < self.min_fib_node.value:
             self.min_fib_node = fib_node
    
     #iterates the circular doubly linked list and updates min node
@@ -62,7 +67,8 @@ class FibonacciHeap:
             node_to_insert.right = self.root_list  
             self.root_list.left.right = node_to_insert 
             self.root_list.left = node_to_insert 
-        self.root_list = node_to_insert 
+        self.root_list = node_to_insert
+        self.scene.insert_into_root_list(node_to_insert)
 
     #Removes node from root list 
     def remove_node_from_root_list(self, fib_node):
@@ -121,6 +127,7 @@ class FibonacciHeap:
             #remove min node from root
             self.remove_node_from_root_list(min_node)
             self.total_fib_nodes -= 1
+            self.scene.delete_node(min_node)
 
             #Consolidate and set new min unless root_list is only one root or empty - the only child of the removed min
             if self.root_list is not None:
@@ -155,18 +162,20 @@ class FibonacciHeap:
 
     #Link to nodes toegether - one will become child, other parent 
     def link_nodes(self, fib_node_one, fib_node_two):
-            fib_node_child = fib_node_one if fib_node_one.key >= fib_node_two.key else fib_node_two
-            fib_node_parent = fib_node_one if fib_node_two.key > fib_node_one.key else fib_node_two
+            fib_node_child = fib_node_one if fib_node_one.value >= fib_node_two.value else fib_node_two
+            fib_node_parent = fib_node_one if fib_node_two.value > fib_node_one.value else fib_node_two
             self.remove_node_from_root_list(fib_node_child)
             self.merge_node_with_child_list(fib_node_child, fib_node_parent)
             fib_node_child.parent = fib_node_parent
             fib_node_parent.degree += 1
+            self.scene.link_up(fib_node_child, fib_node_parent)
             return fib_node_parent
+
     
-    #function to decrease key of a node - eg. 46 -> 12 
-    def decrease_key(self, node_to_decrease, new_value):
-        node_to_decrease.key = new_value
-        if node_to_decrease.parent is not None and node_to_decrease.parent.key > new_value:
+    #function to decrease value of a node - eg. 46 -> 12 
+    def decrease_value(self, node_to_decrease, new_value):
+        node_to_decrease.value = new_value
+        if node_to_decrease.parent is not None and node_to_decrease.parent.value > new_value:
             parent = node_to_decrease.parent
             self.cut(node_to_decrease)
             self.cascading_cut(parent)
@@ -179,7 +188,7 @@ class FibonacciHeap:
         if node_to_cut.marked:
             node_to_cut.marked = False
     
-    # handle parent of cut node in decrasing a key
+    # handle parent of cut node in decrasing a value
     def cascading_cut(self, decreased_node_parent):
         if decreased_node_parent.parent is not None:
             if not decreased_node_parent.marked:
@@ -190,7 +199,7 @@ class FibonacciHeap:
                 self.cascading_cut(next_parent)
 
     def delete_node(self, node_to_delete):
-        self.decrease_key(node_to_delete, -float('inf'))
+        self.decrease_value(node_to_delete, -float('inf'))
         self.extract_min()
 
     #Helper functions to print
@@ -211,9 +220,9 @@ class FibonacciHeap:
                     flag = False
                 print("|")
                 if current_node.marked:
-                    print("---", current_node.key, "+")
+                    print("---", current_node.value, "+")
                 else:
-                    print("---", current_node.key)
+                    print("---", current_node.value)
                 if current_node.child is not None:
                     self.recursivePrint(current_node, 1)
                 current_node = current_node.right
@@ -230,9 +239,9 @@ class FibonacciHeap:
                 flag = False
             print(s*degree, "|")
             if current_node.marked:
-                print(s*degree, "---", current_node.key, "+")
+                print(s*degree, "---", current_node.value, "+")
             else: 
-                print(s*degree, "---", current_node.key)
+                print(s*degree, "---", current_node.value)
             if current_node.child is not None:
                 self.recursivePrint(current_node, degree+2)
             current_node = current_node.right
