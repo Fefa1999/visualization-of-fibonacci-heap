@@ -1,4 +1,5 @@
 import math 
+#import random
 #from Manim4 import main
 
 class FibonacciHeap:
@@ -208,46 +209,57 @@ class FibonacciHeap:
         self.insert(value)
 
     #Helper functions to print
-    # def printHeap(self):
-    #     if self.root_list is not None:
-    #         print()
-    #         print("-----------------------------------------------------")
-    #         print("|              Fibonacci Heap Structure             |")
-    #         print("-----------------------------------------------------")
-    #         print()
+    def printHeap(self):
+        if self.root_list is not None:
+            print()
+            print("-----------------------------------------------------")
+            print("|              Fibonacci Heap Structure             |")
+            print("-----------------------------------------------------")
+            print()
 
-    #         firstNode = self.root_list
-    #         current_node = self.root_list.right
-    #         flag = True
+            firstNode = self.root_list
+            current_node = self.root_list.right
+            flag = True
 
-    #         while flag:
-    #             if current_node == firstNode:
-    #                 flag = False
-    #             print("|")
-    #             if current_node.marked:
-    #                 print("---", current_node.value, "+")
-    #             else:
-    #                 print("---", current_node.value)
-    #             if current_node.child is not None:
-    #                 self.recursivePrint(current_node, 1)
-    #             current_node = current_node.right
-    #             print()
+            while flag:
+                if current_node == firstNode:
+                    flag = False
+                print("|")
+                if current_node.marked:
+                    print("---", current_node.value, "+")
+                else:
+                    print("---", current_node.value)
+                if current_node.child is not None:
+                    self.recursivePrint(current_node, 1)
+                current_node = current_node.right
+                print()
         
-    # def recursivePrint(self, node, degree):
-    #     firstNode = node.child
-    #     current_node = node.child.right
-    #     flag = True
-    #     s = "  "
+    def recursivePrint(self, node, degree):
+        firstNode = node.child
+        current_node = node.child.right
+        flag = True
+        s = "  "
 
-    #     while flag:
-    #         if current_node == firstNode:
-    #             flag = False
-    #         print(s*degree, "|")
-    #         if current_node.marked:
-    #             print(s*degree, "---", current_node.value, "+")
-    #         else: 
-    #             print(s*degree, "---", current_node.value)
-    #         if current_node.child is not None:
-    #             self.recursivePrint(current_node, degree+2)
-    #         current_node = current_node.right
+        while flag:
+            if current_node == firstNode:
+                flag = False
+            print(s*degree, "|")
+            if current_node.marked:
+                print(s*degree, "---", current_node.value, "+")
+            else: 
+                print(s*degree, "---", current_node.value)
+            if current_node.child is not None:
+                self.recursivePrint(current_node, degree+2)
+            current_node = current_node.right
 
+# def run():
+#     heap = FibonacciHeap()
+
+#     for i in range(9):
+#         for j in range(10):
+#             heap.insert(random.randint(0, 250))
+#         heap.extract_min()
+
+#     heap.printHeap()
+#     print(heap.root_list.value)
+# run()
