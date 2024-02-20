@@ -40,7 +40,7 @@ class main(FiboScene):
     def construct(self):
         number_of_nodes = 0
         defaultAddPoint = [0,1, 0]
-        isAnimation = True
+        isAnimation = False
 
         print(self.root)
 
@@ -80,7 +80,7 @@ class main(FiboScene):
         h = insertDot(self, defaultAddPoint, 9, isAnimation, number_of_nodes)
         createChild(self, g.id, h.id, isAnimation)
 
-        isAnimation = True
+        isAnimation = False
 
         number_of_nodes+=1
         i = insertDot(self, defaultAddPoint, 10, isAnimation, number_of_nodes)
@@ -334,13 +334,13 @@ def delete(slf: FiboScene, deleteDotID: int, isAnimation: bool):
             n.parrentKey = None
             slf.root.add(n)
 
-
-
     if isAnimation:
         vg = animateRoot(slf.root, index)
         if isinstance(vg, list):
             slf.play(AnimationGroup(*[MoveToTarget(n) for n in vg], lag_ratio=0), AnimationGroup(*[FadeOut(n) for n in childrenArrows]), FadeOut(deleteDot.number), FadeOut(deleteDot))
     else:
+        slf.remove(deleteDot.number)
+        slf.remove(deleteDot)
         moveRoot(slf, index-1)
         for n in childrenArrows:
             slf.remove(n)
