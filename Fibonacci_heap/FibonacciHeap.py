@@ -1,10 +1,13 @@
 import math 
+#from Manim4 import main
 
 class FibonacciHeap:
     root_list = None
     min_fib_node = None
     total_fib_nodes = 0
-    id = 0
+    id = 1
+    isAnimation = None
+    scene = None
     class FibonacciHeapNode:
         def __init__(self, value):
             self.id = None
@@ -22,6 +25,8 @@ class FibonacciHeap:
         self.merge_node_with_root_list(new_node)
         self.check_min_with_single_node(new_node)
         self.total_fib_nodes += 1
+        if self.scene is not None:
+            self.scene.insertDot(new_node.value, self.isAnimation, new_node.id)
         return new_node
 
     #updates min if node is smaller than current min
@@ -163,9 +168,10 @@ class FibonacciHeap:
             self.merge_node_with_child_list(fib_node_child, fib_node_parent)
             fib_node_child.parent = fib_node_parent
             fib_node_parent.degree += 1
+            if self.scene is not None:
+                self.scene.createChild(fib_node_parent.id, fib_node_child.id, self.isAnimation)
             return fib_node_parent
 
-    
     #function to decrease value of a node - eg. 46 -> 12 
     def decrease_value(self, node_to_decrease, new_value):
         node_to_decrease.value = new_value
@@ -182,7 +188,7 @@ class FibonacciHeap:
         if node_to_cut.marked:
             node_to_cut.marked = False
     
-    # handle parent of cut node in decrasing a value
+    # handle parent of cut node in decreasing a value
     def cascading_cut(self, decreased_node_parent):
         if decreased_node_parent.parent is not None:
             if not decreased_node_parent.marked:
@@ -195,6 +201,11 @@ class FibonacciHeap:
     def delete_node(self, node_to_delete):
         self.decrease_value(node_to_delete, -float('inf'))
         self.extract_min()
+    
+    def increaseKey(self, node_to_increase, value):
+        self.decrease_value(node_to_increase, -float('inf'))
+        self.extract_min()
+        self.insert(value)
 
     #Helper functions to print
     # def printHeap(self):
