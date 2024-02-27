@@ -23,16 +23,17 @@ class FibonacciHeap:
         new_node.id = self.id
         self.id += 1
         self.merge_node_with_root_list(new_node)
-        self.check_min_with_single_node(new_node)
-        self.total_fib_nodes += 1
         if self.scene is not None:
             self.scene.insertDot(new_node.value, self.isAnimation, new_node.id)
+        self.check_min_with_single_node(new_node)
+        self.total_fib_nodes += 1
         return new_node
 
     #updates min if node is smaller than current min
     def check_min_with_single_node(self, fib_node):
         if self.min_fib_node is None or fib_node.value < self.min_fib_node.value:
             self.min_fib_node = fib_node
+            self.scene.setMin(fib_node.id)
    
     #iterates the circular doubly linked list and updates min node
     def set_new_min_from_root_list(self):
@@ -135,7 +136,7 @@ class FibonacciHeap:
                 if self.root_list != self.root_list.right:
                     self.consolidate()
                     self.set_new_min_from_root_list()
-
+            self.scene.adjust_camera_after_consolidate()
             return min_node
 
     #Map heap until no root has same degree
@@ -208,6 +209,25 @@ class FibonacciHeap:
         self.extract_min()
         self.insert(value)
 
+    def find_deepest_node(self):
+        current_node = self.root_list.right
+        end_node = self.root_list
+        deepest_root_node = current_node
+        while True:
+            if current_node == end_node:
+                break 
+            if deepest_root_node.degree < current_node:
+                deepest_root_node = current_node
+            current_node = current_node.right
+
+        while True:
+            if deepest_root_node.child is None:
+                break
+            else:
+                deepest_root_node = deepest_root_node.child
+
+        return deepest_root_node.id
+        
     #Helper functions to print
     # def printHeap(self):
     #     if self.root_list is not None:

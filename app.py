@@ -18,12 +18,17 @@ def run():
     heap.isAnimation = False
     
     #DO THINGS TO HEAP TO SHOW IN VIDEO FILE 
-    for i in range(22):
+    for i in range(150):
         heap.insert(i)
-
-    heap.isAnimation = True
+    #heap.insert(2)
+    #for i in range(8, 22):
+        #heap.insert(i)
+    #heap.isAnimation = True
     heap.extract_min()
-    # heap.extract_min()
+    #heap.extract_min()
+    heap.isAnimation = True
+    heap.insert(120)
+    #heap.extract_min()
 
     scene.render()
     open_media_file(scene.renderer.file_writer.movie_file_path)

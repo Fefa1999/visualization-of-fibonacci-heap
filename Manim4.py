@@ -8,9 +8,13 @@ from typing import TypedDict
 #New Scene class with a dictonary of keys and newdot pointers
 class FiboScene(MovingCameraScene):
     def __init__(self, *args, **kwargs):
-        self.root = VGroup().add(self.newDot(0, color=RED))
+        self.min_node = None
+        self.root = VGroup()
         self.nodeDic = dict()
-        self.defaultAddPoint = [0,1, 0]
+        self.defaultAddPoint = [0,3, 0]
+        self.height = 7.993754879000781                                                                                                                                                                                              
+        self.width = 14.222222222222221
+        self.multp = 0
         super().__init__(*args, **kwargs)
 
     #New dot class. A manim dot with children.
@@ -22,7 +26,6 @@ class FiboScene(MovingCameraScene):
             self.widthOfChildren = int()
             self.parrentKey = int()
             self.arrow = Line()
-            #self.label = Text()
 
     def arrange_where_buffer_is_subtree_width(
         self,
@@ -66,12 +69,7 @@ class FiboScene(MovingCameraScene):
             self.play(FadeIn(dot, dot.number))
         else:
             self.add(dot, dot.number)
-        
-        if len(self.root) == 1: #First node check
-            if fadeIn:
-                self.play(self.root.animate.center())
-                return dot
-        
+
         self.moveToRootSpot(fadeIn)
         self.adjust_camera(fadeIn)
         return dot
@@ -82,31 +80,38 @@ class FiboScene(MovingCameraScene):
         mostRightDot = self.root[rootlength-2]
         if isinstance(addedDot, self.newDot) and isinstance(mostRightDot, self.newDot):
             if fadeIn:
-                self.play(addedDot.animate.next_to(mostRightDot, buff=2*mostRightDot.radius))
+                if addedDot.id == mostRightDot.id:
+                    self.play(addedDot.animate.move_to([0, 2, 0]))
+                else:
+                    self.play(addedDot.animate.next_to(mostRightDot, buff=2*mostRightDot.radius))
             else:
+                if addedDot.id == mostRightDot.id:
+                    addedDot.move_to([0, 2, 0])
                 addedDot.next_to(mostRightDot, buff=2*mostRightDot.radius)             
 
-    def adjust_camera(self, isAnimation: bool):
+    def adjust_camera(self, isAnimation):
         mostLeftNode = self.get_left_most_dot(self.root)
         mostRightNode = self.root[len(self.root)-1]
 
         if isinstance(mostLeftNode, self.newDot) and isinstance(mostRightNode, self.newDot):
             rightPoint = mostRightNode.get_right()
             leftPoint = mostLeftNode.get_left()
-            newCenter: Point3D = (((rightPoint[0]+leftPoint[0])/2)+0.2, (rightPoint[1]+leftPoint[1])/2, (rightPoint[2]+leftPoint[2])/2)
 
             newWidth = rightPoint[0]-leftPoint[0]
+            self.defaultAddPoint[0] = (rightPoint[0]+leftPoint[0])/2
+
+            newCenter: Point3D = (((rightPoint[0]+leftPoint[0])/2), (self.multp * 2)*-1, (rightPoint[2]+leftPoint[2])/2)
 
             if newWidth+4 > (self.camera.frame_width):
+                self.multp = (self.camera.frame_width * 2) / self.width
+                newCenter = (((rightPoint[0]+leftPoint[0])/2), (self.multp * 2)*-1, (rightPoint[2]+leftPoint[2])/2)
                 if isAnimation:
-                    self.play(self.camera.frame.animate.move_to(newCenter).set(width=newWidth + 4.8 ))
-                    #self.camera.frame.move_to(newCenter)
-                else:
-                    self.camera.frame.set_width(newWidth)
-                    self.camera.frame.move_to(newCenter)
+                    self.play(self.camera.frame.animate.set(width=self.camera.frame_width * 2).move_to(newCenter))
+                else: 
+                    self.camera.frame.set(width=self.camera.frame_width * 2).move_to(newCenter)
             else:
-                self.camera.frame.animate.move_to(newCenter)
-
+                self.camera.frame.move_to(newCenter)
+    
     def get_left_most_dot(self, group: VGroup):
         if len(group) == 0:
             return
@@ -167,7 +172,9 @@ class FiboScene(MovingCameraScene):
             parrentMojb.widthOfChildren = parrentMojb.widthOfChildren + childWidth
 
             if isAnimation:
-                vg = self.animateRoot(self.root, min(rootParrentIndex,rootChildIndex))
+                index = min(rootParrentIndex,rootChildIndex)
+
+                vg = self.animateRoot(self.root, index, self.root[index].get_center())
                 if isinstance(vg, list):
                     self.play(AnimationGroup(*[MoveToTarget(n) for n in vg], lag_ratio=0), FadeIn(pointer))
                 #self.play(FadeIn(pointer)) #Move it up
@@ -175,7 +182,7 @@ class FiboScene(MovingCameraScene):
                 self.moveRoot(rootParrentIndex)
                 self.add(pointer)
 
-    def animateRoot(self, root: VGroup, startIndex): #Must be done smart. aka move the lesser tree. Or moving fixed distance if child is at the ends.
+    def animateRoot(self, root: VGroup, startIndex, removedDotCenter): #Must be done smart. aka move the lesser tree. Or moving fixed distance if child is at the ends.
         def aux (root: VGroup, rootIndex: int, lastDotDestination: self.newDot):
             if rootIndex == len(root):
                 return []
@@ -198,10 +205,10 @@ class FiboScene(MovingCameraScene):
 
             return returnList
         
-        startDot = self.newDot(0)
-        if startIndex != 1: #VGroups first index of subobjects is at 1
+        startDot = self.newDot(0, removedDotCenter)
+        if startIndex != 0: #VGroups first index of subobjects is at 1
             startDot = root[startIndex-1]
-        
+
         return aux(root, startIndex, startDot)
 
     def moveRoot(self, rootIndexOfNewParrent: int):
@@ -260,16 +267,16 @@ class FiboScene(MovingCameraScene):
                 self.root.add(n)
 
         if isAnimation:
-            vg = self.animateRoot(self.root, index)
+            vg = self.animateRoot(self.root, index, deleteDot.get_center())
             if isinstance(vg, list):
                 self.play(AnimationGroup(*[MoveToTarget(n) for n in vg], lag_ratio=0), AnimationGroup(*[FadeOut(n) for n in childrenArrows]), FadeOut(deleteDot.number), FadeOut(deleteDot))
+                self.adjust_camera(isAnimation)
         else:
             self.remove(deleteDot.number)
             self.remove(deleteDot)
             self.moveRoot(index-1)
             for n in childrenArrows:
                 self.remove(n)
-        self.adjust_camera(isAnimation)
 
     def moveToRoot(self, movingDotID: int, isAnimation: bool):
         movingDot = self.nodeDic.get(movingDotID)
@@ -286,3 +293,38 @@ class FiboScene(MovingCameraScene):
         else:
             self.moveRoot(self, len(self.root)-1)
             self.remove(movingDot.arrow)
+
+    def setMin(self, min_id):
+        min_node_id = self.getRootKeyIndex(self.root, min_id)
+        if not isinstance(min_node_id, int):
+            return
+        min_node = self.root[min_node_id]
+        if self.min_node is not None:
+            self.min_node.fade_to(BLUE, 1)
+
+        self.min_node = min_node
+        min_node.fade_to(RED, 100)
+
+    def adjust_camera_after_consolidate(self):
+        mostLeftNode = self.get_left_most_dot(self.root)
+        mostRightNode = self.root[len(self.root)-1]
+
+        if isinstance(mostLeftNode, self.newDot) and isinstance(mostRightNode, self.newDot):
+            rightPoint = mostRightNode.get_right()
+            leftPoint = mostLeftNode.get_left()
+
+            self.defaultAddPoint[0] = (rightPoint[0]+leftPoint[0])/2
+            currentWidthOfHeap = rightPoint[0]-leftPoint[0]
+            newWidth = self.width
+            while newWidth < currentWidthOfHeap:
+                newWidth = newWidth * 2
+            
+            if newWidth == self.width:
+                self.multp = 0
+            else: 
+                self.multp = newWidth / self.width
+
+            newCenter: Point3D = (((rightPoint[0]+leftPoint[0])/2), (self.multp * 2)*-1, (rightPoint[2]+leftPoint[2])/2)
+
+            self.play(self.camera.frame.animate.move_to(newCenter).set(width=newWidth))
+
