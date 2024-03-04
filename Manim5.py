@@ -2,6 +2,7 @@ from manim import *
 from manim.typing import Point3D
 from manim.typing import Vector3
 from typing import TypedDict
+import time
 
 #DO YOU HAVE TO STATE DELETIONS OF OBJECTS IN PYTHON TO HELP GARBAGE COLLECTER
 
@@ -102,17 +103,21 @@ class FiboScene(MovingCameraScene):
             newWidth = rightPoint[0]-leftPoint[0]
             self.defaultAddPoint[0] = (rightPoint[0]+leftPoint[0])/2
 
-            newCenter: Point3D = (((rightPoint[0]+leftPoint[0])/2), (self.multp * 2)*-1, (rightPoint[2]+leftPoint[2])/2)
+            boarderRight = self.camera.frame.get_right()[0]
+            boarderLeft = self.camera.frame.get_left()[0]
+            #if not isinstance(boarderLeft, float) or not isinstance(boarderRight, float):
+            #    return
+            
 
-            if newWidth+4 > (self.camera.frame_width): # +4 is secureing padding
+            if newWidth+4 > (self.camera.frame_width) or boarderLeft > (leftPoint[0]+2) or boarderRight < (rightPoint[0]+2): # +4 is secureing padding
                 self.multp = (self.camera.frame_width * 2) / self.width
                 newCenter = (((rightPoint[0]+leftPoint[0])/2), (self.multp * 2)*-1, (rightPoint[2]+leftPoint[2])/2)
                 if isAnimation:
                     self.play(self.camera.frame.animate.set(width=self.camera.frame_width * 2).move_to(newCenter))
                 else: 
                     self.camera.frame.set(width=self.camera.frame_width * 2).move_to(newCenter)
-            else:
-                self.camera.frame.move_to(newCenter)
+                
+                self.camera.frame.move_to(newCenter) #TODO make anmation also
     
     def get_left_most_dot(self, group: VGroup):
         if len(group) == 0:
@@ -141,10 +146,8 @@ class FiboScene(MovingCameraScene):
             return dot.widthOfChildren
         return
 
-    #Default time to render: 23.78835129737854
-    #AnimateRoot pullof list: 23.67553210258484
-    #SceneField dotsTOmovelist: 23.171946048736572
     def createChild(self, parrentKey: int, childKey: int, isAnimation: bool):
+        timeStart2 = time.time()
         rootParrentIndex = self.getRootKeyIndex(self.root, parrentKey)
         if not isinstance(rootParrentIndex, int):
             return
@@ -168,6 +171,8 @@ class FiboScene(MovingCameraScene):
                 )
             childMojb.arrow = pointer
 
+            print("--- First Check: %s seconds ---" % (time.time() - timeStart2))
+
             self.root.remove(childMojb)
             childWidth = int() 
             if len(parrentMojb.children) == 1:
@@ -176,29 +181,39 @@ class FiboScene(MovingCameraScene):
                 childWidth = childMojb.widthOfChildren + parrentMojb.radius*2
             parrentMojb.widthOfChildren = parrentMojb.widthOfChildren + childWidth
 
+            print("--- Second Check: %s seconds ---" % (time.time() - timeStart2))
             if isAnimation:
                 index = min(rootParrentIndex,rootChildIndex)
                 
                 self.animateRoot(self.root, index, self.root[index].get_center())
+                print("--- Third Check: %s seconds ---" % (time.time() - timeStart2))
                 self.play(AnimationGroup(*[MoveToTarget(n) for n in self.dotsTOmove], lag_ratio=0), FadeIn(pointer))
+                print("--- Forth Check: %s seconds ---" % (time.time() - timeStart2))
                 self.dotsTOmove = list()
             else:
                 self.moveRoot(rootParrentIndex)
                 self.add(pointer)
 
+            print("--- %s seconds ---" % (time.time() - timeStart2))
+
     def animateRoot(self, root: VGroup, startIndex, removedDotCenter): #Must be done smart. aka move the lesser tree. Or moving fixed distance if child is at the ends.
+        timeStart3 = time.time()
         def aux (root: VGroup, rootIndex: int, lastDotDestination: self.newDot):
             if rootIndex == len(root):
                 return
             currentDot = root[rootIndex]
             if not isinstance(currentDot, self.newDot): #will be fixed by new vgroup
                 return 
+            print("--- AUX1 Check: %s seconds ---" % (time.time() - timeStart3))
             currentDot.generate_target() #TODO override generate_target
+            print("--- AUX2 Check: %s seconds ---" % (time.time() - timeStart3))
             currentDot.target.set_x(lastDotDestination.get_x()+currentDot.widthOfChildren+currentDot.radius*2).set_y(lastDotDestination.get_y())
             self.dotsTOmove.append(currentDot)
+            print("--- AUX3 Check: %s seconds ---" % (time.time() - timeStart3))
             if isinstance(currentDot.target, self.newDot):
                 self.animateChildren(currentDot, currentDot.target)
             
+            print("--- AUX4 Check: %s seconds ---" % (time.time() - timeStart3))
             aux(root, rootIndex+1, currentDot.target)
             return
         
@@ -206,6 +221,7 @@ class FiboScene(MovingCameraScene):
         if startIndex != 0: #VGroups first index of subobjects is at 1
             startDot = root[startIndex-1]
 
+        print("--- AUX0 Check: %s seconds ---" % (time.time() - timeStart3))
         aux(root, startIndex, startDot)
         return
 
