@@ -10,6 +10,7 @@ class FiboScene(MovingCameraScene):
     def __init__(self, *args, **kwargs):
         self.min_node = None
         self.root = VGroup()
+        self.dotsTOmove = list()
         self.nodeDic = dict()
         self.defaultAddPoint = [0,3, 0]
         self.height = 7.993754879000781                                                                                                                                                                                              
@@ -140,6 +141,9 @@ class FiboScene(MovingCameraScene):
             return dot.widthOfChildren
         return
 
+    #Default time to render: 23.78835129737854
+    #AnimateRoot pullof list: 23.67553210258484
+    #SceneField dotsTOmovelist: 23.171946048736572
     def createChild(self, parrentKey: int, childKey: int, isAnimation: bool):
         rootParrentIndex = self.getRootKeyIndex(self.root, parrentKey)
         if not isinstance(rootParrentIndex, int):
@@ -174,11 +178,10 @@ class FiboScene(MovingCameraScene):
 
             if isAnimation:
                 index = min(rootParrentIndex,rootChildIndex)
-
-                vg = self.animateRoot(self.root, index, self.root[index].get_center())
-                if isinstance(vg, list):
-                    self.play(AnimationGroup(*[MoveToTarget(n) for n in vg], lag_ratio=0), FadeIn(pointer))
-                #self.play(FadeIn(pointer)) #Move it up
+                
+                self.animateRoot(self.root, index, self.root[index].get_center())
+                self.play(AnimationGroup(*[MoveToTarget(n) for n in self.dotsTOmove], lag_ratio=0), FadeIn(pointer))
+                self.dotsTOmove = list()
             else:
                 self.moveRoot(rootParrentIndex)
                 self.add(pointer)
@@ -186,31 +189,25 @@ class FiboScene(MovingCameraScene):
     def animateRoot(self, root: VGroup, startIndex, removedDotCenter): #Must be done smart. aka move the lesser tree. Or moving fixed distance if child is at the ends.
         def aux (root: VGroup, rootIndex: int, lastDotDestination: self.newDot):
             if rootIndex == len(root):
-                return []
-
-            returnList = list()
+                return
             currentDot = root[rootIndex]
             if not isinstance(currentDot, self.newDot): #will be fixed by new vgroup
-                return []
+                return 
             currentDot.generate_target()
             currentDot.target.set_x(lastDotDestination.get_x()+currentDot.widthOfChildren+currentDot.radius*2).set_y(lastDotDestination.get_y())
-            returnList.append(currentDot)
+            self.dotsTOmove.append(currentDot)
             if isinstance(currentDot.target, self.newDot):
-                ch = self.animateChildren(currentDot, currentDot.target)
-            if isinstance(ch, list):
-                returnList.extend(ch)
+                self.animateChildren(currentDot, currentDot.target)
             
-            ac = aux(root, rootIndex+1, currentDot.target)
-
-            returnList.extend(ac)
-
-            return returnList
+            aux(root, rootIndex+1, currentDot.target)
+            return
         
         startDot = self.newDot(0, removedDotCenter)
         if startIndex != 0: #VGroups first index of subobjects is at 1
             startDot = root[startIndex-1]
 
-        return aux(root, startIndex, startDot)
+        aux(root, startIndex, startDot)
+        return
 
     def moveRoot(self, rootIndexOfNewParrent: int):
         if rootIndexOfNewParrent == 0:
@@ -232,19 +229,17 @@ class FiboScene(MovingCameraScene):
             aux(root, rootIndex+1, currentDot)
 
         (aux(self.root, 1, self.root[0]))
+        return
 
     def animateChildren(self, parrentMojb: newDot, parrentTarget: newDot): #need to be made into a transform method where it can collect all animation and then move.
         if len(parrentMojb.children)==0:
             return
-        VGroup_list = list()
         parrentMojb.children.generate_target()
         parrentMojb.children.target.arrange_where_buffer_is_subtree_width(center= False).set_y(parrentTarget.get_y()-1).align_to(parrentTarget, RIGHT)
-        VGroup_list.append(parrentMojb.children)
+        self.dotsTOmove.append(parrentMojb.children)
         for n in range(len(parrentMojb.children)):
-            ac = self.animateChildren(parrentMojb.children[n], parrentMojb.children.target[n])
-            if isinstance(ac, list):
-                VGroup_list= VGroup_list + ac
-        return VGroup_list
+            self.animateChildren(parrentMojb.children[n], parrentMojb.children.target[n])
+        return
         
     def moveChildren(self, parrentMojb: newDot):
         if len(parrentMojb.children)==0:
@@ -268,10 +263,10 @@ class FiboScene(MovingCameraScene):
                 self.root.add(n)
 
         if isAnimation:
-            vg = self.animateRoot(self.root, index, deleteDot.get_center())
-            if isinstance(vg, list):
-                self.play(AnimationGroup(*[MoveToTarget(n) for n in vg], lag_ratio=0), AnimationGroup(*[FadeOut(n) for n in childrenArrows]), FadeOut(deleteDot.number), FadeOut(deleteDot))
-                self.adjust_camera(isAnimation)
+            self.animateRoot(self.root, index, deleteDot.get_center())
+            self.play(AnimationGroup(*[MoveToTarget(n) for n in self.dotsTOmove], lag_ratio=0), AnimationGroup(*[FadeOut(n) for n in childrenArrows]), FadeOut(deleteDot.number), FadeOut(deleteDot))
+            self.dotsTOmove = list()
+            self.adjust_camera(isAnimation)
         else:
             self.remove(deleteDot.number)
             self.remove(deleteDot)
@@ -288,9 +283,9 @@ class FiboScene(MovingCameraScene):
         self.root.add(movingDot)
 
         if isAnimation:
-            vg = self.animateRoot(self.root, len(self.root)-1)
-            if isinstance(vg, list):
-                self.play(AnimationGroup(*[MoveToTarget(n) for n in vg], lag_ratio=0), FadeOut(movingDot.arrow))
+            self.animateRoot(self.root, len(self.root)-1)
+            self.play(AnimationGroup(*[MoveToTarget(n) for n in self.dotsTOmove], lag_ratio=0), FadeOut(movingDot.arrow))
+            self.dotsTOmove = list()
         else:
             self.moveRoot(self, len(self.root)-1)
             self.remove(movingDot.arrow)
