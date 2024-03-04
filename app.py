@@ -21,16 +21,18 @@ def run():
     heap.isAnimation = False
     
     #DO THINGS TO HEAP TO SHOW IN VIDEO FILE 
-    for i in range(20):
+    for i in range(100):
         heap.insert(i)
     #heap.insert(2)
     heap.isAnimation = True
     heap.extract_min()
-    for i in range(20):
-        heap.insert(i)
     heap.extract_min()
+    heap.extract_min()
+    #for i in range(50):
+    #    heap.insert(i)
+    #heap.extract_min()
 
-    heap.insert(100)
+    #heap.insert(100)
 
     scene.render()
 
