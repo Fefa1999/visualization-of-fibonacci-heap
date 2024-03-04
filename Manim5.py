@@ -193,7 +193,7 @@ class FiboScene(MovingCameraScene):
             currentDot = root[rootIndex]
             if not isinstance(currentDot, self.newDot): #will be fixed by new vgroup
                 return 
-            currentDot.generate_target()
+            currentDot.generate_target() #TODO override generate_target
             currentDot.target.set_x(lastDotDestination.get_x()+currentDot.widthOfChildren+currentDot.radius*2).set_y(lastDotDestination.get_y())
             self.dotsTOmove.append(currentDot)
             if isinstance(currentDot.target, self.newDot):
