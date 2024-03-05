@@ -275,7 +275,7 @@ class FiboScene(MovingCameraScene):
             self.dotsTOmove = list()
             self.adjust_camera(isAnimation)
         else:
-            self.remove(deleteDot.number)
+            self.remove(deleteDot.text)
             self.remove(deleteDot)
             self.moveRoot(index-1)
             for n in childrenArrows:
