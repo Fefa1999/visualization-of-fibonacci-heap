@@ -7,6 +7,7 @@ class FibonacciHeap:
     total_fib_nodes = 0
     id = 1
     isAnimation = None
+    concurrent_consolidate = None
     scene = None
     class FibonacciHeapNode:
         def __init__(self, value):
@@ -136,7 +137,6 @@ class FibonacciHeap:
                 if self.root_list != self.root_list.right:
                     self.consolidate()
                     self.set_new_min_from_root_list()
-            self.scene.adjust_camera_after_consolidate()
             return min_node
 
     #Map heap until no root has same degree
@@ -144,6 +144,7 @@ class FibonacciHeap:
         max_degree = int(math.log(self.total_fib_nodes, (1 + math.sqrt(5)) / 2)) + 1
         array = [None] * (max_degree + 1)
         array[self.root_list.degree] = self.root_list
+        animation_array = []
         end_node = self.root_list.left
         current_node = self.root_list.right
 
@@ -152,18 +153,22 @@ class FibonacciHeap:
             if array[current_node.degree] is None:
                 array[current_node.degree] = current_node
             else:
-                node = self.link_nodes(array[current_node.degree], current_node)
+                node = self.link_nodes(array[current_node.degree], current_node, animation_array)
                 array[node.degree-1] = None
                 while node.degree <= max_degree-1 and array[node.degree] is not None:
-                    node = self.link_nodes(array[node.degree], node)
+                    node = self.link_nodes(array[node.degree], node, animation_array)
                     array[node.degree-1] = None
                 array[node.degree] = node
             if current_node == end_node:
                 break
             current_node = next_node
 
+        if self.concurrent_consolidate:
+            for i in range(len(animation_array)):
+                self.scene.create_children_concurrent(animation_array[i], self.isAnimation)
+
     #Link to nodes toegether - one will become child, other parent 
-    def link_nodes(self, fib_node_one, fib_node_two):
+    def link_nodes(self, fib_node_one, fib_node_two, animation_array):
             fib_node_child = fib_node_one if fib_node_one.value >= fib_node_two.value else fib_node_two
             fib_node_parent = fib_node_one if fib_node_two.value > fib_node_one.value else fib_node_two
             self.remove_node_from_root_list(fib_node_child)
@@ -171,7 +176,13 @@ class FibonacciHeap:
             fib_node_child.parent = fib_node_parent
             fib_node_parent.degree += 1
             if self.scene is not None:
-                self.scene.createChild(fib_node_parent.id, fib_node_child.id, self.isAnimation)
+                if self.concurrent_consolidate:
+                    if len(animation_array)-1 < fib_node_parent.degree-1 or len(animation_array) == 0:
+                        animation_array.append([(fib_node_parent.id, fib_node_child.id)]) 
+                    else:
+                        animation_array[fib_node_parent.degree-1].append((fib_node_parent.id, fib_node_child.id))
+                else:
+                    self.scene.create_children_sequential(fib_node_parent.id, fib_node_child.id, self.isAnimation)
             return fib_node_parent
 
     #function to decrease value of a node - eg. 46 -> 12 

@@ -25,9 +25,10 @@ class FiboScene(MovingCameraScene):
             super().__init__(*args, **kwargs)
             self.children = VGroup()
             self.widthOfChildren = int()
-            self.parrentKey = int()
+            self.parentKey = int()
             self.arrow = Line()
             self.text = Text("")
+            self.label = None
 
     def arrange_where_buffer_is_subtree_width(
         self,
@@ -91,33 +92,6 @@ class FiboScene(MovingCameraScene):
                 self.play(addedDot.animate.next_to(mostRightDot, buff=2*mostRightDot.radius))
             else:
                 addedDot.next_to(mostRightDot, buff=2*mostRightDot.radius)             
-
-    def adjust_camera(self, isAnimation):
-        mostLeftNode = self.get_left_most_dot(self.root)
-        mostRightNode = self.root[len(self.root)-1]
-
-        if isinstance(mostLeftNode, self.newDot) and isinstance(mostRightNode, self.newDot):
-            rightPoint = mostRightNode.get_right()
-            leftPoint = mostLeftNode.get_left()
-
-            newWidth = rightPoint[0]-leftPoint[0]
-            self.defaultAddPoint[0] = (rightPoint[0]+leftPoint[0])/2
-
-            boarderRight = self.camera.frame.get_right()[0]
-            boarderLeft = self.camera.frame.get_left()[0]
-            #if not isinstance(boarderLeft, float) or not isinstance(boarderRight, float):
-            #    return
-            
-
-            if newWidth+4 > (self.camera.frame_width) or boarderLeft > (leftPoint[0]+2) or boarderRight < (rightPoint[0]+2): # +4 is secureing padding
-                self.multp = (self.camera.frame_width * 2) / self.width
-                newCenter = (((rightPoint[0]+leftPoint[0])/2), (self.multp * 2)*-1, (rightPoint[2]+leftPoint[2])/2)
-                if isAnimation:
-                    self.play(self.camera.frame.animate.set(width=self.camera.frame_width * 2).move_to(newCenter))
-                else: 
-                    self.camera.frame.set(width=self.camera.frame_width * 2).move_to(newCenter)
-                
-                self.camera.frame.move_to(newCenter) #TODO make anmation also
     
     def get_left_most_dot(self, group: VGroup):
         if len(group) == 0:
@@ -146,11 +120,11 @@ class FiboScene(MovingCameraScene):
             return dot.widthOfChildren
         return
 
-    def createChild(self, parrentKey: int, childKey: int, isAnimation: bool):
-        rootParrentIndex = self.getRootKeyIndex(self.root, parrentKey)
+    def create_children_sequential(self, parentKey: int, childKey: int, isAnimation: bool):
+        rootParrentIndex = self.getRootKeyIndex(self.root, parentKey)
         if not isinstance(rootParrentIndex, int):
             return
-        parrentMojb = self.root[rootParrentIndex]
+        parentMobj = self.root[rootParrentIndex]
 
         rootChildIndex = self.getRootKeyIndex(self.root, childKey)
         if not isinstance(rootChildIndex, int):
@@ -158,25 +132,25 @@ class FiboScene(MovingCameraScene):
         childMojb = self.root[rootChildIndex]
 
         if isinstance(childMojb, self.newDot):
-            childMojb.parrentKey = parrentKey
+            childMojb.parentKey = parentKey
 
-        if isinstance(parrentMojb, self.newDot):
-            parrentMojb.children.add(childMojb)
+        if isinstance(parentMobj, self.newDot):
+            parentMobj.children.add(childMojb)
 
             #creating arrow
-            pointer = Line(childMojb,parrentMojb)
+            pointer = Line(childMojb,parentMobj)
             pointer.add_updater(
-                lambda mob: mob.put_start_and_end_on(childMojb.get_top(), parrentMojb.get_bottom()) #TODO add custome scaller for width
+                lambda mob: mob.put_start_and_end_on(childMojb.get_top(), parentMobj.get_bottom()) #TODO add custome scaller for width
                 )
             childMojb.arrow = pointer
 
             self.root.remove(childMojb)
             childWidth = int() 
-            if len(parrentMojb.children) == 1:
+            if len(parentMobj.children) == 1:
                 childWidth = 0
             else:
-                childWidth = childMojb.widthOfChildren + parrentMojb.radius*2
-            parrentMojb.widthOfChildren = parrentMojb.widthOfChildren + childWidth
+                childWidth = childMojb.widthOfChildren + parentMobj.radius*2
+            parentMobj.widthOfChildren = parentMobj.widthOfChildren + childWidth
 
             if isAnimation:
                 index = min(rootParrentIndex,rootChildIndex)
@@ -187,6 +161,51 @@ class FiboScene(MovingCameraScene):
             else:
                 self.moveRoot(rootParrentIndex)
                 self.add(pointer)
+
+    def create_children_concurrent(self, l, isAnimation):
+        animations = []
+        for a in l:
+            rootParrentIndex = self.getRootKeyIndex(self.root, a[0])
+            if not isinstance(rootParrentIndex, int):
+                return
+            parentMobj = self.root[rootParrentIndex]
+
+            rootChildIndex = self.getRootKeyIndex(self.root, a[1])
+            if not isinstance(rootChildIndex, int):
+                return
+            childMojb = self.root[rootChildIndex]
+            
+            if isinstance(childMojb, self.newDot):
+                childMojb.parrentKey = a[0]
+
+            if isinstance(parentMobj, self.newDot):
+                parentMobj.children.add(childMojb)
+
+                #creating arrow
+                pointer = Line(childMojb, parentMobj)
+                
+                pointer.add_updater(
+                    lambda mob, childMojb=childMojb, parentMobj=parentMobj: mob.put_start_and_end_on(childMojb.get_top(), parentMobj.get_bottom())
+                )
+                childMojb.arrow = pointer
+            
+                self.root.remove(childMojb)
+                childWidth = int() 
+                if len(parentMobj.children) == 1:
+                    childWidth = 0
+                else:
+                    childWidth = childMojb.widthOfChildren + parentMobj.radius*2
+                parentMobj.widthOfChildren = parentMobj.widthOfChildren + childWidth
+
+                index = min(rootParrentIndex,rootChildIndex)
+
+                self.animateRoot(self.root, index, self.root[index].get_center())
+                
+                animations.append(AnimationGroup(*[MoveToTarget(n) for n in self.dotsTOmove], lag_ratio=0))
+                animations.append(FadeIn(pointer, lag_ratio = 0))
+                
+        self.play(*animations)
+        self.adjust_camera(isAnimation)
 
     def animateRoot(self, root: VGroup, startIndex, removedDotCenter): #Must be done smart. aka move the lesser tree. Or moving fixed distance if child is at the ends.
         def aux (root: VGroup, rootIndex: int, lastDotDestination: self.newDot):
@@ -234,25 +253,25 @@ class FiboScene(MovingCameraScene):
         (aux(self.root, 1, self.root[0]))
         return
 
-    def animateChildren(self, parrentMojb: newDot, parrentTarget: newDot): #need to be made into a transform method where it can collect all animation and then move.
-        if len(parrentMojb.children)==0:
+    def animateChildren(self, parentMobj: newDot, parrentTarget: newDot): #need to be made into a transform method where it can collect all animation and then move.
+        if len(parentMobj.children)==0:
             return
-        parrentMojb.children.target = VGroup()
-        for n in parrentMojb.children.submobjects:
+        parentMobj.children.target = VGroup()
+        for n in parentMobj.children.submobjects:
             n.target = self.newDot(id=n.id, point=n.get_center(), radius=n.radius, color=n.color)
             n.target.widthOfChildren = n.widthOfChildren
-            parrentMojb.children.target.add(n.target)
-        parrentMojb.children.target.arrange_where_buffer_is_subtree_width(center= False).set_y(parrentTarget.get_y()-1).align_to(parrentTarget, RIGHT)
-        self.dotsTOmove.append(parrentMojb.children)
-        for n in range(len(parrentMojb.children)):
-            self.animateChildren(parrentMojb.children[n], parrentMojb.children.target[n])
+            parentMobj.children.target.add(n.target)
+        parentMobj.children.target.arrange_where_buffer_is_subtree_width(center= False).set_y(parrentTarget.get_y()-1).align_to(parrentTarget, RIGHT)
+        self.dotsTOmove.append(parentMobj.children)
+        for n in range(len(parentMobj.children)):
+            self.animateChildren(parentMobj.children[n], parentMobj.children.target[n])
         return
         
-    def moveChildren(self, parrentMojb: newDot):
-        if len(parrentMojb.children)==0:
+    def moveChildren(self, parentMobj: newDot):
+        if len(parentMobj.children)==0:
             return
-        self.add(parrentMojb.children.arrange_where_buffer_is_subtree_width(center= False).set_y(parrentMojb.get_y()-1).align_to(parrentMojb, RIGHT))
-        for n in parrentMojb.children:
+        self.add(parentMobj.children.arrange_where_buffer_is_subtree_width(center= False).set_y(parentMobj.get_y()-1).align_to(parentMobj, RIGHT))
+        for n in parentMobj.children:
             self.moveChildren(n)
 
     def delete(self, deleteDotID: int, isAnimation: bool):
@@ -266,7 +285,7 @@ class FiboScene(MovingCameraScene):
             deleteDot.children.submobjects.reverse()
             for n in deleteDot.children.submobjects:
                 childrenArrows.append(n.arrow)
-                n.parrentKey = None
+                n.parentKey = None
                 self.root.add(n)
 
         if isAnimation:
@@ -275,18 +294,20 @@ class FiboScene(MovingCameraScene):
             self.dotsTOmove = list()
             self.adjust_camera(isAnimation)
         else:
-            self.remove(deleteDot.number)
+            self.remove(deleteDot.text)
             self.remove(deleteDot)
             self.moveRoot(index-1)
             for n in childrenArrows:
                 self.remove(n)
+    
+        self.adjust_camera(isAnimation)
 
     def moveToRoot(self, movingDotID: int, isAnimation: bool):
         movingDot = self.nodeDic.get(movingDotID)
-        parrentDot = self.nodeDic.get(movingDot.parrentKey)
+        parentDot = self.nodeDic.get(movingDot.parentKey)
 
-        movingDot.parrentKey = None
-        parrentDot.children.remove(movingDot)
+        movingDot.parentKey = None
+        parentDot.children.remove(movingDot)
         self.root.add(movingDot)
 
         if isAnimation:
@@ -303,31 +324,77 @@ class FiboScene(MovingCameraScene):
             return
         min_node = self.root[min_node_index]
         if self.min_node is not None:
-            self.min_node.fade_to(BLUE, 1)
+            self.min_node.color = BLUE
 
         self.min_node = min_node
-        min_node.fade_to(RED, 100)
+        min_node.color = RED
 
-    def adjust_camera_after_consolidate(self):
+    def adjust_camera(self, isAnimation):
         mostLeftNode = self.get_left_most_dot(self.root)
         mostRightNode = self.root[len(self.root)-1]
 
         if isinstance(mostLeftNode, self.newDot) and isinstance(mostRightNode, self.newDot):
             rightPoint = mostRightNode.get_right()
             leftPoint = mostLeftNode.get_left()
-
             self.defaultAddPoint[0] = (rightPoint[0]+leftPoint[0])/2
             currentWidthOfHeap = rightPoint[0]-leftPoint[0]
-            newWidth = self.width
-            while newWidth < currentWidthOfHeap:
-                newWidth = newWidth * 2
-            
-            if newWidth == self.width:
-                self.multp = 0
-            else: 
-                self.multp = newWidth / self.width
+            newCenter = [((rightPoint[0]+leftPoint[0])/2), (self.multp * 2)*-1, (rightPoint[2]+leftPoint[2])/2]
+            if currentWidthOfHeap+2.4 > (self.camera.frame_width):
+                self.zoom_out(isAnimation, newCenter)      
+            elif currentWidthOfHeap < self.camera.frame_width - self.width:
+                self.zoom_in(isAnimation, newCenter, currentWidthOfHeap)
+            else:
+                if(isAnimation):
+                    self.play(self.camera.frame.animate.move_to(newCenter))
+                else:
+                    self.camera.frame.move_to(newCenter)
 
-            newCenter: Point3D = (((rightPoint[0]+leftPoint[0])/2), (self.multp * 2)*-1, (rightPoint[2]+leftPoint[2])/2)
+    def zoom_in(self, isAnimation, newCenter, currentWidthOfHeap):
+        newWidth = self.width
+        while newWidth < currentWidthOfHeap:
+            newWidth = newWidth + self.width
+        
+        if newWidth == self.width:
+            self.multp = 0
+        else: 
+            self.multp = newWidth / self.width
 
+        newCenter[1] = (self.multp * 2)*-1
+        if isAnimation:
             self.play(self.camera.frame.animate.move_to(newCenter).set(width=newWidth))
+        else:
+            self.camera.frame.move_to(newCenter).set(width=newWidth)
 
+    def zoom_out(self, isAnimation, newCenter):
+        self.multp = self.multp+1
+        if isAnimation:
+            self.play(self.camera.frame.animate.set(width=self.camera.frame_width + self.width).move_to(newCenter))
+        else: 
+            self.camera.frame.set(width=self.camera.frame_width * 2).move_to(newCenter)
+    
+    # def adjust_camera(self, isAnimation):
+    #     mostLeftNode = self.get_left_most_dot(self.root)
+    #     mostRightNode = self.root[len(self.root)-1]
+
+    #     if isinstance(mostLeftNode, self.newDot) and isinstance(mostRightNode, self.newDot):
+    #         rightPoint = mostRightNode.get_right()
+    #         leftPoint = mostLeftNode.get_left()
+
+    #         newWidth = rightPoint[0]-leftPoint[0]
+    #         self.defaultAddPoint[0] = (rightPoint[0]+leftPoint[0])/2
+
+    #         boarderRight = self.camera.frame.get_right()[0]
+    #         boarderLeft = self.camera.frame.get_left()[0]
+    #         #if not isinstance(boarderLeft, float) or not isinstance(boarderRight, float):
+    #         #    return
+            
+
+    #         if newWidth+4 > (self.camera.frame_width) or boarderLeft > (leftPoint[0]+2) or boarderRight < (rightPoint[0]+2): # +4 is secureing padding
+    #             self.multp = (self.camera.frame_width * 2) / self.width
+    #             newCenter = (((rightPoint[0]+leftPoint[0])/2), (self.multp * 2)*-1, (rightPoint[2]+leftPoint[2])/2)
+    #             if isAnimation:
+    #                 self.play(self.camera.frame.animate.set(width=self.camera.frame_width * 2).move_to(newCenter))
+    #             else: 
+    #                 self.camera.frame.set(width=self.camera.frame_width * 2).move_to(newCenter)
+                
+    #             self.camera.frame.move_to(newCenter) #TODO make anmation also
