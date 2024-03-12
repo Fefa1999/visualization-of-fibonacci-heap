@@ -42,7 +42,7 @@ class FiboScene(MovingCameraScene):
         return self
     VGroup.arrange_where_buffer_is_subtree_width = arrange_where_buffer_is_subtree_width
 
-    def getRootKeyIndex(self, root: VGroup, key: int):
+    def get_root_key_index(self, root: VGroup, key: int):
         for n in range(len(root)):
             a = root[n]
             if isinstance(a, self.newDot):
@@ -92,32 +92,32 @@ class FiboScene(MovingCameraScene):
             else:
                 addedDot.next_to(mostRightDot, buff=2*mostRightDot.radius)             
 
-    def adjust_camera(self, isAnimation):
-        mostLeftNode = self.get_left_most_dot(self.root)
-        mostRightNode = self.root[len(self.root)-1]
+    # def adjust_camera(self, isAnimation):
+    #     mostLeftNode = self.get_left_most_dot(self.root)
+    #     mostRightNode = self.root[len(self.root)-1]
 
-        if isinstance(mostLeftNode, self.newDot) and isinstance(mostRightNode, self.newDot):
-            rightPoint = mostRightNode.get_right()
-            leftPoint = mostLeftNode.get_left()
+    #     if isinstance(mostLeftNode, self.newDot) and isinstance(mostRightNode, self.newDot):
+    #         rightPoint = mostRightNode.get_right()
+    #         leftPoint = mostLeftNode.get_left()
 
-            newWidth = rightPoint[0]-leftPoint[0]
-            self.defaultAddPoint[0] = (rightPoint[0]+leftPoint[0])/2
+    #         newWidth = rightPoint[0]-leftPoint[0]
+    #         self.defaultAddPoint[0] = (rightPoint[0]+leftPoint[0])/2
 
-            boarderRight = self.camera.frame.get_right()[0]
-            boarderLeft = self.camera.frame.get_left()[0]
-            #if not isinstance(boarderLeft, float) or not isinstance(boarderRight, float):
-            #    return
+    #         boarderRight = self.camera.frame.get_right()[0]
+    #         boarderLeft = self.camera.frame.get_left()[0]
+    #         #if not isinstance(boarderLeft, float) or not isinstance(boarderRight, float):
+    #         #    return
             
 
-            if newWidth+4 > (self.camera.frame_width) or boarderLeft > (leftPoint[0]+2) or boarderRight < (rightPoint[0]+2): # +4 is secureing padding
-                self.multp = (self.camera.frame_width * 2) / self.width
-                newCenter = (((rightPoint[0]+leftPoint[0])/2), (self.multp * 2)*-1, (rightPoint[2]+leftPoint[2])/2)
-                if isAnimation:
-                    self.play(self.camera.frame.animate.set(width=self.camera.frame_width * 2).move_to(newCenter))
-                else: 
-                    self.camera.frame.set(width=self.camera.frame_width * 2).move_to(newCenter)
+    #         if newWidth+4 > (self.camera.frame_width) or boarderLeft > (leftPoint[0]+2) or boarderRight < (rightPoint[0]+2): # +4 is secureing padding
+    #             self.multp = (self.camera.frame_width * 2) / self.width
+    #             newCenter = (((rightPoint[0]+leftPoint[0])/2), (self.multp * 2)*-1, (rightPoint[2]+leftPoint[2])/2)
+    #             if isAnimation:
+    #                 self.play(self.camera.frame.animate.set(width=self.camera.frame_width * 2).move_to(newCenter))
+    #             else: 
+    #                 self.camera.frame.set(width=self.camera.frame_width * 2).move_to(newCenter)
                 
-                self.camera.frame.move_to(newCenter) #TODO make anmation also
+    #             self.camera.frame.move_to(newCenter) #TODO make anmation also
     
     def get_left_most_dot(self, group: VGroup):
         if len(group) == 0:
@@ -147,12 +147,12 @@ class FiboScene(MovingCameraScene):
         return
 
     def createChild(self, parrentKey: int, childKey: int, isAnimation: bool):
-        rootParrentIndex = self.getRootKeyIndex(self.root, parrentKey)
+        rootParrentIndex = self.get_root_key_index(self.root, parrentKey)
         if not isinstance(rootParrentIndex, int):
             return
         parrentMojb = self.root[rootParrentIndex]
 
-        rootChildIndex = self.getRootKeyIndex(self.root, childKey)
+        rootChildIndex = self.get_root_key_index(self.root, childKey)
         if not isinstance(rootChildIndex, int):
             return
         childMojb = self.root[rootChildIndex]
@@ -257,7 +257,7 @@ class FiboScene(MovingCameraScene):
 
     def delete(self, deleteDotID: int, isAnimation: bool):
         deleteDot = self.nodeDic.get(deleteDotID)
-        index = self.getRootKeyIndex(self.root, deleteDotID)
+        index = self.get_root_key_index(self.root, deleteDotID)
 
         self.root.remove(deleteDot)
     
@@ -298,7 +298,7 @@ class FiboScene(MovingCameraScene):
             self.remove(movingDot.arrow)
 
     def setMin(self, min_id):
-        min_node_index = self.getRootKeyIndex(self.root, min_id)
+        min_node_index = self.get_root_key_index(self.root, min_id)
         if not isinstance(min_node_index, int):
             return
         min_node = self.root[min_node_index]
@@ -308,26 +308,45 @@ class FiboScene(MovingCameraScene):
         self.min_node = min_node
         min_node.fade_to(RED, 100)
 
-    def adjust_camera_after_consolidate(self):
+    def adjust_camera(self, isAnimation):
         mostLeftNode = self.get_left_most_dot(self.root)
         mostRightNode = self.root[len(self.root)-1]
 
         if isinstance(mostLeftNode, self.newDot) and isinstance(mostRightNode, self.newDot):
             rightPoint = mostRightNode.get_right()
             leftPoint = mostLeftNode.get_left()
-
             self.defaultAddPoint[0] = (rightPoint[0]+leftPoint[0])/2
             currentWidthOfHeap = rightPoint[0]-leftPoint[0]
-            newWidth = self.width
-            while newWidth < currentWidthOfHeap:
-                newWidth = newWidth * 2
-            
-            if newWidth == self.width:
-                self.multp = 0
-            else: 
-                self.multp = newWidth / self.width
+            newCenter = [((rightPoint[0]+leftPoint[0])/2), (self.multp * 2)*-1, (rightPoint[2]+leftPoint[2])/2]
+            if currentWidthOfHeap+2.4 > (self.camera.frame_width):
+                self.zoom_out(isAnimation, newCenter)      
+            elif currentWidthOfHeap < self.camera.frame_width - self.width:
+                self.zoom_in(isAnimation, newCenter, currentWidthOfHeap)
+            else:
+                if(isAnimation):
+                    self.play(self.camera.frame.animate.move_to(newCenter))
+                else:
+                    self.camera.frame.move_to(newCenter)
 
-            newCenter: Point3D = (((rightPoint[0]+leftPoint[0])/2), (self.multp * 2)*-1, (rightPoint[2]+leftPoint[2])/2)
+    def zoom_in(self, isAnimation, newCenter, currentWidthOfHeap):
+        newWidth = self.width
+        while newWidth < currentWidthOfHeap:
+            newWidth = newWidth + self.width
+        
+        if newWidth == self.width:
+            self.multp = 0
+        else: 
+            self.multp = newWidth / self.width
 
+        newCenter[1] = (self.multp * 2)*-1
+        if isAnimation:
             self.play(self.camera.frame.animate.move_to(newCenter).set(width=newWidth))
+        else:
+            self.camera.frame.move_to(newCenter).set(width=newWidth)
 
+    def zoom_out(self, isAnimation, newCenter):
+        self.multp = self.multp+1
+        if isAnimation:
+            self.play(self.camera.frame.animate.set(width=self.camera.frame_width + self.width).move_to(newCenter))
+        else: 
+            self.camera.frame.set(width=self.camera.frame_width + self.width).move_to(newCenter)
