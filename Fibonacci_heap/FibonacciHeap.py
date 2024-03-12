@@ -5,7 +5,7 @@ class FibonacciHeap:
     root_list = None
     min_fib_node = None
     total_fib_nodes = 0
-    id = 1
+    id = 0
     isAnimation = None
     scene = None
     class FibonacciHeapNode:
@@ -174,26 +174,49 @@ class FibonacciHeap:
             return fib_node_parent
 
     #function to decrease value of a node - eg. 46 -> 12 
-    def decrease_value(self, node_to_decrease, new_value):
+    def decrease_value(self, node_to_decrease_id, new_value):
+        node_to_decrease = self.find_node_by_id(self.root_list, node_to_decrease_id)
         node_to_decrease.value = new_value
+        self.scene.change_key(node_to_decrease.id, new_value)
         if node_to_decrease.parent is not None and node_to_decrease.parent.value > new_value:
             parent = node_to_decrease.parent
             self.cut(node_to_decrease)
             self.cascading_cut(parent)
         self.check_min_with_single_node(node_to_decrease)
 
+    def find_node_by_id(self, start_node, id):
+        current_node = start_node
+
+        while True:
+            if current_node.id == id:
+                return current_node
+
+            if current_node.child is not None:
+                found_node = self.find_node_by_id(current_node.child, id)
+                if found_node is not None:  
+                    return found_node
+
+            if current_node.right == start_node:
+                break  
+            else:
+                current_node = current_node.right
+        return None
+
     #Cut node from child list to root 
     def cut(self, node_to_cut):
         self.remove_node_from_child_list(node_to_cut)
         self.merge_node_with_root_list(node_to_cut)
+        self.scene.move_to_root(node_to_cut.id, True)
         if node_to_cut.marked:
             node_to_cut.marked = False
+            self.scene.mark_node(node_to_cut.id, True)
     
     # handle parent of cut node in decreasing a value
     def cascading_cut(self, decreased_node_parent):
         if decreased_node_parent.parent is not None:
             if not decreased_node_parent.marked:
                 decreased_node_parent.marked = True
+                self.scene.mark_node(decreased_node_parent.id, False)
             else:
                 next_parent = decreased_node_parent.parent
                 self.cut(decreased_node_parent)

@@ -17,6 +17,9 @@ class FiboScene(MovingCameraScene):
         self.width = 14.222222222222221
         self.multp = 0
         super().__init__(*args, **kwargs)
+    
+    def construct(self):
+        self.wait()
 
     #New dot class. A manim dot with children.
     class newDot(Dot):
@@ -263,7 +266,7 @@ class FiboScene(MovingCameraScene):
         self.root.add(movingDot)
 
         if isAnimation:
-            self.animate_root(self.root, len(self.root)-1)
+            self.animate_root(self.root, len(self.root)-1, movingDot.get_center())
             self.play(AnimationGroup(*[MoveToTarget(n) for n in self.dotsTOmove], lag_ratio=0), FadeOut(movingDot.arrow))
             self.dotsTOmove = list()
         else:
@@ -323,3 +326,15 @@ class FiboScene(MovingCameraScene):
             self.play(self.camera.frame.animate.set(width=self.camera.frame_width + self.width).move_to(newCenter))
         else: 
             self.camera.frame.set(width=self.camera.frame_width + self.width).move_to(newCenter)
+
+    def change_key(self, nodeId, newValue):
+        node = self.nodeDic[nodeId]
+        new_text = Text(str(newValue), font_size=18 - (newValue/100)).move_to(node.get_center()).set_z_index(1) 
+        self.play(Transform(node.text, new_text), node.animate.set_color(GREEN))
+    
+    def mark_node(self, nodeId, unMark):
+        node = self.nodeDic[nodeId]
+        if unMark:
+            self.play(node.animate.set_color(BLUE))
+        else:
+            self.play(node.animate.set_color(ORANGE))
