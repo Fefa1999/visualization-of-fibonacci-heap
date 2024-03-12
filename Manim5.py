@@ -171,7 +171,7 @@ class FiboScene(MovingCameraScene):
 
         self.root.remove(childMojb)
         gainedWidth = int() 
-        if len(parrentMojb.children) == 1: #child or parrentmobj????
+        if len(parrentMojb.children) == 1:
             gainedWidth = 0
         else:
             gainedWidth = childMojb.widthOfChildren + childMojb.dot.radius*2
