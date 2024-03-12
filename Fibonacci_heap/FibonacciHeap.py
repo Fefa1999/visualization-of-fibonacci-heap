@@ -24,7 +24,7 @@ class FibonacciHeap:
         self.id += 1
         self.merge_node_with_root_list(new_node)
         if self.scene is not None:
-            self.scene.insertDot(new_node.value, self.isAnimation, new_node.id)
+            self.scene.insert_dot(new_node.value, self.isAnimation, new_node.id)
         self.check_min_with_single_node(new_node)
         self.total_fib_nodes += 1
         return new_node
@@ -33,7 +33,7 @@ class FibonacciHeap:
     def check_min_with_single_node(self, fib_node):
         if self.min_fib_node is None or fib_node.value < self.min_fib_node.value:
             self.min_fib_node = fib_node
-            self.scene.setMin(fib_node.id)
+            self.scene.set_min(fib_node.id)
    
     #iterates the circular doubly linked list and updates min node
     def set_new_min_from_root_list(self):
@@ -170,7 +170,7 @@ class FibonacciHeap:
             fib_node_child.parent = fib_node_parent
             fib_node_parent.degree += 1
             if self.scene is not None:
-                self.scene.createChild(fib_node_parent.id, fib_node_child.id, self.isAnimation)
+                self.scene.create_child(fib_node_parent.id, fib_node_child.id, self.isAnimation)
             return fib_node_parent
 
     #function to decrease value of a node - eg. 46 -> 12 
