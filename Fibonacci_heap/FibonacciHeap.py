@@ -5,7 +5,7 @@ class FibonacciHeap:
     root_list = None
     min_fib_node = None
     total_fib_nodes = 0
-    id = 1
+    id = 0
     isAnimation = None
     concurrent_consolidate = None
     scene = None
@@ -25,6 +25,7 @@ class FibonacciHeap:
         self.id += 1
         self.merge_node_with_root_list(new_node)
         if self.scene is not None:
+            #self.scene.insert_node(new_node.value, new_node.id)
             self.scene.insertDot(new_node.value, self.isAnimation, new_node.id)
         self.check_min_with_single_node(new_node)
         self.total_fib_nodes += 1
@@ -176,6 +177,7 @@ class FibonacciHeap:
             fib_node_child.parent = fib_node_parent
             fib_node_parent.degree += 1
             if self.scene is not None:
+                #self.scene.link_nodes(fib_node_parent.id, fib_node_child.id)
                 if self.concurrent_consolidate:
                     if len(animation_array)-1 < fib_node_parent.degree-1 or len(animation_array) == 0:
                         animation_array.append([(fib_node_parent.id, fib_node_child.id)]) 

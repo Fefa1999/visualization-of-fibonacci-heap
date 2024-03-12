@@ -1,20 +1,19 @@
 from manim import *
 from manim.typing import Point3D
 from manim.typing import Vector3
-from typing import TypedDict
+from manim.opengl import *
 
 #DO YOU HAVE TO STATE DELETIONS OF OBJECTS IN PYTHON TO HELP GARBAGE COLLECTER
 
 #New Scene class with a dictonary of keys and newdot pointers
-class FiboScene(MovingCameraScene):
-
+class Glscene(Scene):
     def construct(self):
         self.adjust_camera(True)
         self.wait()
 
     def __init__(self, *args, **kwargs):
         self.min_node = None
-        self.root = VGroup()
+        self.root = OpenGLVGroup()
         self.dotsTOmove = list()
         self.nodeDic = dict()
         self.defaultAddPoint = [0,3, 0]
@@ -28,7 +27,7 @@ class FiboScene(MovingCameraScene):
         def __init__(self, id: int, *args, **kwargs):
             self.id = id
             super().__init__(*args, **kwargs)
-            self.children = VGroup()
+            self.children = OpenGLVGroup()
             self.widthOfChildren = int()
             self.parentKey = int()
             self.arrow = Line()
@@ -59,7 +58,7 @@ class FiboScene(MovingCameraScene):
     #Creates a dot with a location, and return it withour adding it to scene.
     def createDot(self, point: Point3D, number: int, id: int):
         blue_dot = self.newDot(id, point, radius=0.2, color=BLUE)
-        dot_label = Text(str(number), font_size=18 - (number/10000)).move_to(blue_dot.get_center()).set_z_index(1) #TODO what is this number/100 
+        dot_label = Text(str(number), font_size=18 - (number/10000)).move_to(blue_dot.get_center()).set_z(1) #TODO what is this number/100 
         dot_label.add_updater(
             lambda mobject: mobject.next_to(blue_dot, 0)
         )
@@ -338,22 +337,21 @@ class FiboScene(MovingCameraScene):
     def adjust_camera(self, isAnimation):
         mostLeftNode = self.get_left_most_dot(self.root)
         mostRightNode = self.root[len(self.root)-1]
-
         if isinstance(mostLeftNode, self.newDot) and isinstance(mostRightNode, self.newDot):
             rightPoint = mostRightNode.get_right()
             leftPoint = mostLeftNode.get_left()
             self.defaultAddPoint[0] = (rightPoint[0]+leftPoint[0])/2
             currentWidthOfHeap = rightPoint[0]-leftPoint[0]
             newCenter = [((rightPoint[0]+leftPoint[0])/2), (self.multp * 2)*-1, (rightPoint[2]+leftPoint[2])/2]
-            if currentWidthOfHeap+2.4 > (self.camera.frame_width):
+            if currentWidthOfHeap+2.4 > self.camera.get_width()-1:
                 self.zoom_out(isAnimation, newCenter)      
-            elif currentWidthOfHeap < self.camera.frame_width - self.width:
+            elif currentWidthOfHeap < self.camera.get_width() - self.width:
                 self.zoom_in(isAnimation, newCenter, currentWidthOfHeap)
             else:
                 if(isAnimation):
-                    self.play(self.camera.frame.animate.move_to(newCenter))
+                    self.play(self.camera.animate.move_to(newCenter))
                 else:
-                    self.camera.frame.move_to(newCenter)
+                    self.camera.move_to(newCenter)
 
     def zoom_in(self, isAnimation, newCenter, currentWidthOfHeap):
         newWidth = self.width
@@ -367,13 +365,13 @@ class FiboScene(MovingCameraScene):
 
         newCenter[1] = (self.multp * 2)*-1
         if isAnimation:
-            self.play(self.camera.frame.animate.move_to(newCenter).set(width=newWidth))
+            self.play(self.camera.animate.move_to(newCenter).set(width=newWidth))
         else:
-            self.camera.frame.move_to(newCenter).set(width=newWidth)
+            self.camera.move_to(newCenter).set(width=newWidth)
 
     def zoom_out(self, isAnimation, newCenter):
         self.multp = self.multp+1
         if isAnimation:
-            self.play(self.camera.frame.animate.set(width=self.camera.frame_width + self.width).move_to(newCenter))
+            self.play(self.camera.animate.set(width=self.camera.get_width() + self.width).move_to(newCenter))
         else: 
-            self.camera.frame.set(width=self.camera.frame_width + self.width).move_to(newCenter)
+            self.camera.set(width=self.camera.get_width() + self.width).move_to(newCenter)
