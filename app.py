@@ -2,12 +2,14 @@ from Fibonacci_heap.FibonacciHeap import FibonacciHeap
 from Manim5 import FiboScene
 from manim.utils.file_ops import open_file as open_media_file 
 from manim import config
+from manim import *
 
 import time
 
 config.disable_caching = True
 config.disable_caching_warning = True
 config.quality = "low_quality"
+#config.quality = "high_quality"
 #config.renderer = "opengl"
 
 def run():
@@ -19,22 +21,18 @@ def run():
 
     #Set animation 
     heap.isAnimation = False
-    
-    #DO THINGS TO HEAP TO SHOW IN VIDEO FILE 
-    for i in range(50):
+
+    for i in range(66):
         heap.insert(i)
-    #heap.insert(2)
+    
     heap.isAnimation = True
     heap.extract_min()
+    heap.isAnimation = False
+    for i in range(8):
+        heap.insert(i+66)
+    heap.isAnimation = True
     heap.extract_min()
-    heap.extract_min()
-    scene.wait()
-    #for i in range(50):
-    #    heap.insert(i)
-    #heap.extract_min()
-
-    #heap.insert(100)
-
+    scene.wait(10)
     scene.render()
 
     print("--- %s seconds ---" % (time.time() - start_time))
