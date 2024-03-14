@@ -39,14 +39,11 @@ class FiboScene(MovingCameraScene):
             #self.numberLabel = Text("")
     
 
-    #RRRR
     def space_list_dots_targets_by_tree_width(self, lst: list[FiboDot], direction: Vector3 = LEFT, **kwargs):
         for m1, m2 in zip(lst, lst[1:]):
             m2.dot.target.next_to(m1.dot.target, direction, (m1.widthOfChildren), **kwargs)
         return lst
-    #list.arrange_where_buffer_is_subtree_width = arrange_where_buffer_is_subtree_width
 
-    #TODO the isnt this a list method.
     def getRootKeyIndex(self, root: list, key: int):
         for n in range(len(root)):
             a = root[n]
@@ -54,7 +51,7 @@ class FiboScene(MovingCameraScene):
                 return n
         return -1
 
-    #Creates a dot with a location, and return it withour adding it to scene.
+    #Creates a FiboDot with a dot at "location", and numberLabel showing numberl, and return it without adding it to scene.
     def createDot(self, point: Point3D, number: int, id: int):
         fiboDot = self.FiboDot(id)
         fiboDot.dot = Dot(point, radius=0.2, color=BLUE)
@@ -98,7 +95,6 @@ class FiboScene(MovingCameraScene):
         if isAnimation:
             shiftValue = mostRightDot.dot.get_center()-addedDot.get_center() + RIGHT*addedDot.radius*4
             self.play(addedDot.animate.shift(shiftValue))#,addedFiboDot.numberLabel.animate.shift(shiftValue))
-            #self.play(addedFiboDot.dot.animate.next_to(mostRightDot.dot, buff=2*mostRightDot.dot.radius))
         else:
             addedFiboDot.dot.next_to(mostRightDot.dot, buff=2*mostRightDot.dot.radius)
             #addedFiboDot.numberLabel.next_to(addedFiboDot.dot, 0)             
@@ -116,13 +112,14 @@ class FiboScene(MovingCameraScene):
         boarderRight = self.camera.frame.get_right()[0]
         boarderLeft = self.camera.frame.get_left()[0]
 
-        if newWidth+4 > (self.camera.frame_width) or boarderLeft > (leftPoint[0]+2) or boarderRight < (rightPoint[0]+2): # +4 is secureing padding
-            self.multp = (self.camera.frame_width * 2) / self.width
-            newCenter = (((rightPoint[0]+leftPoint[0])/2), (self.multp * 2)*-1, (rightPoint[2]+leftPoint[2])/2)
+        if newWidth+2 > (self.camera.frame_width) or boarderLeft > (leftPoint[0]+1) or boarderRight < (rightPoint[0]+1): # +4 is secureing padding
+            #self.multp = (self.camera.frame_width * 2) / self.width  #TODO why is this needed
+            #newCenter = (((rightPoint[0]+leftPoint[0])/2), (self.multp * 2)*-1, (rightPoint[2]+leftPoint[2])/2)
+            newCenter = (((rightPoint[0]+leftPoint[0])/2), ((rightPoint[1]+leftPoint[1])/2), ((rightPoint[2]+leftPoint[2])/2))
             if isAnimation:
-                self.play(self.camera.frame.animate.set(width=self.camera.frame_width * 2).move_to(newCenter))
+                self.play(self.camera.frame.animate.set(width=self.camera.frame_width * 1.3).move_to(newCenter))
             else: 
-                self.camera.frame.set(width=self.camera.frame_width * 2).move_to(newCenter)
+                self.camera.frame.set(width=self.camera.frame_width * 1.3).move_to(newCenter)
     
     def get_left_most_dot(self, group: list[FiboDot]):
         if len(group) == 0:
@@ -143,30 +140,26 @@ class FiboScene(MovingCameraScene):
             return dot.widthOfChildren
         
         leftMost = self.get_left_most_dot(dot.children)
-        if isinstance(leftMost, self.FiboDot):
-            dot.widthOfChildren = dot.get_x()-leftMost.get_x()+padding
-            return dot.widthOfChildren
-        return
+        if not isinstance(leftMost, self.FiboDot):
+            return
+        dot.widthOfChildren = dot.get_x()-leftMost.get_x()+padding
+        return dot.widthOfChildren
 
     def createChild(self, parrentKey: int, childKey: int, isAnimation: bool):
         rootParrentIndex = self.getRootKeyIndex(self.root, parrentKey)
-        
         if rootParrentIndex<0:
-            return
+            return  #TODO should it return something to tell it failed??
         parrentMojb = self.root[rootParrentIndex]
 
         rootChildIndex = self.getRootKeyIndex(self.root, childKey)
         if rootChildIndex<0:
-            return
+            return  #TODO should it return something to tell it failed??
         childMojb = self.root[rootChildIndex]
         childMojb.parrentKey = parrentKey
         parrentMojb.children.append(childMojb)
 
         #creating arrow
         pointer = Line(childMojb.dot,parrentMojb.dot)
-        # pointer.add_updater(
-        #         lambda mob: mob.put_start_and_end_on(childMojb.dot.get_top(), parrentMojb.dot.get_bottom())
-        # )
         childMojb.arrow = pointer
 
         self.root.remove(childMojb)
@@ -180,33 +173,32 @@ class FiboScene(MovingCameraScene):
         if isAnimation:
             index = min(rootParrentIndex,rootChildIndex)
             self.animateRoot(self.root, index, self.root[index].dot.get_center())
-            lst = list()
+            arrowAnimations = list()
             for n in self.mobjsTOmove:
                 if n.arrow != None:
-                    lst.append(n.arrow.animate.put_start_and_end_on(n.dot.target.get_top(), self.nodeDic[n.parrentKey].dot.target.get_bottom()))
-            self.play(AnimationGroup(*[MoveToTarget(n.dot) for n in self.mobjsTOmove], lag_ratio=0), FadeIn(pointer), *lst )
+                    arrowAnimations.append(n.arrow.animate.put_start_and_end_on(n.dot.target.get_top(), self.nodeDic[n.parrentKey].dot.target.get_bottom()))
+            self.play(AnimationGroup(*[MoveToTarget(n.dot) for n in self.mobjsTOmove], lag_ratio=0), FadeIn(pointer), *arrowAnimations )
             self.mobjsTOmove = list[self.FiboDot]()
         else:
             self.moveRoot(rootParrentIndex)
             self.add(pointer)
 
     def animateRoot(self, root: list[FiboDot], startIndex: int, removedDotCenter: Point3D): #Must be done smart. aka move the lesser tree. Or moving fixed distance if child is at the ends.
-        def aux (root: list, rootIndex: int, lastDotDestination: Dot):
+        def aux (root: list[self.FiboDot], rootIndex: int, lastDotDestination: Dot):
             if rootIndex == len(root):
                 return
             currentDot = root[rootIndex]
-            if not isinstance(currentDot, self.FiboDot): #will be fixed by new vgroup
+            if not isinstance(currentDot, self.FiboDot): #TODO why is this needed?
                 return 
             currentDot.dot.target = Dot(point=currentDot.dot.get_center(), radius=currentDot.dot.radius, color=currentDot.dot.color)
             currentDot.dot.target.set_x(lastDotDestination.get_x()+currentDot.widthOfChildren+currentDot.dot.radius*2).set_y(lastDotDestination.get_y())
             self.mobjsTOmove.append(currentDot)
-            #if isinstance(currentDot.target, self.FiboDot):
             self.animateChildren(currentDot, currentDot.dot.target)
             
             aux(root, rootIndex+1, currentDot.dot.target)
             return
 
-        startDot = Dot(removedDotCenter)
+        startDot = Dot(removedDotCenter) #TODO Removed dot should be removede
         if startIndex != 0:
             startDot = root[startIndex-1].dot
 
@@ -235,14 +227,10 @@ class FiboScene(MovingCameraScene):
     def animateChildren(self, parrentMojb: FiboDot, parrentTarget: FiboDot): #TODO need to be made into a transform method where it can collect all animation and then move.
         if len(parrentMojb.children)==0:
             return
-        #listOfTargets = list()
         for n in parrentMojb.children:
             n.dot.target = Dot(point=n.dot.get_center(), radius=n.dot.radius, color=n.dot.color).set_y(parrentTarget.get_y()-1.5).align_to(parrentTarget, RIGHT)
-            #listOfTargets.append(n)
             self.mobjsTOmove.append(n)
         self.space_list_dots_targets_by_tree_width(parrentMojb.children)
-        #parrentMojb.children.target.arrange_where_buffer_is_subtree_width(center= False).set_y(parrentTarget.get_y()-1.5).align_to(parrentTarget, RIGHT)
-        #self.mobjsTOmove.append(parrentMojb.children)
         for n in range(len(parrentMojb.children)):
             self.animateChildren(parrentMojb.children[n], parrentMojb.children[n].dot.target)
         return
@@ -266,12 +254,17 @@ class FiboScene(MovingCameraScene):
             deleteDot.children.reverse() #TODO should it be reversed? now that it isnt a Vgroup
             for n in deleteDot.children:
                 childrenArrows.append(n.arrow)
+                n.arrow = None
                 n.parrentKey = None
-                self.root.add(n)
+                self.root.append(n)
 
         if isAnimation:
             self.animateRoot(self.root, index, deleteDot.dot.get_center())
-            self.play(AnimationGroup(*[MoveToTarget(n.dot) for n in self.mobjsTOmove], lag_ratio=0), AnimationGroup(*[FadeOut(n) for n in childrenArrows]), FadeOut(deleteDot.dot))#, FadeOut(deleteDot.numberLabel))
+            arrowAnimations = list()
+            for n in self.mobjsTOmove:
+                if n.arrow != None:
+                    arrowAnimations.append(n.arrow.animate.put_start_and_end_on(n.dot.target.get_top(), self.nodeDic[n.parrentKey].dot.target.get_bottom()))
+            self.play(AnimationGroup(*[MoveToTarget(n.dot) for n in self.mobjsTOmove], lag_ratio=0), AnimationGroup(*[FadeOut(n) for n in childrenArrows]), FadeOut(deleteDot.dot), *arrowAnimations)#, FadeOut(deleteDot.numberLabel))
             self.mobjsTOmove = list[self.FiboDot]()
             self.adjust_camera(isAnimation)
         else:
@@ -290,7 +283,7 @@ class FiboScene(MovingCameraScene):
         self.root.add(movingDot)
 
         if isAnimation:
-            self.animateRoot(self.root, len(self.root)-1)
+            self.animateRoot(self.root, (len(self.root)-1))
             self.play(AnimationGroup(*[MoveToTarget(n.dot) for n in self.mobjsTOmove], lag_ratio=0), FadeOut(movingDot.arrow))
             self.mobjsTOmove = list[self.FiboDot]()
         else:
