@@ -8,8 +8,8 @@ import time
 
 config.disable_caching = True
 config.disable_caching_warning = True
-#config.quality = "low_quality"
-config.quality = "high_quality"
+config.quality = "low_quality"
+#config.quality = "high_quality"
 #config.renderer = "opengl"
 
 def run():
@@ -22,15 +22,15 @@ def run():
     #Set animation 
     heap.isAnimation = False
 
-    for i in range(513):
-        heap.insert(514-i)
+    for i in range(259):
+        heap.insert(i)
     
     heap.isAnimation = True
     heap.extract_min()
-    heap.extract_min()
-    heap.isAnimation = False
-    # for i in range(8):
-    #     heap.insert(i+66)
+    #heap.extract_min()
+    # heap.isAnimation = False
+    # for i in range(32):
+    #     heap.insert(i+130)
     # heap.isAnimation = True
     # heap.extract_min()
     scene.wait(10)
