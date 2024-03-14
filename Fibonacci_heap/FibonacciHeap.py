@@ -1,12 +1,11 @@
 import math 
-#from Manim4 import main
-
 class FibonacciHeap:
     root_list = None
     min_fib_node = None
     total_fib_nodes = 0
     id = 0
     isAnimation = None
+    showExplanatoryText = None
     scene = None
     class FibonacciHeapNode:
         def __init__(self, value):
@@ -31,7 +30,7 @@ class FibonacciHeap:
 
     #updates min if node is smaller than current min
     def check_min_with_single_node(self, fib_node):
-        if self.min_fib_node is None or fib_node.value < self.min_fib_node.value:
+        if self.min_fib_node is None or fib_node.value <= self.min_fib_node.value:
             self.min_fib_node = fib_node
             self.scene.set_min(fib_node.id)
    
@@ -118,13 +117,14 @@ class FibonacciHeap:
                 current_child = min_node.child.right
                 while True:
                     next_child = current_child.right
-                    self.cut(current_child)
+                    self.remove_node_from_child_list(current_child)
+                    self.merge_node_with_root_list(current_child)
                     if min_node.child is None:
                         break
                     current_child = next_child
 
             #set new min to next 
-            self.min_fib_node = min_node.right 
+            self.min_fib_node = min_node.right
 
             #remove min node from root
             self.remove_node_from_root_list(min_node)
@@ -135,7 +135,7 @@ class FibonacciHeap:
             if self.root_list is not None:
                 if self.root_list != self.root_list.right:
                     self.consolidate()
-                    self.set_new_min_from_root_list()
+                self.set_new_min_from_root_list()
             return min_node
 
     #Map heap until no root has same degree
@@ -170,23 +170,23 @@ class FibonacciHeap:
             fib_node_child.parent = fib_node_parent
             fib_node_parent.degree += 1
             if self.scene is not None:
-                self.scene.create_child(fib_node_parent.id, fib_node_child.id, self.isAnimation)
+                self.scene.create_child(fib_node_parent.id, fib_node_child.id, self.isAnimation, self.showExplanatoryText)
             return fib_node_parent
 
     #function to decrease value of a node - eg. 46 -> 12 
     def decrease_value(self, node_to_decrease_id, new_value):
         node_to_decrease = self.find_node_by_id(self.root_list, node_to_decrease_id)
-        node_to_decrease.value = new_value
-        self.scene.change_key(node_to_decrease.id, new_value)
-        if node_to_decrease.parent is not None and node_to_decrease.parent.value > new_value:
+        if node_to_decrease.value > new_value:
+            node_to_decrease.value = new_value
             parent = node_to_decrease.parent
-            self.cut(node_to_decrease)
-            self.cascading_cut(parent)
-        self.check_min_with_single_node(node_to_decrease)
+            self.scene.change_key(node_to_decrease.id, new_value, self.isAnimation, self.showExplanatoryText)
+            if parent is not None and parent.value > new_value:
+                self.cut(node_to_decrease)
+                self.cascading_cut(parent)
+            self.check_min_with_single_node(node_to_decrease)
 
     def find_node_by_id(self, start_node, id):
         current_node = start_node
-
         while True:
             if current_node.id == id:
                 return current_node
@@ -206,17 +206,16 @@ class FibonacciHeap:
     def cut(self, node_to_cut):
         self.remove_node_from_child_list(node_to_cut)
         self.merge_node_with_root_list(node_to_cut)
-        self.scene.move_to_root(node_to_cut.id, True)
+        self.scene.cut(node_to_cut.id, self.isAnimation, node_to_cut.marked, self.showExplanatoryText)
         if node_to_cut.marked:
             node_to_cut.marked = False
-            self.scene.mark_node(node_to_cut.id, True)
     
     # handle parent of cut node in decreasing a value
     def cascading_cut(self, decreased_node_parent):
         if decreased_node_parent.parent is not None:
             if not decreased_node_parent.marked:
                 decreased_node_parent.marked = True
-                self.scene.mark_node(decreased_node_parent.id, False)
+                self.scene.cascading_cut(decreased_node_parent.id, self.isAnimation, self.showExplanatoryText)
             else:
                 next_parent = decreased_node_parent.parent
                 self.cut(decreased_node_parent)
