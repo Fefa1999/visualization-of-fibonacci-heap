@@ -12,7 +12,10 @@ config.max_files_cached = 300
 config.disable_caching = True
 config.disable_caching_warning = True
 config.quality = "low_quality"
+#config.quality = "medium_quality"
 #config.quality = "high_quality"
+#config.quality = "production_quality"
+#config.quality = fourk_quality
 #config.renderer = "opengl"
 
 
@@ -24,33 +27,16 @@ def run():
     heap.scene = scene
 
     #Set animation 
-    heap.isAnimation = False
-    for i in range(16):
+    heap.isAnimation = True
+    for i in range(36):
         heap.insert(i)
 
     heap.isAnimation = True
     heap.extract_min()
-    
-    heap.extract_min()
-    
-    heap.insert(99)
-    
-    heap.decrease_value(10, 1)
-    for i in range(16):
-        heap.insert(16+i)
-    
-    heap.insert(100)
     heap.extract_min()
     heap.extract_min()
-    #heap.isAnimation = True
-    #heap.extract_min()
-    # heap.isAnimation = False
-    #for i in range(32):
-    #    heap.insert(i+130)
-    # heap.isAnimation = True
-    #heap.extract_min()
-    scene.wait(10)
-
+    heap.extract_min()
+    heap.extract_min()
     scene.render()
 
     print("--- %s seconds ---" % (time.time() - start_time))

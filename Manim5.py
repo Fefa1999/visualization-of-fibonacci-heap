@@ -15,6 +15,7 @@ class FiboScene(MovingCameraScene):
         self.mobjsTOmove = list[self.FiboDot]()
         self.storedAnimations = list[Animation]()
         self.nodeDic = dict[int, self.FiboDot]()
+        self.showLabels = True
         self.defaultAddPoint = [0.0, 3.0, 0.0]
         self.height = 7.993754879000781                                                                                                                                                                                              
         self.width = 14.222222222222221
@@ -25,8 +26,8 @@ class FiboScene(MovingCameraScene):
         self.adjust_camera(True)
         self.wait(5)
         self.clear()
-        dot_label = Text(str("THANKS FOR WATCHING"), font_size=25).move_to(self.camera.frame.get_center())
-        self.play(FadeIn(dot_label))
+        #dot_label = Text(str("THANKS FOR WATCHING"), font_size=25).move_to(self.camera.frame.get_center())
+        #self.play(FadeIn(dot_label))
 
     #New dot class. A manim dot with children.
     class FiboDot:
@@ -80,9 +81,15 @@ class FiboScene(MovingCameraScene):
         self.root.append(fiboDot) #main doesnt have this??????
 
         if isAnimation:
-            self.play(FadeIn(fiboDot.dot, fiboDot.numberLabel))
+            if self.showLabels:
+                self.play(FadeIn(fiboDot.dot, fiboDot.numberLabel))
+            else:
+                self.play(FadeIn(fiboDot.dot))
         else:
-            self.add(fiboDot.dot, fiboDot.numberLabel)
+            if self.showLabels:
+                self.add(fiboDot.dot, fiboDot.numberLabel)
+            else:
+                self.add(fiboDot.dot)
 
         if len(self.root) == 1:
             if isAnimation:
@@ -96,9 +103,7 @@ class FiboScene(MovingCameraScene):
         if isAnimation:
             self.animate_root((len(self.root)-1))
         else:
-            self.move_root((len(self.root)-1))
-
-        return fiboDot  #TODO is returning fiboDot needed?????           
+            self.move_root((len(self.root)-1))   
 
     def adjust_camera(self, isAnimation): #Fix should have soooo many lookups.
         mostLeftNode = self.get_left_most_dot(self.root)
@@ -128,25 +133,6 @@ class FiboScene(MovingCameraScene):
                 self.camera.frame.set(width=self.camera.frame_width * 1.3).move_to(newCenter)
 
         
-        
-
-    #def move_to_rootSpot(self, fadeIn: bool):
-    #    rootlength = len(self.root)
-    #    addedDot = self.root[rootlength-1]
-    #    if rootlength == 1:
-    #        if fadeIn:
-    #            self.play(addedDot.animate.move_to([0, 2, 0]))
-    #        else:
-    #            addedDot.move_to([0, 2, 0])
-    #    
-    #    mostRightDot = self.root[rootlength-2]
-    #    if isinstance(addedDot, self.newDot) and isinstance(mostRightDot, self.newDot):
-    #        if fadeIn:
-    #            self.play(addedDot.animate.next_to(mostRightDot, buff=2*mostRightDot.radius))
-    #        else:
-    #            addedDot.next_to(mostRightDot, buff=2*mostRightDot.radius)          
-
-    
     def get_left_most_dot(self, group: list[FiboDot]):
         if len(group) == 0:
             return #TODO should it return something to tell it failed??
@@ -165,7 +151,7 @@ class FiboScene(MovingCameraScene):
         rootParrentIndex = self.get_root_key_index(self.root, parentKey)
         if rootParrentIndex<0:
             return  #TODO should it return something to tell it failed??
-        parentMojb = self.root[rootParrentIndex]
+        parentMobj = self.root[rootParrentIndex]
         rootChildIndex = self.get_root_key_index(self.root, childKey)
         if rootChildIndex<0:
             return  #TODO should it return something to tell it failed??
@@ -173,21 +159,21 @@ class FiboScene(MovingCameraScene):
         childMojb.parentKey = parentKey
         
         #Adding child to parent and removing from root
-        parentMojb.children.append(childMojb)
+        parentMobj.children.append(childMojb)
         self.root.remove(childMojb)
 
         #creating arrow
-        pointer = Line(childMojb.dot,parentMojb.dot)
+        pointer = Line(childMojb.dot,parentMobj.dot)
         childMojb.arrow = pointer
 
         #Calculation new widths.
-        self.update_widthOfChildren(parentMojb, childMojb, isAddingNode=True)
+        self.update_widthOfChildren(parentMobj, childMojb, isAddingNode=True)
 
-        #if showExplanatoryText:
-        #    text = "Compare " + str(parentMobj.id) + " < " + str(childMojb.id) + " and move " + str(childMojb.id) + " as a child of " + str(parentMobj.id)
-        #    textPlacement = [self.camera.frame.get_top()[0], self.camera.frame.get_top()[1]-1, 0]
-        #    explanatoryText = Text(str(text), font_size=18).move_to(textPlacement)
-        #    self.play(FadeIn(explanatoryText))
+        if showExplanatoryText:
+           text = "Compare " + str(parentMobj.id) + " < " + str(childMojb.id) + " and move " + str(childMojb.id) + " as a child of " + str(parentMobj.id)
+           textPlacement = [self.camera.frame.get_top()[0], self.camera.frame.get_top()[1]-1, 0]
+           explanatoryText = Text(str(text), font_size=18).move_to(textPlacement)
+           self.play(FadeIn(explanatoryText))
         
         if isAnimation:
             self.storedAnimations.append(FadeIn(pointer))
@@ -197,8 +183,8 @@ class FiboScene(MovingCameraScene):
             self.move_root(rootParrentIndex)
             self.add(pointer)
             
-       # if showExplanatoryText:
-       #       self.play(FadeOut(explanatoryText))
+        if showExplanatoryText:
+            self.play(FadeOut(explanatoryText))
 
     def update_widthOfChildren(self, parent: FiboDot, child: FiboDot, isAddingNode: bool):
         if isAddingNode:
@@ -216,6 +202,12 @@ class FiboScene(MovingCameraScene):
                 Temp_node = self.nodeDic.get(Temp_node.parentKey)   
             
     def animate_root(self, startIndex: int): #Must be done smart. aka move the lesser tree. Or moving fixed distance if child is at the ends.
+        if startIndex >= len(self.root): #this can happen if the last insered dot in root is removed
+            self.executeStoredAnimations()
+            self.remove_label_check()
+            self.adjust_camera(True)
+            return
+
         def aux (rootIndex: int, lastDotDestination: Point3D):
             if rootIndex == len(self.root):
                 return
@@ -225,7 +217,7 @@ class FiboScene(MovingCameraScene):
             currentDot.dot.target = Dot(point=currentDot.dot.get_center(), radius=currentDot.dot.radius, color=currentDot.dot.color)
             currentDot.dot.target.set_x(lastDotDestination[0]+currentDot.widthOfChildren+currentDot.dot.radius*2).set_y(lastDotDestination[1])
             self.mobjsTOmove.append(currentDot)
-            self.animateChildren(currentDot, currentDot.dot.target)
+            self.create_children_animations(currentDot, currentDot.dot.target)
             
             aux(rootIndex+1, currentDot.dot.target.get_center())
             return
@@ -233,7 +225,9 @@ class FiboScene(MovingCameraScene):
         rootNodeAtIndex = self.root[startIndex]
         leftRootDotLocation: Point3D
         if startIndex == 0: 
-            self.animateChildren(rootNodeAtIndex, rootNodeAtIndex.dot)
+            self.create_children_animations(rootNodeAtIndex, rootNodeAtIndex.dot)
+            rootNodeAtIndex.dot.target = Dot(point=rootNodeAtIndex.dot.get_center(), radius=rootNodeAtIndex.dot.radius, color=rootNodeAtIndex.dot.color)
+            self.mobjsTOmove.append(rootNodeAtIndex)
             leftRootDotLocation = rootNodeAtIndex.dot.get_center()
             startIndex += 1
         else: 
@@ -243,6 +237,7 @@ class FiboScene(MovingCameraScene):
 
         self.buildAnimation()
         self.executeStoredAnimations()
+        self.remove_label_check()
         self.adjust_camera(True)
         return
 
@@ -259,17 +254,20 @@ class FiboScene(MovingCameraScene):
             
             currentDot = root[rootIndex]
             currentDot.dot.set_x(lastDotDestination.get_x()+currentDot.widthOfChildren+currentDot.dot.radius*2).set_y(lastDotDestination.get_y())
-            currentDot.numberLabel.move_to(currentDot.dot.get_center())
+            
+            if self.showLabels:
+                currentDot.numberLabel.move_to(currentDot.dot.get_center())
 
             self.move_children(currentDot)
             
             aux(root, rootIndex+1, currentDot.dot)
 
         aux(self.root, startIndex, self.root[startIndex-1].dot)
+        self.remove_label_check()
         self.adjust_camera(False)
         return
 
-    def animateChildren(self, parentMojb: FiboDot, parentTarget: Dot): #TODO need to be made into a transform method where it can collect all animation and then move.
+    def create_children_animations(self, parentMojb: FiboDot, parentTarget: Dot):
         if len(parentMojb.children)==0:
             return
 
@@ -287,7 +285,7 @@ class FiboScene(MovingCameraScene):
         self.space_list_dots_by_tree_width(parentMojb.children, True)
 
         for n in range(len(parentMojb.children)):
-            self.animateChildren(parentMojb.children[n], parentMojb.children[n].dot.target)
+            self.create_children_animations(parentMojb.children[n], parentMojb.children[n].dot.target)
         return
         
     def move_children(self, parentMojb: FiboDot):
@@ -303,7 +301,8 @@ class FiboScene(MovingCameraScene):
         #Move arrows and recursively move childrens og children
         parentsBottom = parentMojb.dot.get_bottom()
         for n in parentMojb.children:
-            n.numberLabel.move_to(n.dot.get_center())
+            if self.showLabels:
+                n.numberLabel.move_to(n.dot.get_center())
             n.arrow.put_start_and_end_on(n.dot.get_top(), parentsBottom)
             self.move_children(n)
 
@@ -315,25 +314,29 @@ class FiboScene(MovingCameraScene):
     
         childrenArrows = []
         if (len(deleteDot.children)>0):
-            deleteDot.children.reverse() #TODO should it be reversed? Reverse determent the movement and place to root
+            deleteDot.children.reverse()
             for n in deleteDot.children:
                 childrenArrows.append(n.arrow)
                 n.arrow = None
                 n.parentKey = None
                 self.root.append(n)
 
+        self.nodeDic.pop(deleteDot.id)  #No test if it works
         if isAnimation:
             for n in childrenArrows:
                 self.storedAnimations.append(FadeOut(n))
             self.storedAnimations.append(FadeOut(deleteDot.dot))
-            self.storedAnimations.append(FadeOut(deleteDot.numberLabel))
+            if self.showLabels:
+                self.storedAnimations.append(FadeOut(deleteDot.numberLabel))
             self.animate_root(index)
         else:
-            self.remove(deleteDot.numberLabel) #TODO it should be removed from dic?
+            if self.showLabels:
+                self.remove(deleteDot.numberLabel)
             self.remove(deleteDot.dot)
             self.move_root(index)
             for n in childrenArrows:
                 self.remove(n)
+        
 
     def set_min(self, min_id):
         min_node_index = self.get_root_key_index(self.root, min_id)
@@ -350,8 +353,9 @@ class FiboScene(MovingCameraScene):
         listOfAnimations = list[Animation]()
         for n in self.mobjsTOmove:
             listOfAnimations.append(MoveToTarget(n.dot))
-            listOfAnimations.append(n.numberLabel.animate.move_to(n.dot.target.get_center()))
-            if n.arrow != None:
+            if self.showLabels:
+                listOfAnimations.append(n.numberLabel.animate.move_to(n.dot.target.get_center()))
+            if not (n.arrow is None):
                 listOfAnimations.append(n.arrow.animate.put_start_and_end_on(n.dot.target.get_top(), self.nodeDic[n.parentKey].dot.target.get_bottom()))
             n.target = None
         self.mobjsTOmove = list[self.FiboDot]()
@@ -363,7 +367,7 @@ class FiboScene(MovingCameraScene):
         self.storedAnimations = list[Animation]()
         return
 
-    def adjust_camera_after_consolidate(self, isAnimation: bool): #THIS IS NEVER USED. should have soooo many lookups.
+    def adjust_camera_after_consolidate(self, isAnimation: bool): #TODO THIS IS NEVER USED. should have soooo many lookups.
         mostLeftNode = self.get_left_most_dot(self.root)
         mostRightNode = self.root[len(self.root)-1]
 
@@ -414,7 +418,8 @@ class FiboScene(MovingCameraScene):
             text = "Decrease key of node " + str(node.id) + " to " + str(newValue)
             self.write_explanatory_text_to_video(text)
         if isAnimation:
-            self.play(FadeOut(node.numberLabel), FadeIn(new_text))
+            if self.showLabels:
+                self.play(FadeOut(node.numberLabel), FadeIn(new_text))
             #self.play(Transform(node.numberLabel, new_text)) #more expensive? and leaves the other the screen
             node.numberLabel = new_text
         else:
@@ -465,3 +470,24 @@ class FiboScene(MovingCameraScene):
         explanatoryText = Text(str(text), font_size=30).move_to(textPlacement)
         self.play(FadeIn(explanatoryText))
         self.play(FadeOut(explanatoryText))
+
+    def remove_label_check(self): #low quality: 35 dots - High: 65 dots - Production: 97 - 4k: ??
+        qualityNumber = 35
+        numberOfDots = len(self.nodeDic.values())
+        if numberOfDots >= qualityNumber and self.showLabels:
+            self.showLabels = False
+            self.remove_labels()
+        elif (numberOfDots < qualityNumber) and not self.showLabels:
+            self.showLabels = True
+            self.add_labels()
+        
+    def add_labels(self):
+        for _, n in self.nodeDic.items():
+            self.add(n.numberLabel.move_to(n.dot.get_center()))
+        return
+
+    def remove_labels(self):
+        for _, n in self.nodeDic.items():
+            self.remove(n.numberLabel)
+        return
+        
