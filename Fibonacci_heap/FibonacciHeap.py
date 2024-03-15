@@ -161,6 +161,8 @@ class FibonacciHeap:
                 break
             current_node = next_node
 
+        #self.scene.adjust_camera_after_consolidate(self.isAnimation) #TODO should it be used?
+
     #Link to nodes toegether - one will become child, other parent 
     def link_nodes(self, fib_node_one, fib_node_two):
             fib_node_child = fib_node_one if fib_node_one.value >= fib_node_two.value else fib_node_two
