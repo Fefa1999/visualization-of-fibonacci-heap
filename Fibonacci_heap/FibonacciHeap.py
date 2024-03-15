@@ -136,7 +136,6 @@ class FibonacciHeap:
                 if self.root_list != self.root_list.right:
                     self.consolidate()
                 self.set_new_min_from_root_list()
-            #self.scene.adjust_camera_after_consolidate() #TODO is it needed?
             return min_node
 
     #Map heap until no root has same degree

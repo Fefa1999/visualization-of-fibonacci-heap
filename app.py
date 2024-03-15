@@ -24,21 +24,31 @@ def run():
     heap.scene = scene
 
     #Set animation 
-    heap.isAnimation = True
-
-
-    heap.insert(10)
-    for i in range(8):
+    heap.isAnimation = False
+    for i in range(16):
         heap.insert(i)
-    
+
     heap.isAnimation = True
     heap.extract_min()
+    
     heap.extract_min()
+    
+    heap.insert(99)
+    
+    heap.decrease_value(10, 1)
+    for i in range(16):
+        heap.insert(16+i)
+    
+    heap.insert(100)
+    heap.extract_min()
+    heap.extract_min()
+    #heap.isAnimation = True
+    #heap.extract_min()
     # heap.isAnimation = False
-    for i in range(32):
-        heap.insert(i+130)
+    #for i in range(32):
+    #    heap.insert(i+130)
     # heap.isAnimation = True
-    heap.extract_min()
+    #heap.extract_min()
     scene.wait(10)
 
     scene.render()
