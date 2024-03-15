@@ -31,7 +31,7 @@ class FibonacciHeap:
 
     #updates min if node is smaller than current min
     def check_min_with_single_node(self, fib_node):
-        if self.min_fib_node is None or fib_node.value < self.min_fib_node.value:
+        if self.min_fib_node is None or fib_node.value <= self.min_fib_node.value:
             self.min_fib_node = fib_node
             self.scene.setMin(fib_node.id)
    
@@ -118,7 +118,8 @@ class FibonacciHeap:
                 current_child = min_node.child.right
                 while True:
                     next_child = current_child.right
-                    self.cut(current_child)
+                    self.remove_node_from_child_list(current_child)
+                    self.merge_node_with_root_list(current_child)
                     if min_node.child is None:
                         break
                     current_child = next_child
@@ -135,7 +136,7 @@ class FibonacciHeap:
             if self.root_list is not None:
                 if self.root_list != self.root_list.right:
                     self.consolidate()
-                    self.set_new_min_from_root_list()
+                self.set_new_min_from_root_list()
             self.scene.adjust_camera_after_consolidate()
             return min_node
 
