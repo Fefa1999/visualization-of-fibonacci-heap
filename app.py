@@ -4,8 +4,6 @@ from manim.utils.file_ops import open_file as open_media_file
 from manim import config
 from manim import *
 import random
-
-
 import time
 
 config.max_files_cached = 300
@@ -28,13 +26,15 @@ def run():
 
     #Set animation 
     heap.isAnimation = False
-    for i in range(200):
+    for i in range(100):
         heap.insert(i)
 
-    heap.isAnimation = False
     heap.extract_min()
-    scene.render()
+    heap.isAnimation = True
+    heap.insert(0)
+    heap.extract_min()
 
+    scene.render()
     print("--- %s seconds ---" % (time.time() - start_time))
 
     open_media_file(scene.renderer.file_writer.movie_file_path)

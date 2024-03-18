@@ -23,7 +23,7 @@ class FiboScene(MovingCameraScene):
         super().__init__(*args, **kwargs)
     
     def construct(self):
-        self.wait(5)
+        #self.wait(5)
         self.clear()
 
     #New dot class. A manim dot with children.
@@ -114,7 +114,6 @@ class FiboScene(MovingCameraScene):
         
         return aux(group[0])
 
-      
     def create_child(self, parentKey: int, childKey: int, isAnimation: bool, showExplanatoryText: bool = False):
         #Finding parent and child
         rootParrentIndex = self.get_root_key_index(self.root, parentKey)
@@ -207,7 +206,6 @@ class FiboScene(MovingCameraScene):
         self.executeStoredAnimations()
         self.remove_label_check()
         return
-
 
     def move_root(self, startIndex: int):
         if startIndex == 0:
@@ -427,14 +425,13 @@ class FiboScene(MovingCameraScene):
         mostLeftNode = self.get_left_most_dot(self.root)
         mostRightNode = self.root[len(self.root)-1]
         #Do not adjust camera with a node that is in default add point
-        if mostLeftNode.dot.get_center()[1] != mostRightNode.dot.get_center()[1]:
+        if mostRightNode.dot.get_center()[1] == 3:
             return
 
         rightPoint = mostRightNode.dot.get_right()
         leftPoint = mostLeftNode.dot.get_left()
 
-        additional_width = (rightPoint[0]-leftPoint[0])/self.width
-        newWidth = (rightPoint[0]-leftPoint[0])+additional_width
+        newWidth = (rightPoint[0]-leftPoint[0])+2
         self.defaultAddPoint[0] = (rightPoint[0]+leftPoint[0])/2
 
         boarderRight = self.camera.frame.get_right()[0]

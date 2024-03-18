@@ -24,24 +24,26 @@ class FibonacciHeap:
         self.merge_node_with_root_list(new_node)
         if self.scene is not None:
             self.scene.insert_dot(new_node.value, self.isAnimation, new_node.id)
-        self.check_min_with_single_node(new_node)
+        self.check_min_with_single_node(new_node, True)
         self.total_fib_nodes += 1
         return new_node
 
     #updates min if node is smaller than current min
-    def check_min_with_single_node(self, fib_node):
+    def check_min_with_single_node(self, fib_node, print):
         if self.min_fib_node is None or fib_node.value <= self.min_fib_node.value:
             self.min_fib_node = fib_node
-            self.scene.set_min(fib_node.id, self.isAnimation)
+            if print:
+                self.scene.set_min(fib_node.id, self.isAnimation)
    
     #iterates the circular doubly linked list and updates min node
     def set_new_min_from_root_list(self):
         current_node = self.root_list.right
         while True: 
-            self.check_min_with_single_node(current_node)
+            self.check_min_with_single_node(current_node, False)
             if self.root_list == current_node:
                 break
             current_node = current_node.right
+        self.scene.set_min(self.min_fib_node.id, self.isAnimation)
 
     #return min node in O(1) time
     def returnMin(self):
@@ -259,11 +261,9 @@ class FibonacciHeap:
     #         print("|              Fibonacci Heap Structure             |")
     #         print("-----------------------------------------------------")
     #         print()
-
     #         firstNode = self.root_list
     #         current_node = self.root_list.right
     #         flag = True
-
     #         while flag:
     #             if current_node == firstNode:
     #                 flag = False
@@ -276,7 +276,6 @@ class FibonacciHeap:
     #                 self.recursivePrint(current_node, 1)
     #             current_node = current_node.right
     #             print()
-        
     # def recursivePrint(self, node, degree):
     #     firstNode = node.child
     #     current_node = node.child.right
