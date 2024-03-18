@@ -15,7 +15,7 @@ config.disable_caching_warning = True
 #config.quality = "medium_quality"
 #config.quality = "high_quality"
 #config.quality = "production_quality"
-config.quality = "fourk_quality"
+config.quality = "medium_quality"
 #config.renderer = "opengl"
 
 
@@ -28,7 +28,7 @@ def run():
 
     #Set animation 
     heap.isAnimation = False
-    for i in range(97):
+    for i in range(200):
         heap.insert(i)
 
     heap.isAnimation = False

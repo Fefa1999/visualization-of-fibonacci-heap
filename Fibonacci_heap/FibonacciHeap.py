@@ -32,7 +32,7 @@ class FibonacciHeap:
     def check_min_with_single_node(self, fib_node):
         if self.min_fib_node is None or fib_node.value <= self.min_fib_node.value:
             self.min_fib_node = fib_node
-            self.scene.set_min(fib_node.id)
+            self.scene.set_min(fib_node.id, self.isAnimation)
    
     #iterates the circular doubly linked list and updates min node
     def set_new_min_from_root_list(self):
