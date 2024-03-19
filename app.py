@@ -9,13 +9,7 @@ import time
 config.max_files_cached = 300
 config.disable_caching = True
 config.disable_caching_warning = True
-#config.quality = "low_quality"
-#config.quality = "medium_quality"
-#config.quality = "high_quality"
-#config.quality = "production_quality"
 config.quality = "medium_quality"
-#config.renderer = "opengl"
-
 
 def run():
     #SETUP 
@@ -36,6 +30,5 @@ def run():
 
     scene.render()
     print("--- %s seconds ---" % (time.time() - start_time))
-
     open_media_file(scene.renderer.file_writer.movie_file_path)
 run()
