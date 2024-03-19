@@ -15,6 +15,7 @@ class FiboScene(MovingCameraScene):
         self.mobjsTOmove = list[self.FiboDot]()
         self.storedAnimations = list[Animation]()
         self.nodeDic = dict[int, self.FiboDot]()
+        self.bottom_node = None
         self.sceneUpToDate = True
         self.showLabels = True
         self.defaultAddPoint = [0.0, 3.0, 0.0]
@@ -335,6 +336,10 @@ class FiboScene(MovingCameraScene):
                 listOfAnimations.append(n.arrow.animate.put_start_and_end_on(n.dot.target.get_center(), self.nodeDic[n.parentKey].dot.target.get_center()))
             if n.dot.target.get_center()[0] > self.camera.frame.get_right()[0] or n.dot.target.get_center()[0] < self.camera.frame.get_left()[0]:
                 self.adjust_camera(isAnimation)
+            if n.dot.target.get_bottom()[1] < self.camera.frame.get_bottom()[1]:
+                self.bottom_node = n.dot.target
+                self.adjust_camera(isAnimation)
+                self.bottom_node = None
             n.target = None
         self.mobjsTOmove = list[self.FiboDot]()
         self.storedAnimations.extend(listOfAnimations)
@@ -443,10 +448,14 @@ class FiboScene(MovingCameraScene):
         self.sceneUpToDate = True
         self.adjust_camera(False)
     
+    def get_bottom_most_dot(self):
+        return self.bottom_node
+    
     def adjust_camera(self, isAnimation):
         self.prepareSceneForAnimations(isAnimation)
         mostLeftNode = self.get_left_most_dot(self.root)
         mostRightNode = self.root[len(self.root)-1]
+        mostBottomDot = self.get_bottom_most_dot()
 
         #Do not adjust camera with a node that is in default add point
         if mostRightNode.dot.get_center()[1] == 3:
@@ -458,6 +467,14 @@ class FiboScene(MovingCameraScene):
         newWidth = (rightPoint[0]-leftPoint[0])+2
         self.defaultAddPoint[0] = (rightPoint[0]+leftPoint[0])/2
 
+        newHeight = 0
+        if mostBottomDot is not None:
+            top_point = self.camera.frame.get_top()[1]
+            bottom_point = mostBottomDot.get_center()[1]
+            newHeight = (top_point-bottom_point)+2
+
+        newWidth = max(newWidth, newHeight*(self.width / self.height))
+        
         boarderRight = self.camera.frame.get_right()[0]
         boarderLeft = self.camera.frame.get_left()[0]
         screenWidth = boarderRight-boarderLeft

@@ -187,6 +187,7 @@ class FibonacciHeap:
             if parent is not None and parent.value > new_value:
                 self.cut(node_to_decrease)
                 self.cascading_cut(parent)
+
             self.check_min_with_single_node(node_to_decrease, True) #TODO fix 2ønd parameter
 
     def find_node_by_id(self, start_node, id):
