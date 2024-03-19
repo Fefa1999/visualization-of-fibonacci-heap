@@ -70,7 +70,7 @@ class FiboScene(MovingCameraScene):
     def create_dot(self, point: Point3D, number: int, id: int):
         fiboDot = self.FiboDot(id)
         fiboDot.dot = Dot(point, radius=0.2, color=BLUE)
-        fiboDot.numberLabel = Text(str(number), font_size=18).move_to(fiboDot.dot.get_center())#.set_z_index(1) #Why is set_z_index soooo slow? #And Stroke width???
+        fiboDot.numberLabel = Text(str(number), font_size=18).move_to(fiboDot.dot.get_center()).set_z_index(1) #Why is set_z_index soooo slow? #And Stroke width???
         fiboDot.widthOfChildren = fiboDot.dot.radius*2
         return fiboDot
 
@@ -95,11 +95,11 @@ class FiboScene(MovingCameraScene):
 
         if len(self.root) == 1:
             if isAnimation:
-                self.play(fiboDot.dot.animate.move_to([0, 2, 0]), fiboDot.numberLabel.animate.move_to([0, 2, 0]))
+                self.play(fiboDot.dot.animate.move_to([0.0, 2.0, 0.0]), fiboDot.numberLabel.animate.move_to([0.0, 2.0, 0.0]))
                 return
             else:
-                fiboDot.dot.move_to([0, 2, 0])
-                fiboDot.numberLabel.move_to([0, 2, 0])
+                fiboDot.dot.move_to([0.0, 2.0, 0.0])
+                fiboDot.numberLabel.move_to([0.0, 2.0, 0.0])
                 return
 
         if isAnimation:
@@ -167,7 +167,7 @@ class FiboScene(MovingCameraScene):
         self.root.remove(childMojb)
 
         #creating arrow
-        pointer = Line(childMojb.dot,parentMobj.dot)
+        pointer = Line(childMojb.dot,parentMobj.dot).set_z_index(-1)
         childMojb.arrow = pointer
 
         #Calculation new widths.
@@ -304,11 +304,11 @@ class FiboScene(MovingCameraScene):
         self.space_list_dots_by_tree_width(parentMojb.children, False)
 
         #Move arrows and recursively move childrens og children
-        parentsBottom = parentMojb.dot.get_bottom()
+        parentsCenter = parentMojb.dot.get_center()
         for n in parentMojb.children:
             if self.showLabels:
                 n.numberLabel.move_to(n.dot.get_center())
-            n.arrow.put_start_and_end_on(n.dot.get_top(), parentsBottom)
+            n.arrow.put_start_and_end_on(n.dot.get_center(), parentsCenter)
             self.move_children(n)
 
     def delete(self, deleteDotID: int, isAnimation: bool):
@@ -425,7 +425,7 @@ class FiboScene(MovingCameraScene):
         self.prepareSceneForAnimations(isAnimation)
 
         node = self.nodeDic[nodeId]
-        new_text = Text(str(newValue), font_size=18 - (newValue/100)).move_to(node.dot.get_center())#.set_z_index(1) #TODO why not just change the text???
+        new_text = Text(str(newValue), font_size=18 - (newValue/100)).move_to(node.dot.get_center()).set_z_index(1) #TODO why not just change the text???
         if showExplanatoryText:
             text = "Decrease key of node " + str(node.id) + " to " + str(newValue)
             self.write_explanatory_text_to_video(text)
@@ -487,7 +487,7 @@ class FiboScene(MovingCameraScene):
         self.play(FadeOut(explanatoryText))
 
     def remove_label_check(self): #low quality: 35 dots - medium: ??- High: 65 dots - Production: 97 - 4k: 110 
-        qualityNumber = 50
+        qualityNumber = 200
         numberOfDots = len(self.nodeDic.values())
         if numberOfDots >= qualityNumber and self.showLabels:
             self.showLabels = False
