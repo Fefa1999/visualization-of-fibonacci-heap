@@ -363,7 +363,7 @@ class FiboScene(MovingCameraScene):
             if self.showLabels:
                 listOfAnimations.append(n.numberLabel.animate.move_to(n.dot.target.get_center()))
             if not (n.arrow is None):
-                listOfAnimations.append(n.arrow.animate.put_start_and_end_on(n.dot.target.get_top(), self.nodeDic[n.parentKey].dot.target.get_bottom()))
+                listOfAnimations.append(n.arrow.animate.put_start_and_end_on(n.dot.target.get_center(), self.nodeDic[n.parentKey].dot.target.get_center()))
             n.target = None
         self.mobjsTOmove = list[self.FiboDot]()
         self.storedAnimations.extend(listOfAnimations)
