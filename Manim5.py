@@ -49,10 +49,10 @@ class FiboScene(MovingCameraScene):
     def space_list_dots_by_tree_width(self, lst: list[FiboDot], isToTarget: bool, direction: Vector3 = LEFT, **kwargs):
         if isToTarget:
             for m1, m2 in zip(lst, lst[1:]):
-                m2.dot.target.next_to(m1.dot.target, direction, (m1.widthOfChildren), **kwargs)
+                m2.dot.target.next_to(m1.dot.target, direction, (m1.widthOfChildren + m1.dot.radius*2), **kwargs)
         else:
             for m1, m2 in zip(lst, lst[1:]):
-                m2.dot.next_to(m1.dot, direction, (m1.widthOfChildren), **kwargs)
+                m2.dot.next_to(m1.dot, direction, (m1.widthOfChildren + m1.dot.radius*2), **kwargs)
         return lst
 
     def get_root_key_index(self, root: list, key: int):
@@ -66,8 +66,8 @@ class FiboScene(MovingCameraScene):
     def create_dot(self, point: Point3D, number: int, id: int):
         fiboDot = self.FiboDot(id)
         fiboDot.dot = Dot(point, radius=0.2, color=BLUE)
-        fiboDot.numberLabel = Text(str(number), font_size=18).move_to(fiboDot.dot.get_center()).set_z_index(1) #Why is set_z_index soooo slow? #And Stroke width???
-        fiboDot.widthOfChildren = fiboDot.dot.radius*2
+        fiboDot.numberLabel = Text(str(number), font_size=18 - (number/100)).move_to(fiboDot.dot.get_center()).set_z_index(1) #Why is set_z_index soooo slow? #And Stroke width???
+        fiboDot.widthOfChildren = 0
         return fiboDot
 
     #Inserts the dot onto the scene and adds it to a vgroup (Root), then calls for a repositioning of the nodes.
@@ -167,7 +167,7 @@ class FiboScene(MovingCameraScene):
             if len(parent.children) == 1:
                 gainedWidth = 0
             else:
-                gainedWidth = child.widthOfChildren + parent.dot.radius*2
+                gainedWidth = child.widthOfChildren + parent.dot.radius*4
             parent.widthOfChildren = parent.widthOfChildren + gainedWidth
         else:
             #If we remove a child in the middle of a tree, the tree should "move together" and become more narrow
@@ -191,7 +191,7 @@ class FiboScene(MovingCameraScene):
             if not isinstance(currentDot, self.FiboDot): #TODO why is this still needed?
                 return 
             currentDot.dot.target = Dot(point=currentDot.dot.get_center(), radius=currentDot.dot.radius, color=currentDot.dot.color)
-            currentDot.dot.target.set_x(lastDotDestination[0]+currentDot.widthOfChildren+currentDot.dot.radius*2).set_y(lastDotDestination[1])
+            currentDot.dot.target.set_x(lastDotDestination[0]+currentDot.widthOfChildren+currentDot.dot.radius*4).set_y(lastDotDestination[1])
             self.mobjsTOmove.append(currentDot)
             self.create_children_animations(currentDot, currentDot.dot.target)
             
@@ -248,7 +248,7 @@ class FiboScene(MovingCameraScene):
                 return []
             
             currentDot = root[rootIndex]
-            currentDot.dot.set_x(lastDotDestination.get_x()+currentDot.widthOfChildren+currentDot.dot.radius*2).set_y(lastDotDestination.get_y())
+            currentDot.dot.set_x(lastDotDestination.get_x()+currentDot.widthOfChildren+currentDot.dot.radius*4).set_y(lastDotDestination.get_y())
             
             if self.showLabels:
                 currentDot.numberLabel.move_to(currentDot.dot.get_center())
