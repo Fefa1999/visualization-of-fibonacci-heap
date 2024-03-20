@@ -28,13 +28,15 @@ class FiboScene(MovingCameraScene):
     def construct(self):
         self.clear()
 
-    #New dot class. A manim dot with children.
+    #New class. Contains an ID and a parrentKey for the fibonacci heap to indenfify and modify individual instanses. 
+        #Contains a manim dot, line and text. All needed for manim to display a node.
+        #Contains a list of children, width and heigth of them. For calculating mobjects target location.
     class FiboDot:
-        dot: Dot
         id: int
         parentKey: int
         children: list[Self]
         widthOfChildren: int
+        heigthOfChildren: int
         dot: Dot
         arrow: Line = None
         numberLabel: Text
@@ -46,22 +48,9 @@ class FiboScene(MovingCameraScene):
             #self.widthOfChildren = int()
             #self.arrow = Line()
             #self.numberLabel = Text("")
-    
-    def space_list_dots_by_tree_width(self, lst: list[FiboDot], isToTarget: bool, direction: Vector3 = LEFT, **kwargs):
-        if isToTarget:
-            for m1, m2 in zip(lst, lst[1:]):
-                m2.dot.target.next_to(m1.dot.target, direction, (m1.widthOfChildren + m1.dot.radius*2), **kwargs)
-        else:
-            for m1, m2 in zip(lst, lst[1:]):
-                m2.dot.next_to(m1.dot, direction, (m1.widthOfChildren + m1.dot.radius*2), **kwargs)
-        return lst
 
-    def get_root_key_index(self, root: list, key: int):
-        for n in range(len(root)):
-            a = root[n]
-            if a.id == key:
-                return n
-        return -1
+    ################################################################
+    ################### Fibonacci Heap Functions ###################
 
     #Creates a FiboDot with a dot at "location", and numberLabel showing numberl, and return it without adding it to scene.
     def create_dot(self, point: Point3D, number: int, id: int):
@@ -69,6 +58,7 @@ class FiboScene(MovingCameraScene):
         fiboDot.dot = Dot(point, radius=0.2, color=BLUE)
         fiboDot.numberLabel = Text(str(number), font_size=18 - (number/100)).move_to(fiboDot.dot.get_center()).set_z_index(1) #Why is set_z_index soooo slow? #And Stroke width???
         fiboDot.widthOfChildren = 0
+        fiboDot.heigthOfChildren = 0
         return fiboDot
 
     #Inserts the dot onto the scene and adds it to a vgroup (Root), then calls for a repositioning of the nodes.
@@ -107,18 +97,6 @@ class FiboScene(MovingCameraScene):
             self.adjust_camera(isAnimation)
         else:
             self.sceneUpToDate = False
-        
-    def get_left_most_dot(self, group: list[FiboDot]):
-        if len(group) == 0:
-            return #TODO should it return something to tell it failed??
-        
-        def aux(a: self.FiboDot):
-            if len(a.children) > 0:
-                return aux(a.children[len(a.children)-1])
-            else:
-                return a
-        
-        return aux(group[0])
 
     def create_child(self, parentKey: int, childKey: int, isAnimation: bool, showExplanatoryText: bool = False):
         self.prepareSceneForAnimations(isAnimation)
@@ -162,6 +140,274 @@ class FiboScene(MovingCameraScene):
         if showExplanatoryText and isAnimation:
             self.play(FadeOut(explanatoryText))
 
+    def delete(self, deleteDotID: int, isAnimation: bool):
+        self.prepareSceneForAnimations(isAnimation)
+        
+        deleteDot = self.nodeDic.get(deleteDotID)
+        index = self.get_root_key_index(self.root, deleteDotID)
+
+        self.root.remove(deleteDot)
+    
+        childrenArrows = []
+        if (len(deleteDot.children)>0):
+            deleteDot.children.reverse()
+            for n in deleteDot.children:
+                childrenArrows.append(n.arrow)
+                n.arrow = None
+                n.parentKey = None
+                self.root.append(n)
+
+        self.nodeDic.pop(deleteDot.id)  #No test if it works
+        if isAnimation:
+            for n in childrenArrows:
+                self.storedAnimations.append(FadeOut(n))
+            self.storedAnimations.append(FadeOut(deleteDot.dot))
+            if self.showLabels:
+                self.storedAnimations.append(FadeOut(deleteDot.numberLabel))
+            self.animate_root(index, isAnimation)
+        else:
+            if self.showLabels:
+                self.remove(deleteDot.numberLabel)
+            self.remove(deleteDot.dot)
+            for n in childrenArrows:
+                self.remove(n)
+            self.sceneUpToDate = False
+        self.adjust_camera(isAnimation)
+    
+    def set_min(self, min_id, isAnimation):
+        min_node_index = self.get_root_key_index(self.root, min_id)
+        if not isinstance(min_node_index, int):
+            return
+        minFiboNode = self.root[min_node_index]
+        if self.min_node is not None:
+            self.min_node.dot.color = BLUE
+
+        self.min_node = minFiboNode
+        minFiboNode.dot.color = RED
+        self.adjust_camera(isAnimation)
+
+    def change_key(self, nodeId, newValue: int, isAnimation: bool, showExplanatoryText: bool=False):
+        self.prepareSceneForAnimations(isAnimation)
+
+        node = self.nodeDic[nodeId]
+        new_text = Text(str(newValue), font_size=18 - (newValue/100)).move_to(node.dot.get_center()).set_z_index(1) #TODO why not just change the text???
+        if showExplanatoryText:
+            text = "Decrease key of node " + str(node.id) + " to " + str(newValue) #is it alway decrease????
+            self.write_explanatory_text_to_video(text)
+        if isAnimation:
+            if self.showLabels:
+                self.play(FadeOut(node.numberLabel), FadeIn(new_text))
+            #self.play(Transform(node.numberLabel, new_text)) #more expensive? and leaves the other the screen
+            node.numberLabel = new_text
+        else:
+            node.numberLabel.become(new_text)
+
+    def cut(self, node_to_cut_ID: int, isAnimation: bool, unMark, showExplanatoryText: bool=False):
+        self.prepareSceneForAnimations(isAnimation)
+        node_to_cut = self.nodeDic[node_to_cut_ID]
+        if showExplanatoryText:
+            text = "Cut " + node_to_cut.numberLabel.text + " from parent and move it to the root list"
+            self.write_explanatory_text_to_video(text)
+
+        parent_node = self.nodeDic[node_to_cut.parentKey]
+        arrowToBeRemoved = node_to_cut.arrow
+        node_to_cut.arrow = None
+        node_to_cut.parentKey = None
+        parent_node.children.remove(node_to_cut)
+        self.root.append(node_to_cut)
+        
+        self.update_widthOfChildren(parent_node, node_to_cut, isAddingNode=False)
+
+        firstIndexOfChange = 0
+        root_parent = parent_node
+        while True:
+            if root_parent.parentKey is None:
+                firstIndexOfChange = self.get_root_key_index(self.root, root_parent.id)
+                break
+            root_parent = self.nodeDic[root_parent.parentKey]
+
+        if isAnimation:
+            self.storedAnimations.append(FadeOut(arrowToBeRemoved))
+            self.animate_root(firstIndexOfChange, isAnimation)
+        else:
+            self.remove(arrowToBeRemoved)
+            self.sceneUpToDate = False
+
+        if unMark and showExplanatoryText:
+            text = "If " + node_to_cut.numberLabel.text + " is marked, unmark it again"
+            self.write_explanatory_text_to_video(text)
+            if isAnimation:
+                self.play(node_to_cut.dot.animate.set_color(BLUE))
+            else:
+                node_to_cut.dot.color = BLUE
+        
+    def cascading_cut(self, decreased_node_parent_id, isAnimation, showExplanatoryText):
+        self.prepareSceneForAnimations(isAnimation)
+        node = self.nodeDic[decreased_node_parent_id]
+        if showExplanatoryText:
+            self.write_explanatory_text_to_video("If parent is unmarked, mark it")
+        if isAnimation:
+            self.play(node.dot.animate.set_color(ORANGE))
+        else:
+            node.dot.color = ORANGE
+    
+    def write_explanatory_text_to_video(self, text):
+        textPlacement = [self.camera.frame.get_top()[0], self.camera.frame.get_top()[1]-1, 0]
+        explanatoryText = Text(str(text), font_size=30).move_to(textPlacement)
+        self.play(FadeIn(explanatoryText))
+        self.play(FadeOut(explanatoryText))
+
+
+
+    ##########################################################################
+    ################### Preformace functions based on size ###################
+    def remove_label_check(self): #low quality: 35 dots - medium: ??- High: 65 dots - Production: 97 - 4k: 110 
+        qualityNumber = 35
+        numberOfDots = len(self.nodeDic.values())
+        if numberOfDots >= qualityNumber and self.showLabels:
+            self.showLabels = False
+            self.remove_labels()
+        elif (numberOfDots < qualityNumber) and not self.showLabels:
+            self.showLabels = True
+            self.add_labels()
+        
+    def add_labels(self):
+        for _, n in self.nodeDic.items():
+            self.add(n.numberLabel.move_to(n.dot.get_center()))
+        return
+
+    def remove_labels(self):
+        for _, n in self.nodeDic.items():
+            self.remove(n.numberLabel)
+        return
+        
+
+    #############################################################################
+    ################### Build animations and execute movement ###################
+    def prepareSceneForAnimations(self, isAnimation: bool):
+        if not isAnimation or self.sceneUpToDate:
+            return
+        self.build_scene(0)
+        self.sceneUpToDate = True
+        self.adjust_camera(False)
+    
+    def buildAnimation(self, isAnimation):
+        listOfAnimations = list[Animation]()
+        for n in self.mobjsTOmove:
+            listOfAnimations.append(MoveToTarget(n.dot))
+            if self.showLabels:
+                listOfAnimations.append(n.numberLabel.animate.move_to(n.dot.target.get_center()))
+            if not (n.arrow is None):
+                listOfAnimations.append(n.arrow.animate.put_start_and_end_on(n.dot.target.get_center(), self.nodeDic[n.parentKey].dot.target.get_center()))
+            if n.dot.target.get_center()[0] > self.camera.frame.get_right()[0] or n.dot.target.get_center()[0] < self.camera.frame.get_left()[0]:
+                self.adjust_camera(isAnimation)
+            if n.dot.target.get_bottom()[1] < self.camera.frame.get_bottom()[1]:
+                self.bottom_node = n.dot.target
+                self.adjust_camera(isAnimation)
+                self.bottom_node = None
+            n.target = None
+        self.mobjsTOmove = list[self.FiboDot]()
+        self.storedAnimations.extend(listOfAnimations)
+        return 
+
+    def executeStoredAnimations(self):
+        self.play(*self.storedAnimations)
+        self.storedAnimations = list[Animation]()
+        return
+    
+
+    ##############################################
+    ################### Camera ###################    
+    def adjust_camera(self, isAnimation):
+        self.prepareSceneForAnimations(isAnimation)
+        mostLeftNode = self.get_left_most_dot(self.root)
+        mostRightNode = self.root[len(self.root)-1]
+        mostBottomDot = self.get_bottom_most_dot()
+
+        #Do not adjust camera with a node that is in default add point
+        if mostRightNode.dot.get_center()[1] == 3:
+            return
+
+        rightPoint = mostRightNode.dot.get_right()
+        leftPoint = mostLeftNode.dot.get_left()
+
+        newWidth = (rightPoint[0]-leftPoint[0])+2
+        self.defaultAddPoint[0] = (rightPoint[0]+leftPoint[0])/2
+
+        newHeight = 0
+        if mostBottomDot is not None:
+            top_point = self.camera.frame.get_top()[1]
+            bottom_point = mostBottomDot.get_center()[1]
+            newHeight = (top_point-bottom_point)+2
+
+        newWidth = max(newWidth, newHeight*(self.width / self.height))
+        
+        boarderRight = self.camera.frame.get_right()[0]
+        boarderLeft = self.camera.frame.get_left()[0]
+        screenWidth = boarderRight-boarderLeft
+
+        newCenter = (((rightPoint[0]+leftPoint[0])/2), self.camera.frame.get_y(), 0)
+
+        if newWidth > screenWidth:
+            self.zoom_out(isAnimation, newCenter, newWidth)
+        elif newWidth > self.width and newWidth < screenWidth:
+            self.zoom_in(isAnimation, newCenter, newWidth)
+        else:
+            if isAnimation:
+                self.play(self.camera.frame.animate.move_to(newCenter))
+            else:
+                self.camera.frame.move_to(newCenter)
+
+    def zoom_in(self, isAnimation, newCenter, currentWidthOfHeap):
+        if isAnimation:
+            self.play(self.camera.frame.animate.set_width(currentWidthOfHeap).move_to(newCenter))  
+        else:
+            self.camera.frame.set_width(currentWidthOfHeap).move_to(newCenter)         
+
+    def zoom_out(self, isAnimation, newCenter, currentWidthOfHeap):
+        if isAnimation:
+            self.play(self.camera.frame.animate.set_width(currentWidthOfHeap).move_to(newCenter))  
+        else:
+            self.camera.frame.set_width(currentWidthOfHeap).move_to(newCenter) 
+
+
+    ######################################################
+    ################### Util Functions ###################
+
+    def get_root_key_index(self, root: list, key: int):
+        for n in range(len(root)):
+            a = root[n]
+            if a.id == key:
+                return n
+        return -1
+
+    def get_left_most_dot(self, group: list[FiboDot]):
+        if len(group) == 0:
+            return #TODO should it return something to tell it failed??
+        
+        def aux(a: self.FiboDot):
+            if len(a.children) > 0:
+                return aux(a.children[len(a.children)-1])
+            else:
+                return a
+        
+        return aux(group[0])
+    
+    def get_bottom_most_dot(self):
+        return self.bottom_node
+
+
+    ##########################################################################
+    ################### Allign with parent right - Layout. ###################
+    def space_list_dots_by_tree_width(self, lst: list[FiboDot], isToTarget: bool, direction: Vector3 = LEFT, **kwargs):
+        if isToTarget:
+            for m1, m2 in zip(lst, lst[1:]):
+                m2.dot.target.next_to(m1.dot.target, direction, (m1.widthOfChildren + m1.dot.radius*2), **kwargs)
+        else:
+            for m1, m2 in zip(lst, lst[1:]):
+                m2.dot.next_to(m1.dot, direction, (m1.widthOfChildren + m1.dot.radius*2), **kwargs)
+        return lst
+    
     def update_widthOfChildren(self, parent: FiboDot, child: FiboDot, isAddingNode: bool):
         if isAddingNode:
             gainedWidth = int() 
@@ -175,8 +421,8 @@ class FiboScene(MovingCameraScene):
             Temp_node = parent
             while isinstance(Temp_node, self.FiboDot):
                 Temp_node.widthOfChildren = Temp_node.widthOfChildren - child.widthOfChildren
-                Temp_node = self.nodeDic.get(Temp_node.parentKey)   
-            
+                Temp_node = self.nodeDic.get(Temp_node.parentKey)            
+    
     def animate_root(self, startIndex: int, isAnimation): #Must be done smart. aka move the lesser tree. Or moving fixed distance if child is at the ends.
         self.prepareSceneForAnimations(True)
 
@@ -280,226 +526,7 @@ class FiboScene(MovingCameraScene):
             n.arrow.put_start_and_end_on(n.dot.get_center(), parentsCenter)
             self.move_children(n)
 
-    def delete(self, deleteDotID: int, isAnimation: bool):
-        self.prepareSceneForAnimations(isAnimation)
-        
-        deleteDot = self.nodeDic.get(deleteDotID)
-        index = self.get_root_key_index(self.root, deleteDotID)
 
-        self.root.remove(deleteDot)
+    #####################################################
+    ################### Uncatagorized ###################
     
-        childrenArrows = []
-        if (len(deleteDot.children)>0):
-            deleteDot.children.reverse()
-            for n in deleteDot.children:
-                childrenArrows.append(n.arrow)
-                n.arrow = None
-                n.parentKey = None
-                self.root.append(n)
-
-        self.nodeDic.pop(deleteDot.id)  #No test if it works
-        if isAnimation:
-            for n in childrenArrows:
-                self.storedAnimations.append(FadeOut(n))
-            self.storedAnimations.append(FadeOut(deleteDot.dot))
-            if self.showLabels:
-                self.storedAnimations.append(FadeOut(deleteDot.numberLabel))
-            self.animate_root(index, isAnimation)
-        else:
-            if self.showLabels:
-                self.remove(deleteDot.numberLabel)
-            self.remove(deleteDot.dot)
-            for n in childrenArrows:
-                self.remove(n)
-            self.sceneUpToDate = False
-        self.adjust_camera(isAnimation)
-
-    def set_min(self, min_id, isAnimation):
-        min_node_index = self.get_root_key_index(self.root, min_id)
-        if not isinstance(min_node_index, int):
-            return
-        minFiboNode = self.root[min_node_index]
-        if self.min_node is not None:
-            self.min_node.dot.color = BLUE
-
-        self.min_node = minFiboNode
-        minFiboNode.dot.color = RED
-        self.adjust_camera(isAnimation)
-
-    def buildAnimation(self, isAnimation):
-        listOfAnimations = list[Animation]()
-        for n in self.mobjsTOmove:
-            listOfAnimations.append(MoveToTarget(n.dot))
-            if self.showLabels:
-                listOfAnimations.append(n.numberLabel.animate.move_to(n.dot.target.get_center()))
-            if not (n.arrow is None):
-                listOfAnimations.append(n.arrow.animate.put_start_and_end_on(n.dot.target.get_center(), self.nodeDic[n.parentKey].dot.target.get_center()))
-            if n.dot.target.get_center()[0] > self.camera.frame.get_right()[0] or n.dot.target.get_center()[0] < self.camera.frame.get_left()[0]:
-                self.adjust_camera(isAnimation)
-            if n.dot.target.get_bottom()[1] < self.camera.frame.get_bottom()[1]:
-                self.bottom_node = n.dot.target
-                self.adjust_camera(isAnimation)
-                self.bottom_node = None
-            n.target = None
-        self.mobjsTOmove = list[self.FiboDot]()
-        self.storedAnimations.extend(listOfAnimations)
-        return 
-
-    def executeStoredAnimations(self):
-        self.play(*self.storedAnimations)
-        self.storedAnimations = list[Animation]()
-        return
-
-    def change_key(self, nodeId, newValue: int, isAnimation: bool, showExplanatoryText: bool=False):
-        self.prepareSceneForAnimations(isAnimation)
-
-        node = self.nodeDic[nodeId]
-        new_text = Text(str(newValue), font_size=18 - (newValue/100)).move_to(node.dot.get_center()).set_z_index(1) #TODO why not just change the text???
-        if showExplanatoryText:
-            text = "Decrease key of node " + str(node.id) + " to " + str(newValue)
-            self.write_explanatory_text_to_video(text)
-        if isAnimation:
-            if self.showLabels:
-                self.play(FadeOut(node.numberLabel), FadeIn(new_text))
-            #self.play(Transform(node.numberLabel, new_text)) #more expensive? and leaves the other the screen
-            node.numberLabel = new_text
-        else:
-            node.numberLabel.become(new_text)
-
-    def cut(self, node_to_cut_ID: int, isAnimation: bool, unMark, showExplanatoryText: bool=False):
-        self.prepareSceneForAnimations(isAnimation)
-        node_to_cut = self.nodeDic[node_to_cut_ID]
-        if showExplanatoryText:
-            text = "Cut " + node_to_cut.numberLabel.text + " from parent and move it to the root list"
-            self.write_explanatory_text_to_video(text)
-
-        parent_node = self.nodeDic[node_to_cut.parentKey]
-        arrowToBeRemoved = node_to_cut.arrow
-        node_to_cut.arrow = None
-        node_to_cut.parentKey = None
-        parent_node.children.remove(node_to_cut)
-        self.root.append(node_to_cut)
-        
-        self.update_widthOfChildren(parent_node, node_to_cut, isAddingNode=False)
-
-        firstIndexOfChange = 0
-        root_parent = parent_node
-        while True:
-            if root_parent.parentKey is None:
-                firstIndexOfChange = self.get_root_key_index(self.root, root_parent.id)
-                break
-            root_parent = self.nodeDic[root_parent.parentKey]
-
-        if isAnimation:
-            self.storedAnimations.append(FadeOut(arrowToBeRemoved))
-            self.animate_root(firstIndexOfChange, isAnimation)
-        else:
-            self.remove(arrowToBeRemoved)
-            self.sceneUpToDate = False
-
-        if unMark and showExplanatoryText:
-            text = "If " + node_to_cut.numberLabel.text + " is marked, unmark it again"
-            self.write_explanatory_text_to_video(text)
-            if isAnimation:
-                self.play(node_to_cut.dot.animate.set_color(BLUE))
-            else:
-                node_to_cut.dot.color = BLUE
-        
-    def cascading_cut(self, decreased_node_parent_id, isAnimation, showExplanatoryText):
-        self.prepareSceneForAnimations(isAnimation)
-        node = self.nodeDic[decreased_node_parent_id]
-        if showExplanatoryText:
-            self.write_explanatory_text_to_video("If parent is unmarked, mark it")
-        if isAnimation:
-            self.play(node.dot.animate.set_color(ORANGE))
-        else:
-            node.dot.color = ORANGE
-    
-    def write_explanatory_text_to_video(self, text):
-        textPlacement = [self.camera.frame.get_top()[0], self.camera.frame.get_top()[1]-1, 0]
-        explanatoryText = Text(str(text), font_size=30).move_to(textPlacement)
-        self.play(FadeIn(explanatoryText))
-        self.play(FadeOut(explanatoryText))
-
-    def remove_label_check(self): #low quality: 35 dots - medium: ??- High: 65 dots - Production: 97 - 4k: 110 
-        qualityNumber = 200
-        numberOfDots = len(self.nodeDic.values())
-        if numberOfDots >= qualityNumber and self.showLabels:
-            self.showLabels = False
-            self.remove_labels()
-        elif (numberOfDots < qualityNumber) and not self.showLabels:
-            self.showLabels = True
-            self.add_labels()
-        
-    def add_labels(self):
-        for _, n in self.nodeDic.items():
-            self.add(n.numberLabel.move_to(n.dot.get_center()))
-        return
-
-    def remove_labels(self):
-        for _, n in self.nodeDic.items():
-            self.remove(n.numberLabel)
-        return
-        
-    def prepareSceneForAnimations(self, isAnimation: bool):
-        if not isAnimation or self.sceneUpToDate:
-            return
-        self.build_scene(0)
-        self.sceneUpToDate = True
-        self.adjust_camera(False)
-    
-    def get_bottom_most_dot(self):
-        return self.bottom_node
-    
-    def adjust_camera(self, isAnimation):
-        self.prepareSceneForAnimations(isAnimation)
-        mostLeftNode = self.get_left_most_dot(self.root)
-        mostRightNode = self.root[len(self.root)-1]
-        mostBottomDot = self.get_bottom_most_dot()
-
-        #Do not adjust camera with a node that is in default add point
-        if mostRightNode.dot.get_center()[1] == 3:
-            return
-
-        rightPoint = mostRightNode.dot.get_right()
-        leftPoint = mostLeftNode.dot.get_left()
-
-        newWidth = (rightPoint[0]-leftPoint[0])+2
-        self.defaultAddPoint[0] = (rightPoint[0]+leftPoint[0])/2
-
-        newHeight = 0
-        if mostBottomDot is not None:
-            top_point = self.camera.frame.get_top()[1]
-            bottom_point = mostBottomDot.get_center()[1]
-            newHeight = (top_point-bottom_point)+2
-
-        newWidth = max(newWidth, newHeight*(self.width / self.height))
-        
-        boarderRight = self.camera.frame.get_right()[0]
-        boarderLeft = self.camera.frame.get_left()[0]
-        screenWidth = boarderRight-boarderLeft
-
-        newCenter = (((rightPoint[0]+leftPoint[0])/2), self.camera.frame.get_y(), 0)
-
-        if newWidth > screenWidth:
-            self.zoom_out(isAnimation, newCenter, newWidth)
-        elif newWidth > self.width and newWidth < screenWidth:
-            self.zoom_in(isAnimation, newCenter, newWidth)
-        else:
-            if isAnimation:
-                self.play(self.camera.frame.animate.move_to(newCenter))
-            else:
-                self.camera.frame.move_to(newCenter)
-
-    def zoom_in(self, isAnimation, newCenter, currentWidthOfHeap):
-        if isAnimation:
-            self.play(self.camera.frame.animate.set_width(currentWidthOfHeap).move_to(newCenter))  
-        else:
-            self.camera.frame.set_width(currentWidthOfHeap).move_to(newCenter)         
-
-    def zoom_out(self, isAnimation, newCenter, currentWidthOfHeap):
-        if isAnimation:
-            self.play(self.camera.frame.animate.set_width(currentWidthOfHeap).move_to(newCenter))  
-        else:
-            self.camera.frame.set_width(currentWidthOfHeap).move_to(newCenter) 
-
