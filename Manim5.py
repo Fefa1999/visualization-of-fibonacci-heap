@@ -133,6 +133,7 @@ class FiboScene(MovingCameraScene):
             self.storedAnimations.append(FadeIn(pointer))
             firstIndexOfChange = min(rootParrentIndex,rootChildIndex)
             self.animate_root(firstIndexOfChange, isAnimation)
+            #self.hv_Tree_Creation(firstIndexOfChange, isAnimation) #TODO make flag
         else:
             self.add(pointer)
             self.sceneUpToDate = False
@@ -530,3 +531,136 @@ class FiboScene(MovingCameraScene):
     #####################################################
     ################### Uncatagorized ###################
     
+
+
+    ###############################################
+    ################### HV-Tree ###################
+    def hv_Tree_Creation(self, startIndex: int, isAnimation: bool):
+        self.prepareSceneForAnimations(isAnimation)
+        
+        if startIndex >= len(self.root): #TODO is this needed in the function
+            self.executeStoredAnimations()
+            self.remove_label_check()
+            return
+
+        startFDot = self.root[startIndex]
+
+        standardDistance = startFDot.dot.radius*4
+        ba = self.transformToBinary(startFDot)
+        maxIndex = len(ba)
+
+        isLeftIsClosest_ = (len(startFDot.children)%2==0)
+
+        def aux(i: int, isLeftIsClosest: bool, x: float, y: float):
+            currentDot = ba[i]
+            if not isinstance(currentDot, self.FiboDot):
+                return
+            
+            currentDot.dot.target = Dot(point=(currentDot.dot.get_center()), radius=currentDot.dot.radius, color=currentDot.dot.color)
+            currentDot.dot.target.set_x(x).set_y(y)
+            if currentDot.id != -1:
+                self.mobjsTOmove.append(currentDot)
+
+            if i*2+2>=maxIndex:
+                return
+
+            left = ba[i*2+1]
+            leftH = 0
+            if left is not None:
+                leftH = left.widthOfChildren
+
+            rigth = ba[i*2+2]
+            rigthV = 0
+            if rigth is not None:
+                rigthV = rigth.heigthOfChildren
+    
+
+            leftY= 0.0; rightX = 0.0
+            dt = currentDot.dot.target
+            if isLeftIsClosest:
+                leftY = dt.get_y()-standardDistance
+                rightX = dt.get_x()+leftH+standardDistance
+            else:
+                leftY = dt.get_y()-rigthV-standardDistance
+                rightX = dt.get_x()+standardDistance
+                
+            rightY = dt.get_y()
+            leftX = dt.get_x()
+
+            aux(i*2+1, (not isLeftIsClosest), leftX, leftY)
+            aux(i*2+2, (not isLeftIsClosest), rightX, rightY)
+
+        aux(0, isLeftIsClosest_, startFDot.dot.get_x(), startFDot.dot.get_y())
+
+        self.buildAnimation(isAnimation)
+        self.executeStoredAnimations()
+        self.remove_label_check()
+        return   
+
+    def transformToBinary(self, parrentDot: FiboDot):
+        binaryArray = [None] * (int(len(self.nodeDic)*2*1.2)) #Make proof that there can be at max 20% fake nodes
+
+        def aux(binaryIndex, fDot: self.FiboDot):
+            binaryArray[binaryIndex] = fDot
+            nChildren = len(fDot.children)            
+            if nChildren == 0:
+                return
+            
+            childN = nChildren
+            aux(binaryIndex*2+2-childN%2, fDot.children[childN-1])#If even children place first left.
+
+            childN -= 1
+            currentIndex = binaryIndex*2+2-childN%2
+            while childN >= 1:
+                if childN == 1:
+                    aux(currentIndex, fDot.children[0])
+                    return
+
+                fakeDot = self.FiboDot(-1)
+                fakeDot.dot = Dot()
+                binaryArray[currentIndex] = fakeDot
+
+                aux(currentIndex*2+2-childN%2, fDot.children[childN-1])
+                childN -= 1
+                currentIndex = currentIndex*2+2-childN%2
+
+        aux(0,parrentDot)
+        self.updateDimentions(binaryArray, len(parrentDot.children)%2==0)
+        return binaryArray
+
+    def updateDimentions(self, binaryHeap: list[FiboDot], leftIsClosest: bool):    #NOT TAIL RECURSIVE!!!
+        root = binaryHeap[0]
+        distance = root.dot.radius*4
+        maxIndex = len(binaryHeap)
+
+        def updated(i: int, leftIsClosest_: bool):
+            fDot = binaryHeap[i]
+            if not isinstance(fDot, self.FiboDot):
+                return 0,0
+
+            fDot.widthOfChildren = 0
+            fDot.heigthOfChildren = 0
+
+            if i*2+2 >= maxIndex:
+                return 0, 0
+            
+            leftHeigth = 0; leftWidth = 0
+            if binaryHeap[i*2+1] is not None:
+                leftHeigth, leftWidth = updated(i*2+1, (not leftIsClosest_))
+                leftHeigth += distance
+
+            rigthHeigth = 0; rigthWidth = 0
+            if binaryHeap[i*2+2] is not None:
+                rigthHeigth, rigthWidth = updated(i*2+2, (not leftIsClosest_))
+                rigthWidth += distance
+
+            if leftIsClosest_:
+                fDot.widthOfChildren = rigthWidth+leftWidth
+                fDot.heigthOfChildren = max(rigthHeigth, leftHeigth)
+            else:
+                fDot.widthOfChildren = max(leftWidth, rigthWidth)
+                fDot.heigthOfChildren = rigthHeigth+leftHeigth
+                
+            return fDot.heigthOfChildren, fDot.widthOfChildren
+
+        updated(0, leftIsClosest)
