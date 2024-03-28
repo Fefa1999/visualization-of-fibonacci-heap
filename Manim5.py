@@ -650,20 +650,12 @@ class FiboScene(MovingCameraScene):
         if startIndex >= len(self.root): #TODO is this needed in the function
             return
 
-        startFDot = self.root[startIndex]
-
-        standardDistance = startFDot.dot.radius*4
-        ba = self.transformToBinary(startFDot)
-        maxIndex = len(ba)
-
-        isLeftIsClosest_ = (len(startFDot.children)%2==0)
-
         def aux(i: int, isLeftIsClosest: bool, x: float, y: float):
             currentDot = ba[i]
             if not isinstance(currentDot, self.FiboDot):
                 return
 
-            currentDot.dot.set_x(x).set_y(y)
+            currentDot.dot.move_to((x,y,0))
             if self.showLabels and currentDot.id != -1:
                 currentDot.numberLabel.move_to(currentDot.dot.get_center())
             if currentDot.arrow is not None:
@@ -681,7 +673,6 @@ class FiboScene(MovingCameraScene):
             rigthV = 0
             if rigth is not None:
                 rigthV = rigth.heigthOfChildren
-    
 
             leftY= 0.0; rightX = 0.0
             dt = currentDot.dot
@@ -699,11 +690,20 @@ class FiboScene(MovingCameraScene):
             aux(i*2+1, (not isLeftIsClosest), leftX, leftY)
             aux(i*2+2, (not isLeftIsClosest), rightX, rightY)
 
-        aux(0, isLeftIsClosest_, startFDot.dot.get_x(), startFDot.dot.get_y())
+
+        for i in range((len(self.root)-startIndex)):
+            startFDot = self.root[i]
+            standardDistance = startFDot.dot.radius*4
+            ba = self.transformToBinary(startFDot)
+            maxIndex = len(ba)
+            isLeftIsClosest_ = (len(startFDot.children)%2==0)
+            aux(0, isLeftIsClosest_, startFDot.dot.get_x(), startFDot.dot.get_y())
         return 
 
     def transformToBinary(self, parrentDot: FiboDot):
         binaryArray = [None] * (int(len(self.nodeDic)*2*1.2)) #Make proof that there can be at max 20% fake nodes
+        #TODO to much space of smaller trees...
+        #: list[self.FiboDot]
 
         def aux(binaryIndex, fDot: self.FiboDot):
             binaryArray[binaryIndex] = fDot
@@ -770,6 +770,28 @@ class FiboScene(MovingCameraScene):
 
         updated(0, leftIsClosest)
 
+    def packingAlgorithmBL(self):
+        class Rect:
+            def __init__(self, height: int, width: int):
+                self.x = None
+                self.y = None
+                self.h = height
+                self.w = width
+                self.placed = False
+
+        rootBinaryTrees = list()
+        rootRects = list()
+        spacing = 0.8
+
+        for i in self.root:
+            rootBinaryTrees.append(self.transformToBinary(i))
+
+        rootBinaryTrees.sort(key=lambda x: (x[0].heigthOfChildren,x[0].widthOfChildren), reverse=True)
+
+        for i in rootBinaryTrees:
+            rootRects.append(Rect(spacing+i[0].heigthOfChildren, spacing+i[0].widthOfChildren))
+
+            
 
     #####################################################
     ################### Uncatagorized ###################
