@@ -25,30 +25,12 @@ def run():
 
     #Set animation 
     heap.isAnimation = False
-    for i in range(82):
+    heap.showExplanatoryText = True
+    for i in range(32):
         heap.insert(i)
     heap.isAnimation = True 
     heap.extract_min()
-    heap.extract_min()
-    heap.extract_min()
-    for i in range(15):
-        heap.insert(i+82)
-    heap.extract_min()
-    heap.decrease_value(83, -1)
-    heap.decrease_value(84, -2)
-    heap.extract_min()
-    # heap.isAnimation = True
-    # Wanted_height = 7
-    # n = 500
-    # indexTodecrease = 1
-    # heap.insert(0)
-    # for i in range(Wanted_height):
-    #     heap.insert(n)
-    #     heap.insert(n-1)
-    #     n-=2
-    #     heap.extract_min()
-    #     heap.decrease_value(indexTodecrease, 0)
-    #     indexTodecrease += 2
+
 
     scene.render()
     print("--- %s seconds ---" % (time.time() - start_time))
