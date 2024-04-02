@@ -3,7 +3,7 @@ from manim.typing import Point3D
 from manim.typing import Vector3
 from typing_extensions import Self
 from typing import TypedDict
-
+import copy
 
 #DO YOU HAVE TO STATE DELETIONS OF OBJECTS IN PYTHON TO HELP GARBAGE COLLECTER
 #HOW DOES MANIM HANDLE REMOVED OBJECTS? ARE THEY DELTED?
@@ -32,7 +32,9 @@ class FiboScene(MovingCameraScene):
         
         #For Camera
         self.bottom_node = None
-        self.height = 7.993754879000781                                                                                                                                                                                              
+        self.right_most_node_being_moved = None
+        self.left_most_node_being_moved = None
+        self.height = 7.993754879000781                                                                                                                                                                                             
         self.width = 14.222222222222221
         self.multp = 0
         super().__init__(*args, **kwargs)
@@ -129,6 +131,7 @@ class FiboScene(MovingCameraScene):
         #Adding child to parent and removing from root
         parentMobj.children.append(childMojb)
         self.root.remove(childMojb)
+        self.set_moving_nodes(childMojb)
 
         #creating arrow
         pointer = Line(childMojb.dot,parentMobj.dot).set_z_index(-1)
@@ -160,6 +163,7 @@ class FiboScene(MovingCameraScene):
         self.prepare(isAnimation)
         
         deleteDot = self.nodeDic.get(deleteDotID)
+        self.set_moving_nodes(deleteDot)
         index = self.get_root_index_from_key(self.root, deleteDotID)
 
         self.root.remove(deleteDot)
@@ -188,7 +192,7 @@ class FiboScene(MovingCameraScene):
             for n in childrenArrows:
                 self.remove(n)
             self.sceneUpToDate = False
-
+        
         self.finish(isAnimation)
         self.adjust_camera(isAnimation)
     
@@ -205,7 +209,7 @@ class FiboScene(MovingCameraScene):
         self.adjust_camera(isAnimation)
 
     def change_key(self, nodeId, newValue: int, isAnimation: bool, showExplanatoryText: bool=False):
-        self.prepareSceneForAnimations(isAnimation)
+        self.prepareSceneForAnimations()
 
         node = self.nodeDic[nodeId]
         new_text = Text(str(newValue), font_size=18 - (newValue/100)).move_to(node.dot.get_center()).set_z_index(1) #TODO why not just change the text???
@@ -280,7 +284,7 @@ class FiboScene(MovingCameraScene):
     ##########################################################################
     ################### Preformace functions based on size ###################
     def remove_label_check(self): #low quality: 35 dots - medium: ??- High: 65 dots - Production: 97 - 4k: 110 
-        qualityNumber = 35
+        qualityNumber = 200
         numberOfDots = len(self.nodeDic.values())
         if numberOfDots >= qualityNumber and self.showLabels:
             self.showLabels = False
@@ -310,6 +314,10 @@ class FiboScene(MovingCameraScene):
         self.remove_label_check()
         if isAnimation:
             self.buildAnimations(isAnimation)
+            if self.get_leftmost_point_in_heap() < self.camera.frame.get_left()[0] or self.get_rightmost_point_in_heap() > self.camera.frame.get_right()[0] or self.get_most_bottom_dot().dot.target.get_bottom()[1] < self.camera.frame.get_bottom()[1]:
+                self.adjust_camera(True)
+                self.right_most_node_being_moved = None
+                self.left_most_node_being_moved = None
             self.executeStoredAnimations()
     
     #############################################################
@@ -331,7 +339,7 @@ class FiboScene(MovingCameraScene):
             self.hv_Tree_Build(0)
 
         self.sceneUpToDate = True
-        self.adjust_camera(False)
+        #self.adjust_camera(False)
 
     def changeTreeLayout(self, layout: TreeLayout = TreeLayout.RightAlligned, isAnimation: bool = False):
         if self.treeLayout == layout:
@@ -366,14 +374,7 @@ class FiboScene(MovingCameraScene):
                 listOfAnimations.append(n.numberLabel.animate.move_to(n.dot.target.get_center()))
             if not (n.arrow is None):
                 listOfAnimations.append(n.arrow.animate.put_start_and_end_on(n.dot.target.get_center(), self.nodeDic[n.parentKey].dot.target.get_center()))
-            
-            #TODO should it be here??
-            if n.dot.target.get_center()[0] > self.camera.frame.get_right()[0] or n.dot.target.get_center()[0] < self.camera.frame.get_left()[0]:
-                self.adjust_camera(isAnimation) 
-            if n.dot.target.get_bottom()[1] < self.camera.frame.get_bottom()[1]:
-                self.bottom_node = n.dot.target
-                self.adjust_camera(isAnimation)
-                self.bottom_node = None
+
             n.target = None
         self.mobjsTOmove = list[self.FiboDot]()
         self.storedAnimations.extend(listOfAnimations)
@@ -389,56 +390,49 @@ class FiboScene(MovingCameraScene):
     ################### Camera ###################    
     def adjust_camera(self, isAnimation):
         self.prepare(isAnimation)
-        mostLeftNode = self.get_left_most_dot(self.root)
-        mostRightNode = self.root[len(self.root)-1]
-        mostBottomDot = self.get_bottom_most_dot()
 
-        #Do not adjust camera with a node that is in default add point
-        if mostRightNode.dot.get_center()[1] == 3:
+        left_point = self.get_leftmost_point_in_heap()
+        right_point = self.get_rightmost_point_in_heap()
+        bottom_point = self.get_bottom_point_in_heap()
+        top_point = self.camera.frame.get_top()[1]
+
+        screen_width = self.camera.frame.get_right()[0]-self.camera.frame.get_left()[0]
+
+        new_x = (right_point+left_point)/2
+        new_y = self.camera.frame.get_y()
+        new_width = (right_point-left_point)
+        new_height = (top_point-bottom_point)
+        final_width = max(new_width, (new_height*(self.width / self.height)))+2
+        new_center = (new_x, new_y, 0)
+
+        if final_width == screen_width:
             return
-
-        rightPoint = mostRightNode.dot.get_right()
-        leftPoint = mostLeftNode.dot.get_left()
-
-        newWidth = (rightPoint[0]-leftPoint[0])+2
-        self.defaultAddPoint[0] = (rightPoint[0]+leftPoint[0])/2
-
-        newHeight = 0
-        if mostBottomDot is not None:
-            top_point = self.camera.frame.get_top()[1]
-            bottom_point = mostBottomDot.get_center()[1]
-            newHeight = (top_point-bottom_point)+2
-
-        newWidth = max(newWidth, newHeight*(self.width / self.height))
-        
-        boarderRight = self.camera.frame.get_right()[0]
-        boarderLeft = self.camera.frame.get_left()[0]
-        screenWidth = boarderRight-boarderLeft
-
-        newCenter = (((rightPoint[0]+leftPoint[0])/2), self.camera.frame.get_y(), 0)
-
-        if newWidth > screenWidth:
-            self.zoom_out(isAnimation, newCenter, newWidth)
-        elif newWidth > self.width and newWidth < screenWidth:
-            self.zoom_in(isAnimation, newCenter, newWidth)
+        elif final_width > screen_width:
+            self.zoom_out(isAnimation, new_center, final_width)
+        elif final_width > self.width and final_width < screen_width:
+            self.zoom_in(isAnimation, new_center, final_width)
         else:
-            if isAnimation:
-                self.play(self.camera.frame.animate.move_to(newCenter))
-            else:
-                self.camera.frame.move_to(newCenter)
+            self.centralize(isAnimation, new_center)
 
-    def zoom_in(self, isAnimation, newCenter, currentWidthOfHeap):
+        self.defaultAddPoint[0] = new_x
+
+    def zoom_in(self, isAnimation, new_center, currentWidthOfHeap):
         if isAnimation:
-            self.play(self.camera.frame.animate.set_width(currentWidthOfHeap).move_to(newCenter))  
+            self.play(self.camera.frame.animate.set_width(currentWidthOfHeap).move_to(new_center))  
         else:
-            self.camera.frame.set_width(currentWidthOfHeap).move_to(newCenter)         
+            self.camera.frame.set_width(currentWidthOfHeap).move_to(new_center)         
 
-    def zoom_out(self, isAnimation, newCenter, currentWidthOfHeap):
+    def zoom_out(self, isAnimation, new_center, currentWidthOfHeap):
         if isAnimation:
-            self.play(self.camera.frame.animate.set_width(currentWidthOfHeap).move_to(newCenter))  
+            self.play(self.camera.frame.animate.set_width(currentWidthOfHeap).move_to(new_center))  
         else:
-            self.camera.frame.set_width(currentWidthOfHeap).move_to(newCenter) 
+            self.camera.frame.set_width(currentWidthOfHeap).move_to(new_center) 
 
+    def centralize(self, isAnimation, new_center):
+        if isAnimation:
+            self.play(self.camera.frame.animate.move_to(new_center))
+        else:
+            self.camera.frame.move_to(new_center)
 
     ######################################################
     ################### Util Functions ###################
@@ -449,8 +443,8 @@ class FiboScene(MovingCameraScene):
                 return n
         return -1
 
-    def get_left_most_dot(self, group: list[FiboDot]): #TODO only works on some layouts?
-        if len(group) == 0:
+    def get_left_most_dot(self): #TODO only works on some layouts?
+        if len(self.root) == 0:
             return #TODO should it return something to tell it failed??
         
         def aux(a: self.FiboDot):
@@ -459,11 +453,62 @@ class FiboScene(MovingCameraScene):
             else:
                 return a
         
-        return aux(group[0])
-    
-    def get_bottom_most_dot(self):
-        return self.bottom_node
+        return aux(self.root[0])
 
+    def get_most_bottom_dot(self):
+        def aux(a):
+            if len(a.children) > 0:
+                return aux(a.children[len(a.children)-1])
+            else:
+                return a
+
+        most_bottom_node = self.root[0]
+        for r in self.root:
+            most_bottom_in_current_root = aux(r)
+            if most_bottom_in_current_root.dot.get_bottom()[1] < most_bottom_node.dot.get_bottom()[1]:
+                most_bottom_node = most_bottom_in_current_root
+
+        return most_bottom_node
+    
+    def get_leftmost_point_in_heap(self):
+        leftmost_node = self.get_left_most_dot()
+        left_point = leftmost_node.dot.get_left()[0]
+        if leftmost_node.dot.target is not None: 
+            left_point = min(left_point, leftmost_node.dot.target.get_left()[0])
+        if self.right_most_node_being_moved is not None:
+            left_point = min(left_point, self.right_most_node_being_moved.dot.get_left()[0])
+            left_point = min(left_point, self.left_most_node_being_moved.dot.get_left()[0])
+            if self.right_most_node_being_moved.dot.target is not None:
+                left_point = min(left_point, self.right_most_node_being_moved.dot.target.get_left()[0])
+                left_point = min(left_point, self.left_most_node_being_moved.dot.target.get_left()[0])
+        return left_point
+
+    def get_rightmost_point_in_heap(self):
+        rightmost_node = self.root[len(self.root)-1]
+        right_point = rightmost_node.dot.get_right()[0]
+        if rightmost_node.dot.target is not None: 
+            right_point = max(right_point, rightmost_node.dot.target.get_right()[0])
+        if self.right_most_node_being_moved is not None:
+            right_point = max(right_point, self.right_most_node_being_moved.dot.get_right()[0])
+            right_point = max(right_point, self.left_most_node_being_moved.dot.get_right()[0])
+            if self.right_most_node_being_moved.dot.target is not None:
+                right_point = max(right_point, self.right_most_node_being_moved.dot.target.get_right()[0])
+                right_point = max(right_point, self.left_most_node_being_moved.dot.target.get_right()[0])
+        return right_point
+    
+    def get_bottom_point_in_heap(self):
+        bottom_node = self.get_most_bottom_dot()
+        bottom_point = bottom_node.dot.get_bottom()[1]
+        if bottom_node.dot.target is not None:
+           bottom_point = bottom_node.dot.target.get_bottom()[1]
+        return bottom_point
+
+    def set_moving_nodes(self, moving_node):
+        self.right_most_node_being_moved = copy.deepcopy(moving_node)
+        left_most_node = moving_node
+        while len(left_most_node.children)!=0:
+            left_most_node = left_most_node.children[len(left_most_node.children)-1]
+        self.left_most_node_being_moved = copy.deepcopy(left_most_node)
 
     ##########################################################################
     ################### Allign with parent right - Layout. ###################
@@ -485,11 +530,15 @@ class FiboScene(MovingCameraScene):
                 gainedWidth = child.widthOfChildren + parent.dot.radius*4
             parent.widthOfChildren = parent.widthOfChildren + gainedWidth
         else:
-            #If we remove a child in the middle of a tree, the tree should "move together" and become more narrow
+        #If we remove a child in the middle of a tree, the tree should "move together" and become more narrow
             Temp_node = parent
-            while isinstance(Temp_node, self.FiboDot):
-                Temp_node.widthOfChildren = Temp_node.widthOfChildren - child.widthOfChildren
-                Temp_node = self.nodeDic.get(Temp_node.parentKey)            
+            size = child.widthOfChildren
+            while Temp_node is not None:
+                if len(Temp_node.children) == 0:
+                    Temp_node.widthOfChildren = Temp_node.widthOfChildren 
+                else:
+                    Temp_node.widthOfChildren = Temp_node.widthOfChildren - size
+                Temp_node = self.nodeDic.get(Temp_node.parentKey)           
     
     def animate_root(self, startIndex: int): #Must be done smart. aka move the lesser tree. Or moving fixed distance if child is at the ends.
         if startIndex >= len(self.root): #this can happen if the last dot in root is removed
@@ -584,7 +633,6 @@ class FiboScene(MovingCameraScene):
                 n.numberLabel.move_to(n.dot.get_center())
             n.arrow.put_start_and_end_on(n.dot.get_center(), parentsCenter)
             self.move_children(n)
-
 
     ###############################################
     ################### HV-Tree ###################
