@@ -44,16 +44,18 @@ class FiboScene(MovingCameraScene):
         #Unique tree layout 
         self.treeVerticalSpacing = 1.5
         self.rootDisplayOrder = list()
-        self.rootBinaryTrees = None
+        self.rootBinaryTrees = list()
  
         #For Camera #TODO maybe the new rootPacking can create a current and new boundary
         self.bottom_node = None
-        self.height = 7.993754879000781                                                                                                                                                                                              
+        self.minimumheight = 7.993754879000781                                                                                                                                                                                              
         self.minimumwidth = 14.222222222222221
         self.multp = 0
         self.bounds = (0,0)
         self.newBounds = (0,0)
 
+
+        self.rootRects = list() #TODO delete only for trouble shooting
         super().__init__(*args, **kwargs)
     
     def construct(self):
@@ -104,6 +106,8 @@ class FiboScene(MovingCameraScene):
         self.nodeDic[id] = fiboDot
         self.root.append(fiboDot)
         self.rootDisplayOrder.append(fiboDot)
+        if self.treeLayout == TreeLayout.H_V:
+            self.rootBinaryTrees.append(self.transformToBinary(fiboDot))
 
         if isAnimation:
             if self.showLabels:
@@ -142,17 +146,23 @@ class FiboScene(MovingCameraScene):
         
         #Adding child to parent and removing from root
         parentMobj.children.append(childMojb)
+        #Calculation new widths.
+        self.update_widthOfChildren(parentMobj, childMojb, isAddingNode=True)
+        self.update_heigthOfChildren(parentMobj, childMojb, isAddingNode=True)
+
+        #Removeing child from rootobjects
         self.root.remove(childMojb)
         childDisplayIndex = self.getIndexForDisplay(childMojb)
+        parenDisplayIndex = self.getIndexForDisplay(parentMobj)
+
+        if self.treeLayout == TreeLayout.H_V:
+            self.rootBinaryTrees[parenDisplayIndex] = self.transformToBinary(parentMobj)
+            del self.rootBinaryTrees[childDisplayIndex]
         self.rootDisplayOrder.remove(childMojb)
 
         #creating arrow
         pointer = Line(childMojb.dot,parentMobj.dot).set_z_index(-1)
         childMojb.arrow = pointer
-
-        #Calculation new widths.
-        self.update_widthOfChildren(parentMobj, childMojb, isAddingNode=True)
-        self.update_heigthOfChildren(parentMobj, childMojb, isAddingNode=True)
 
         if showExplanatoryText and isAnimation:
            text = "Compare " + str(parentMobj.id) + " < " + str(childMojb.id) + " and move " + str(childMojb.id) + " as a child of " + str(parentMobj.id)
@@ -162,7 +172,7 @@ class FiboScene(MovingCameraScene):
         
         if isAnimation:
             self.storedAnimations.append(FadeIn(pointer))
-            firstIndexOfChange = min(self.getIndexForDisplay(parentMobj), childDisplayIndex)
+            firstIndexOfChange = min(parenDisplayIndex, childDisplayIndex)
             self.animateTrees(firstIndexOfChange)
         else:
             self.add(pointer)
@@ -180,6 +190,8 @@ class FiboScene(MovingCameraScene):
         index = self.getIndexForDisplay(deleteDot)
 
         self.root.remove(deleteDot)
+        if self.treeLayout == TreeLayout.H_V:
+            del self.rootBinaryTrees[index]
         self.rootDisplayOrder.remove(deleteDot)
     
         childrenArrows = []
@@ -191,6 +203,8 @@ class FiboScene(MovingCameraScene):
                 n.parentKey = None
                 self.root.append(n)
                 self.rootDisplayOrder.append(n)
+                if self.treeLayout == TreeLayout.H_V:
+                    self.rootBinaryTrees.append(self.transformToBinary(n))
 
         self.nodeDic.pop(deleteDot.id)  #TODO No test if it works
         if isAnimation:
@@ -264,6 +278,10 @@ class FiboScene(MovingCameraScene):
                 break
             root_parent = self.nodeDic[root_parent.parentKey]
 
+        if self.treeLayout == TreeLayout.H_V:
+            self.rootBinaryTrees.append(self.transformToBinary(node_to_cut))
+            self.rootBinaryTrees[firstIndexOfChange] = self.transformToBinary(root_parent)
+
         if isAnimation:
             self.storedAnimations.append(FadeOut(arrowToBeRemoved))
             self.animateTrees(firstIndexOfChange)
@@ -278,6 +296,8 @@ class FiboScene(MovingCameraScene):
                 self.play(node_to_cut.dot.animate.set_color(BLUE))
             else:
                 node_to_cut.dot.color = BLUE
+        else: 
+            node_to_cut.dot.color = BLUE
         self.finish(isAnimation)
         
     def cascading_cut(self, decreased_node_parent_id, isAnimation, showExplanatoryText):
@@ -322,7 +342,7 @@ class FiboScene(MovingCameraScene):
 
 #############################################################################
 ################### Build animations and execute movement ###################
-    def buildAnimations(self, isAnimation):
+    def buildAnimations(self):
         listOfAnimations = list[Animation]()
         for n in self.mobjsToMove:
             listOfAnimations.append(MoveToTarget(n.dot))
@@ -351,7 +371,7 @@ class FiboScene(MovingCameraScene):
     def finish(self, isAnimation: bool = True):
         self.remove_label_check()
         if isAnimation:
-            self.buildAnimations(isAnimation)
+            self.buildAnimations()
             self.executeStoredAnimations()
             self.adjust_camera(True)
 
@@ -390,39 +410,42 @@ class FiboScene(MovingCameraScene):
         self.sceneUpToDate = True
         self.adjust_camera(False)
 
-    def changeTreeLayout(self, layout: TreeLayout = TreeLayout.RightAlligned, isAnimation: bool = False):
+    def changeTreeLayout(self, layout: TreeLayout = TreeLayout.RightAlligned, isAnimation: bool = True):
         if self.treeLayout == layout:
             return
-        self.treeLayout = layout
 
+        self.rootBinaryTrees = list()
+        if layout == TreeLayout.H_V:
+            for r in self.rootDisplayOrder:
+                self.rootBinaryTrees.append(self.transformToBinary(r))
+       
+        self.prepare(isAnimation)
+
+        self.treeLayout = layout
+        
+        
         if not isAnimation:
             self.sceneUpToDate = False
-            return
+            return 
         
-        self.rootBinaryTrees = None
-
+        self.rootPackingAlgorithms(0, True)
         if self.treeLayout == TreeLayout.RightAlligned:
-            if isAnimation:
-                self.right_align_tree_animate(0)
-            else:
-                self.right_align_tree_build(0)
+            self.right_align_tree_animate(0)
         elif self.treeLayout == TreeLayout.Balanced:
             NotImplemented
         elif self.treeLayout == TreeLayout.H_V:
-            for r in self.root:
-                self.rootBinaryTrees.append(self.transformToBinary(r))
-            if isAnimation:
-                self.hv_Tree_Animate(0)
-            else:
-                self.hv_Tree_Build(0)
+            self.hv_Tree_Animate(0)
+        
+        self.finish(isAnimation)
+
 
 #####################################################
 ################### Root movement ###################
     def rootPackingAlgorithms(self, startIndex_: int, isAnimation: bool):
-        if startIndex_ < 0 or startIndex_ >= len(self.rootDisplayOrder):
+        if startIndex_ < 0 or startIndex_ >= len(self.rootDisplayOrder) or len(self.root) == 0:
             return
 
-        if self.rootSorting == RootSorting(2):
+        if self.rootSorting == RootSorting.Heigth_Width:
             self.sortRootsByWidthHeigth()
         
         rootRects = self.createRettangels()
@@ -434,21 +457,26 @@ class FiboScene(MovingCameraScene):
             boundsX = rootRects[0].w
             boundsY = boundsX * (resolution[1]/resolution[0])
 
+        if boundsX < self.minimumwidth:
+            boundsX = self.minimumwidth
+            boundsY = self.minimumheight
+
         placedAllRoots = False
         
         while not placedAllRoots:
             if self.rootPacking == RootPacking.No_Packing:
-                placedAllRoots = self.noPacking(rootRects)
+                placedAllRoots = self.noPacking(boundsX, rootRects)
             elif self.rootPacking == RootPacking.FFDH:
                 placedAllRoots = self.fFDH_Packing(boundsX, boundsY, rootRects)
             elif self.rootPacking == RootPacking.Binary_Tree_Packing:
                 placedAllRoots = self.binary_Tree_Packing(boundsX, boundsY, rootRects)
             
             if not placedAllRoots:
-                boundsY += boundsY*0.2
-                boundsX += boundsX*0.2
-
+                boundsY += boundsY*0.3
+                boundsX += boundsX*0.3
+        
         self.newBounds = (boundsX, boundsY)
+        self.rootRects = rootRects #TODO delete only for trouble shooting
 
         startIndex = startIndex_
         if self.rootPacking == RootPacking.FFDH or self.rootPacking == RootPacking.Binary_Tree_Packing:
@@ -489,9 +517,14 @@ class FiboScene(MovingCameraScene):
                     self.rootBinaryTrees[i][0].dot.move_to((rootRects[i].x, rootRects[i].y, 0))
 
     def sortRootsByWidthHeigth(self):
-        self.rootDisplayOrder.sort(key=lambda x: (x.heigthOfChildren, x.widthOfChildren), reverse=True) 
-        if self.treeLayout == TreeLayout(3):
+        if self.treeLayout == TreeLayout.RightAlligned or self.treeLayout == TreeLayout.Balanced:
+            self.rootDisplayOrder.sort(key=lambda x: (x.heigthOfChildren, x.widthOfChildren), reverse=True) 
+        if self.treeLayout == TreeLayout.H_V:
             self.rootBinaryTrees.sort(key=lambda x: (x[0].heigthOfChildren, x[0].widthOfChildren), reverse=True) 
+            newRootOrder = list()
+            for x in self.rootBinaryTrees:
+                newRootOrder.append(x[0])
+            self.rootDisplayOrder = newRootOrder
 
     def getIndexForDisplay(self, fDot: FiboDot):
         x = 0
@@ -499,6 +532,7 @@ class FiboScene(MovingCameraScene):
             if fDot.id == i.id:
                 return x
             x += 1
+        return 0
 
     def changeRootPackingAndSorting(self, rootPacking: RootPacking = RootPacking.No_Packing, rootSorting: RootSorting = RootSorting.Order, isAnimation: bool = False):
         if rootPacking == self.rootPacking and rootSorting == self.rootSorting:
@@ -511,8 +545,24 @@ class FiboScene(MovingCameraScene):
             self.rootSorting = rootSorting
             if self.rootSorting == RootSorting.Order:
                 self.rootDisplayOrder = self.root.copy()
+                if self.treeLayout == TreeLayout.H_V:
+                    self.restoreOrderInBinaryRootList()
         
+        self.prepare(isAnimation)
         self.rootPackingAlgorithms(0, isAnimation)
+        
+        if not isAnimation:
+            self.sceneUpToDate = False
+            return
+
+        if self.treeLayout == TreeLayout.RightAlligned:
+            self.right_align_tree_animate(0)
+        elif self.treeLayout == TreeLayout.Balanced:
+            NotImplemented
+        elif self.treeLayout == TreeLayout.H_V:
+            self.hv_Tree_Animate(0)
+
+        self.finish(isAnimation)
 
     def createRettangels(self):
         class Rect:
@@ -523,36 +573,42 @@ class FiboScene(MovingCameraScene):
                 self.w = width
 
         rootRects = list()
-        horizontalspacing = self.rootDisplayOrder[0].dot.radius*4
+        spacing = self.rootDisplayOrder[0].dot.radius*4
 
         if self.treeLayout == TreeLayout(1):
             for r in self.rootDisplayOrder:
-                rootRects.append(Rect(self.treeVerticalSpacing+r.heigthOfChildren, horizontalspacing+r.widthOfChildren))
-            rootRects[0].x = self.rootDisplayOrder[0].dot.get_x()-(self.rootDisplayOrder[0].widthOfChildren)-horizontalspacing
-            rootRects[0].y = self.rootDisplayOrder[0].dot.get_y()
+                rootRects.append(Rect(spacing+r.heigthOfChildren, spacing+r.widthOfChildren))
+            # rootRects[0].x = self.rootDisplayOrder[0].dot.get_x()-(self.rootDisplayOrder[0].widthOfChildren)-spacing #If we want a non moving index 0
+            # rootRects[0].y = self.rootDisplayOrder[0].dot.get_y()
+            rootRects[0].x = 0-(self.rootDisplayOrder[0].widthOfChildren)-spacing
+            rootRects[0].y = 0
         elif self.treeLayout == TreeLayout(2):
             for r in self.rootDisplayOrder:
-                rootRects.append(Rect(self.treeVerticalSpacing+r.heigthOfChildren, horizontalspacing+r.widthOfChildren))
-            rootRects[0].x = self.rootDisplayOrder[0].dot.get_x()-(self.rootDisplayOrder[0].widthOfChildren/2)-horizontalspacing
-            rootRects[0].y = self.rootDisplayOrder[0].dot.get_y()
+                rootRects.append(Rect(spacing+r.heigthOfChildren, spacing+r.widthOfChildren))
+            rootRects[0].x = 0-(self.rootDisplayOrder[0].widthOfChildren/2)-spacing
+            rootRects[0].y = 0
         elif self.treeLayout == TreeLayout(3):
             for r in self.rootBinaryTrees:
-                rootRects.append(Rect(horizontalspacing+r[0].heigthOfChildren, horizontalspacing+r[0].widthOfChildren))
-            rootRects[0].x = self.rootBinaryTrees[0][0].dot.get_x() 
-            rootRects[0].y = self.rootBinaryTrees[0][0].dot.get_y()
+                rootRects.append(Rect(spacing + r[0].heigthOfChildren, spacing+r[0].widthOfChildren))
+            rootRects[0].x = 0
+            rootRects[0].y = 0
 
         return rootRects
         
 
 ##############################################################
 ################### Root Packing functions ###################
-    def noPacking(self, listOfRects: list):
+    def noPacking(self, boundX_: int, listOfRects: list):
         xPos = listOfRects[0].x
         yPos = listOfRects[0].y
+        boundX = boundX_ + xPos
         for r in listOfRects:
+            if (xPos+r.w)>boundX:
+                return False
             r.x = xPos 
             r.y = yPos
             xPos += r.w 
+ 
         return True
 
     def fFDH_Packing(self, boundX_: int, boundY_: int, listOfRects: list):
@@ -564,10 +620,13 @@ class FiboScene(MovingCameraScene):
         boundY = boundY_ + yPos
         LargestHInRow = 0
         for r in listOfRects:
-            if (xPos+r.w)>boundX:
+            if (xPos+r.w) > boundX:
                 yPos += LargestHInRow
                 xPos = startx
-                LargestHInRow = 0 
+                LargestHInRow = 0
+                if (xPos+r.w) > boundX:
+                    return False 
+                
             
             if (yPos+r.h)>boundY:
                 return False
@@ -710,7 +769,7 @@ class FiboScene(MovingCameraScene):
 ###############################################
 ################### HV-Tree ###################
     def hv_Tree_Animate(self, startIndex: int):
-        if startIndex > 0 or startIndex >= len(self.rootDisplayOrder):
+        if startIndex < 0 or startIndex >= len(self.rootDisplayOrder):
             return
 
         def aux(i: int, isLeftIsClosest: bool, x: float, y: float):
@@ -760,15 +819,21 @@ class FiboScene(MovingCameraScene):
             standardDistance = fDot.dot.radius*4
             ba = self.rootBinaryTrees[i+startIndex]
             if ba[2] == None and ba[1] == None: # if the tree have changed.
-                ba = self.transformToBinary(fDot) 
+                self.rootBinaryTrees[i+startIndex] = self.transformToBinary(fDot) 
+                ba = self.rootBinaryTrees[i+startIndex]
             maxIndex = len(ba)
             isLeftIsClosest_ = (len(fDot.children)%2==0)
-            aux(0, isLeftIsClosest_, fDot.dot.get_x(), fDot.dot.get_y())
+            targetX = fDot.dot.get_x()
+            targetY = fDot.dot.get_y()
+            if fDot.dot.target is not None:
+                targetX = fDot.dot.target.get_x()
+                targetY = fDot.dot.target.get_y()
+            aux(0, isLeftIsClosest_, targetX, targetY)
 
         return   
 
     def hv_Tree_Build(self, startIndex: int):
-        if startIndex > 0 or startIndex >= len(self.rootDisplayOrder):
+        if startIndex < 0 or startIndex >= len(self.rootDisplayOrder):
             return
 
         def aux(i: int, isLeftIsClosest: bool, x: float, y: float):
@@ -814,11 +879,9 @@ class FiboScene(MovingCameraScene):
 
         for i in range((len(self.rootDisplayOrder)-startIndex)):
             fDot = self.rootDisplayOrder[i+startIndex]
-            if len(fDot.children) == 0:
-                continue
             standardDistance = fDot.dot.radius*4
             ba = self.rootBinaryTrees[i+startIndex]
-            if ba[2] == None and ba[1] == None:
+            if len(fDot.children) > 0 and ba[2] == None and ba[1] == None:
                 ba = self.transformToBinary(fDot) 
             maxIndex = len(ba)
             isLeftIsClosest_ = (len(fDot.children)%2==0)
@@ -895,17 +958,24 @@ class FiboScene(MovingCameraScene):
 
         updated(0, leftIsClosest)
 
+    def restoreOrderInBinaryRootList(self):
+        newBinRoot = list ()
+        for i in self.rootDisplayOrder:
+            for x in self.rootBinaryTrees:
+                if x[0].id == i.id:
+                    newBinRoot.append(x)
+                    break
+        self.rootBinaryTrees = newBinRoot
 
 ##############################################
 ################### Camera ###################    
     def adjust_camera(self, isAnimation):
-        print("Ajust Camera")
+        if len(self.rootDisplayOrder) < 1:
+            return
+
         self.prepare(isAnimation)
 
-        print(len(self.rootDisplayOrder))
-        for a in self.rootDisplayOrder:
-            print(a.numberLabel.text)
-        mostLeft = self.get_left_most_dot(self.rootDisplayOrder).dot.get_x()
+        mostLeftX = self.get_left_most_dot(self.rootDisplayOrder).dot.get_x()
         xbound = self.newBounds[0]
         ybound = self.newBounds[1]
         
@@ -913,8 +983,7 @@ class FiboScene(MovingCameraScene):
         boarderLeft = self.camera.frame.get_left()[0]
         screenWidth = boarderRight-boarderLeft
 
-        print(mostLeft)
-        newCenter = (((mostLeft+xbound)/2), 2+((self.rootDisplayOrder[0].dot.get_y()-ybound)/2), 0) #the +2 is a top padding
+        newCenter = (((mostLeftX+xbound)/2), 2+((self.rootDisplayOrder[0].dot.get_y()-ybound)/2), 0) #the +2 is a top padding
 
         newWidth = xbound+2
         if newWidth > screenWidth:
@@ -943,6 +1012,8 @@ class FiboScene(MovingCameraScene):
 ######################################################
 ################### Util Functions ###################
     def update_heigthOfChildren(self, parent: FiboDot, child: FiboDot, isAddingNode: bool): 
+        if self.treeLayout == TreeLayout.H_V:
+            return
         if isAddingNode: 
             newHeigth = child.heigthOfChildren+self.treeVerticalSpacing
             if parent.heigthOfChildren < newHeigth:
@@ -958,6 +1029,8 @@ class FiboScene(MovingCameraScene):
                 parent.heigthOfChildren = hightOfTallestChild + self.treeVerticalSpacing
 
     def update_widthOfChildren(self, parent: FiboDot, child: FiboDot, isAddingNode: bool):
+        if self.treeLayout == TreeLayout.H_V:
+            return
         if isAddingNode:
             gainedWidth = int() 
             if len(parent.children) == 1:
@@ -969,7 +1042,10 @@ class FiboScene(MovingCameraScene):
             #If we remove a child in the middle of a tree, the tree should "move together" and become more narrow
             Temp_node = parent
             while isinstance(Temp_node, self.FiboDot):
-                Temp_node.widthOfChildren = Temp_node.widthOfChildren - child.widthOfChildren - parent.dot.radius*4
+                width = 0
+                for i in Temp_node.children:
+                    width += i.widthOfChildren
+                Temp_node.widthOfChildren = max(0, width+(Temp_node.dot.radius*4)*(len(Temp_node.children)-1))
                 Temp_node = self.nodeDic.get(Temp_node.parentKey)            
   
 
@@ -991,7 +1067,6 @@ class FiboScene(MovingCameraScene):
             if len(a.children) > 0:
                 return aux(a.children[len(a.children)-1])
             else:
-                a.dot.color = RED
                 return a
         
         return aux(group[0])
