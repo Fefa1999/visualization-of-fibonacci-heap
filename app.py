@@ -10,10 +10,10 @@ config.max_files_cached = 300
 config.disable_caching = True
 config.disable_caching_warning = True
 
-#config.quality = "low_quality"
+config.quality = "low_quality"
 #config.quality = "medium_quality"
 #config.quality = "high_quality"
-config.quality = "production_quality"
+#config.quality = "production_quality"
 #config.quality = "fourk_quality"
 
 def run():
@@ -25,22 +25,46 @@ def run():
 
     #Set animation 
     heap.isAnimation = False
-    for i in range(32):
+
+    
+    scene.changeRootPackingAndSorting(RootPacking.Binary_Tree_Packing, isAnimation=False)
+
+    heap.isAnimation = False
+
+    for i in range(1024):
         heap.insert(i)
 
-    heap.isAnimation = True
-    heap.insert(99)
-
-    scene.changeTreeLayout(TreeLayout.H_V)
-
     heap.extract_min()
+
+    heap.isAnimation = True
+
+    scene.changeRootPackingAndSorting(rootSorting=RootSorting.Heigth_Width, isAnimation=True)
+
+    scene.zoom_out(True, scene.camera.frame_center, scene.camera.frame_width*1.5)
+    scene.wait(3)
     
-    scene.changeTreeLayout(isAnimation=True)
-    heap.insert(0)
+    scene.changeRootPackingAndSorting(rootPacking=RootPacking.FFDH, isAnimation=True)
 
+    #For adding bounds of trees
+    # for i in scene.rootRects:
+    #     r = Rectangle(height=i.h, width=i.w)
+    #     r.move_to((i.x+(r.width/2), i.y-(r.height/2), -1))
+    #     scene.add(r)
+
+    #For adding the bounds off the root packing:
+    # x = Rectangle(height=scene.bounds[1], width=scene.bounds[0])
+    # x.move_to((0+x.width/2, 0-x.height/2, 0))
+    # scene.add(x)
+
+        
+    scene.zoom_out(True, scene.camera.frame_center, scene.camera.frame_width*2)
+    scene.wait(3)
+
+    scene.changeTreeLayout(layout=TreeLayout.H_V, isAnimation=True)
+    scene.changeRootPackingAndSorting(isAnimation=True, rootSorting=RootSorting.Heigth_Width, rootPacking=RootPacking.Binary_Tree_Packing)
     
-
-
+    scene.zoom_out(True, scene.camera.frame_center, scene.camera.frame_width*1.5)
+    scene.wait(3)
 
     scene.render()
     print("--- %s seconds ---" % (time.time() - start_time))

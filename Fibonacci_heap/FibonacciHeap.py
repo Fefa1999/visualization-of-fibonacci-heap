@@ -33,7 +33,7 @@ class FibonacciHeap:
         if self.min_fib_node is None or fib_node.value <= self.min_fib_node.value:
             self.min_fib_node = fib_node
             if print:
-                self.scene.set_min(fib_node.id, self.isAnimation)
+                self.scene.set_min(fib_node.id)
    
     #iterates the circular doubly linked list and updates min node
     def set_new_min_from_root_list(self):
@@ -43,7 +43,7 @@ class FibonacciHeap:
             if self.root_list == current_node:
                 break
             current_node = current_node.right
-        self.scene.set_min(self.min_fib_node.id, self.isAnimation)
+        self.scene.set_min(self.min_fib_node.id)
 
     #return min node in O(1) time
     def returnMin(self):
