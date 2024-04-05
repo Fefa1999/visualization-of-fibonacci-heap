@@ -26,19 +26,27 @@ def run():
     #Set animation 
     heap.isAnimation = False
 
-    scene.add(Dot(point=(0.0, -1.0, 0.0), color=PURPLE))
+    
     #scene.changeRootPackingAndSorting(RootPacking.Binary_Tree_Packing, isAnimation=False)
 
-    heap.isAnimation = True
+    heap.isAnimation = False
     
     scene.add()
 
-    for i in range(16):
+    for i in range(600):
         heap.insert(i)
 
     heap.extract_min()
 
     heap.isAnimation = True
+    
+    scene.changeTreeLayout(layout=TreeLayout.H_V, isAnimation=True)
+    
+    scene.wait(3)
+    
+    scene.changeTreeLayout(layout=TreeLayout.RightAlligned, isAnimation=True)
+
+    scene.wait(3)
 
     # scene.changeRootPackingAndSorting(rootSorting=RootSorting.Heigth_Width, isAnimation=True)
 

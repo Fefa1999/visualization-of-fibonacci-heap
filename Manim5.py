@@ -403,15 +403,18 @@ class FiboScene(MovingCameraScene):
         if self.treeLayout == layout:
             return
 
+        self.prepare(isAnimation)
+
         self.rootBinaryTrees = list()
         if layout == TreeLayout.H_V:
             for r in self.rootDisplayOrder:
                 self.rootBinaryTrees.append(self.transformToBinary(r))
+                
+        if self.treeLayout == TreeLayout.H_V:
+            for i in self.rootDisplayOrder:
+                self.recalcTreeDimentions(i)
        
-        self.prepare(isAnimation)
-
         self.treeLayout = layout
-        
         
         if not isAnimation:
             self.sceneUpToDate = False
@@ -465,7 +468,7 @@ class FiboScene(MovingCameraScene):
                 boundsX += boundsX*0.3
         
         self.newBounds = (boundsX, boundsY)
-        self.rootRects = rootRects #TODO delete only for trouble shooting
+        self.rootRects = rootRects #TODO delete only for trouble shooting (printing the squares)
 
         startIndex = startIndex_
         if self.rootPacking == RootPacking.FFDH or self.rootPacking == RootPacking.Binary_Tree_Packing:
@@ -750,6 +753,35 @@ class FiboScene(MovingCameraScene):
             n.arrow.put_start_and_end_on(n.dot.get_center(), parentsCenter)
             self.ra_move_children(n)
 
+    def recalcTreeDimentions(self, rootDot: FiboDot):    #TODO NOT TAIL RECURSIVE!!!
+        distance = self.root[0].dot.radius*4
+
+        def updated(fDot: self.FiboDot):
+            if not isinstance(fDot, self.FiboDot):
+                return #Error
+            
+            if len(fDot.children) == 0:
+                fDot.widthOfChildren = 0 
+                fDot.heigthOfChildren = 0
+                return (0, 0)
+
+            if len(fDot.children) == 1:
+                fDot.widthOfChildren = 0
+                fDot.heigthOfChildren = self.treeVerticalSpacing
+                return (0, self.treeVerticalSpacing)
+            
+            width = 0
+            heigth = 0
+            for i in fDot.children:
+                updated(i)
+                width += i.widthOfChildren
+                heigth = max(heigth, i.heigthOfChildren)
+            fDot.widthOfChildren = width+distance*(len(fDot.children)-1)
+            fDot.heigthOfChildren = heigth+self.treeVerticalSpacing
+                
+            return fDot.heigthOfChildren, fDot.widthOfChildren
+
+        updated(rootDot)
 
 ###############################################
 ################### Balanced Trees ###################
@@ -907,10 +939,10 @@ class FiboScene(MovingCameraScene):
                 currentIndex = currentIndex*2+2-childN%2
 
         aux(0,parrentDot)
-        self.updateBinaryTreeDimentions(binaryArray, len(parrentDot.children)%2==0)
+        self.recalcBinaryTreeDimentions(binaryArray, len(parrentDot.children)%2==0)
         return binaryArray
 
-    def updateBinaryTreeDimentions(self, binaryHeap: list[FiboDot], leftIsClosest: bool):    #TODO NOT TAIL RECURSIVE!!!
+    def recalcBinaryTreeDimentions(self, binaryHeap: list[FiboDot], leftIsClosest: bool):    #TODO NOT TAIL RECURSIVE!!!
         root = binaryHeap[0]
         distance = root.dot.radius*4
         maxIndex = len(binaryHeap)
