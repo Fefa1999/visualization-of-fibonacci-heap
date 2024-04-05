@@ -99,8 +99,7 @@ class FiboScene(MovingCameraScene):
     def insert_dot(self, number: int, isAnimation: bool, id: int):
         self.prepare(isAnimation)
 
-        if isAnimation:
-            fiboDot = self.create_dot(self.defaultAddPoint, number, id)
+        fiboDot = self.create_dot(self.defaultAddPoint, number, id)
         
         self.nodeDic[id] = fiboDot
         self.root.append(fiboDot)
@@ -118,15 +117,6 @@ class FiboScene(MovingCameraScene):
                 self.add(fiboDot.dot, fiboDot.numberLabel)
             else:
                 self.add(fiboDot.dot)
-
-        # if len(self.root) == 1:
-        #     if isAnimation:
-        #         self.play(fiboDot.dot.animate.move_to(self.rootSpot), fiboDot.numberLabel.animate.move_to(self.rootSpot))
-        #         return
-        #     else:
-        #         fiboDot.dot.move_to(self.rootSpot)
-        #         fiboDot.numberLabel.move_to(self.rootSpot)
-        #         return
 
         if isAnimation:
             self.animateTrees((len(self.root)-1))
