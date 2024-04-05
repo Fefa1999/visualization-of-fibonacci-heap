@@ -31,8 +31,8 @@ class FiboScene(MovingCameraScene):
         self.nodeDic = dict[int, self.FiboDot]()
 
         #For Animations and Display
-        self.rootSpot = [0.0, 2.0, 0.0]
-        self.defaultAddPoint = [0.0, 3.0, 0.0]
+        self.rootSpot = [0.0, 5.0, 0.0]
+        self.defaultAddPoint = [0.0, 1.0, 0.0]
         self.treeLayout = TreeLayout(1)
         self.rootPacking = RootPacking(1)
         self.rootSorting = RootSorting(1)
@@ -101,8 +101,7 @@ class FiboScene(MovingCameraScene):
 
         if isAnimation:
             fiboDot = self.create_dot(self.defaultAddPoint, number, id)
-        else:
-            fiboDot = self.create_dot(self.rootSpot, number, id)
+        
         self.nodeDic[id] = fiboDot
         self.root.append(fiboDot)
         self.rootDisplayOrder.append(fiboDot)
@@ -120,14 +119,14 @@ class FiboScene(MovingCameraScene):
             else:
                 self.add(fiboDot.dot)
 
-        if len(self.root) == 1:
-            if isAnimation:
-                self.play(fiboDot.dot.animate.move_to(self.rootSpot), fiboDot.numberLabel.animate.move_to(self.rootSpot))
-                return
-            else:
-                fiboDot.dot.move_to(self.rootSpot)
-                fiboDot.numberLabel.move_to(self.rootSpot)
-                return
+        # if len(self.root) == 1:
+        #     if isAnimation:
+        #         self.play(fiboDot.dot.animate.move_to(self.rootSpot), fiboDot.numberLabel.animate.move_to(self.rootSpot))
+        #         return
+        #     else:
+        #         fiboDot.dot.move_to(self.rootSpot)
+        #         fiboDot.numberLabel.move_to(self.rootSpot)
+        #         return
 
         if isAnimation:
             self.animateTrees((len(self.root)-1))
