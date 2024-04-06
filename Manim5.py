@@ -355,7 +355,9 @@ class FiboScene(MovingCameraScene):
 ################### Pre and Post Functions ###################
     def prepare(self, isAnimation: bool = True):
         if isAnimation and not self.sceneUpToDate:
-            self.prepareSceneForAnimations()
+            self.buildTrees(0)
+            self.sceneUpToDate = True
+            self.adjust_camera(False)
 
     def finish(self, isAnimation: bool = True):
         self.remove_label_check()
@@ -373,7 +375,7 @@ class FiboScene(MovingCameraScene):
         if self.treeLayout == TreeLayout.RightAlligned:
             self.right_align_tree_animate(startIndex)
         elif self.treeLayout == TreeLayout.Balanced:
-            NotImplemented
+            self.balanced_tree_animate(startIndex)
         elif self.treeLayout == TreeLayout.H_V:
             self.hv_Tree_Animate(startIndex)
 
@@ -383,26 +385,18 @@ class FiboScene(MovingCameraScene):
         if self.treeLayout == TreeLayout.RightAlligned:
             self.right_align_tree_build(startIndex)
         elif self.treeLayout == TreeLayout.Balanced:
-            NotImplemented
+            self.balance_tree_build(startIndex)
         elif self.treeLayout == TreeLayout.H_V:
             self.hv_Tree_Build(0)
-
-    def prepareSceneForAnimations(self):
-        self.rootPackingAlgorithms(0, False)
-        if self.treeLayout == TreeLayout.RightAlligned:
-            self.right_align_tree_build(0)
-        elif self.treeLayout == TreeLayout.Balanced:
-            NotImplemented
-        elif self.treeLayout == TreeLayout.H_V:
-            self.hv_Tree_Build(0)
-
-        self.sceneUpToDate = True
-        self.adjust_camera(False)
 
     def changeTreeLayout(self, layout: TreeLayout = TreeLayout.RightAlligned, isAnimation: bool = True):
         if self.treeLayout == layout:
             return
 
+        if len(self.root)==0:
+            self.treeLayout = layout
+            return
+            
         self.prepare(isAnimation)
 
         self.rootBinaryTrees = list()
@@ -420,13 +414,7 @@ class FiboScene(MovingCameraScene):
             self.sceneUpToDate = False
             return 
         
-        self.rootPackingAlgorithms(0, True)
-        if self.treeLayout == TreeLayout.RightAlligned:
-            self.right_align_tree_animate(0)
-        elif self.treeLayout == TreeLayout.Balanced:
-            NotImplemented
-        elif self.treeLayout == TreeLayout.H_V:
-            self.hv_Tree_Animate(0)
+        self.animateTrees(0)
         
         self.finish(isAnimation)
 
@@ -464,8 +452,8 @@ class FiboScene(MovingCameraScene):
                 placedAllRoots = self.binary_Tree_Packing(boundsX, boundsY, rootRects)
             
             if not placedAllRoots:
-                boundsY += boundsY*0.3
-                boundsX += boundsX*0.3
+                boundsY += boundsY*0.2
+                boundsX += boundsX*0.2
         
         self.newBounds = (boundsX, boundsY)
         self.rootRects = rootRects #TODO delete only for trouble shooting (printing the squares)
@@ -540,20 +528,14 @@ class FiboScene(MovingCameraScene):
                 if self.treeLayout == TreeLayout.H_V:
                     self.restoreOrderInBinaryRootList()
         
-        self.prepare(isAnimation)
-        self.rootPackingAlgorithms(0, isAnimation)
-        
         if not isAnimation:
             self.sceneUpToDate = False
             return
 
-        if self.treeLayout == TreeLayout.RightAlligned:
-            self.right_align_tree_animate(0)
-        elif self.treeLayout == TreeLayout.Balanced:
-            NotImplemented
-        elif self.treeLayout == TreeLayout.H_V:
-            self.hv_Tree_Animate(0)
-
+        self.prepare(isAnimation)
+        
+        self.animateTrees(0)
+        
         self.finish(isAnimation)
 
     def createRettangels(self):
@@ -572,12 +554,12 @@ class FiboScene(MovingCameraScene):
                 rootRects.append(Rect(spacing+r.heigthOfChildren, spacing+r.widthOfChildren))
             # rootRects[0].x = self.rootDisplayOrder[0].dot.get_x()-(self.rootDisplayOrder[0].widthOfChildren)-spacing #If we want a non moving index 0
             # rootRects[0].y = self.rootDisplayOrder[0].dot.get_y()
-            rootRects[0].x = 0-(self.rootDisplayOrder[0].widthOfChildren)-spacing
+            rootRects[0].x = 0#-(self.rootDisplayOrder[0].widthOfChildren)-spacing
             rootRects[0].y = 0
         elif self.treeLayout == TreeLayout(2):
             for r in self.rootDisplayOrder:
                 rootRects.append(Rect(spacing+r.heigthOfChildren, spacing+r.widthOfChildren))
-            rootRects[0].x = 0-(self.rootDisplayOrder[0].widthOfChildren/2)-spacing
+            rootRects[0].x = 0#-(self.rootDisplayOrder[0].widthOfChildren/2)-spacing
             rootRects[0].y = 0
         elif self.treeLayout == TreeLayout(3):
             for r in self.rootBinaryTrees:
@@ -696,7 +678,7 @@ class FiboScene(MovingCameraScene):
 
 ##########################################################################
 ################### Allign with parent right - Layout. ###################
-    def space_children_by_thier_width(self, lst: list[FiboDot], isToTarget: bool = False, direction: Vector3 = LEFT, **kwargs):
+    def space_children_by_thier_own_width(self, lst: list[FiboDot], isToTarget: bool = False, direction: Vector3 = LEFT, **kwargs):
         if isToTarget:
             for m1, m2 in zip(lst, lst[1:]):
                 m2.dot.target.next_to(m1.dot.target, direction, (m1.widthOfChildren + m1.dot.radius*2), **kwargs)
@@ -725,7 +707,7 @@ class FiboScene(MovingCameraScene):
             self.mobjsToMove.append(child)
         
         #Arrange based on first child.
-        self.space_children_by_thier_width(parentMojb.children, True)
+        self.space_children_by_thier_own_width(parentMojb.children, True)
 
         for n in range(len(parentMojb.children)):
             self.ra_create_children_animations(parentMojb.children[n], parentMojb.children[n].dot.target)
@@ -743,7 +725,7 @@ class FiboScene(MovingCameraScene):
         parentMojb.children[0].dot.set_y(parentMojb.dot.get_y()-self.treeVerticalSpacing).align_to(parentMojb.dot, RIGHT)
         
         #Arrange rest based on first
-        self.space_children_by_thier_width(parentMojb.children, False)
+        self.space_children_by_thier_own_width(parentMojb.children, False)
 
         #Move arrows and recursively move childrens og children
         parentsCenter = parentMojb.dot.get_center()
@@ -786,6 +768,62 @@ class FiboScene(MovingCameraScene):
 ###############################################
 ################### Balanced Trees ###################
             
+    def space_children_by_halv_thier_width(self, lst: list[FiboDot], isToTarget: bool = False, direction: Vector3 = LEFT, **kwargs):
+        if isToTarget:
+            for m1, m2 in zip(lst, lst[1:]):
+                m2.dot.target.next_to(m1.dot.target, direction, (m1.widthOfChildren/2 + m2.widthOfChildren/2 + m1.dot.radius*2), **kwargs)
+        else:
+            for m1, m2 in zip(lst, lst[1:]):
+                m2.dot.next_to(m1.dot, direction, (m1.widthOfChildren/2 + m2.widthOfChildren/2 + m1.dot.radius*2), **kwargs)
+        return lst
+
+    def balanced_tree_animate(self, startIndex):#Must be done smart. aka move the lesser tree. Or moving fixed distance if child is at the ends
+        for i in range(len(self.rootDisplayOrder)-startIndex):
+            x = self.rootDisplayOrder[i+startIndex]
+            self.bal_create_children_animations(x, x.dot.target)
+
+    def bal_create_children_animations(self, parentMojb: FiboDot, parentTarget: Dot):
+        if len(parentMojb.children)==0:
+            return
+
+        #First child which the other children should be alinged left of
+        baseChild = parentMojb.children[0]
+        baseChild.dot.target = Dot(point=baseChild.dot.get_center(), radius=baseChild.dot.radius, color=baseChild.dot.color).set_y(parentTarget.get_y()-self.treeVerticalSpacing).set_x(parentTarget.get_x()+parentMojb.widthOfChildren/2-baseChild.widthOfChildren/2)
+        self.mobjsToMove.append(baseChild)
+
+        for i in range(len(parentMojb.children)-1):
+            child =  parentMojb.children[i+1]
+            child.dot.target = Dot(point=child.dot.get_center(), radius=child.dot.radius, color=child.dot.color)
+            self.mobjsToMove.append(child)
+        
+        #Arrange based on first child.
+        self.space_children_by_halv_thier_width(parentMojb.children, True)
+
+        for n in range(len(parentMojb.children)):
+            self.bal_create_children_animations(parentMojb.children[n], parentMojb.children[n].dot.target)
+        return
+
+    def balance_tree_build(self, startIndex: int):
+        for i in range(len(self.rootDisplayOrder)-startIndex):
+            self.bal_move_children(self.rootDisplayOrder[i+startIndex])
+
+    def bal_move_children(self, parentMojb: FiboDot):
+        if len(parentMojb.children)==0:
+            return
+        
+        #Set first childs new location
+        parentMojb.children[0].dot.set_y(parentMojb.get_y()-self.treeVerticalSpacing).set_x(parentMojb.get_x()+parentMojb.widthOfChildren/2-parentMojb.children[0].widthOfChildren/2)
+        
+        #Arrange rest based on first
+        self.space_children_by_halv_thier_width(parentMojb.children, False)
+
+        #Move arrows and recursively move childrens og children
+        parentsCenter = parentMojb.dot.get_center()
+        for n in parentMojb.children:
+            if self.showLabels:
+                n.numberLabel.move_to(n.dot.get_center())
+            n.arrow.put_start_and_end_on(n.dot.get_center(), parentsCenter)
+            self.bal_move_children(n)
 
 ###############################################
 ################### HV-Tree ###################
@@ -1092,7 +1130,7 @@ class FiboScene(MovingCameraScene):
         
         return aux(group[0])
     
-    def get_bottom_most_dot(self):
+    def get_bottom_most_dot(self): #TODO is it laysensitive? Is it needed?
         return self.bottom_node
 
 
