@@ -25,12 +25,11 @@ def run():
 
     #Set animation 
     heap.isAnimation = False
-    heap.showExplanatoryText = True
+    heap.showExplanatoryText = False
     for i in range(32):
         heap.insert(i)
     heap.isAnimation = True 
     heap.extract_min()
-
 
     scene.render()
     print("--- %s seconds ---" % (time.time() - start_time))

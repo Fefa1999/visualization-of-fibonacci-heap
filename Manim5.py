@@ -820,7 +820,7 @@ class FiboScene(MovingCameraScene):
         updated(0, leftIsClosest)
 
     #####################################################
-    ################# Explanatory array consolidation ##################
+    ########## Explanatory array consolidation ##########
 
     class explanatory_array:
         arr: Dict[int, Text]
