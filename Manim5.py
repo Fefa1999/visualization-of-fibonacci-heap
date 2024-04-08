@@ -68,9 +68,9 @@ class FiboScene(MovingCameraScene):
         id: int
         parentKey: int
         children: list[Self]
-        #nFdotsInTree: int #TODO Not implemented
-        widthOfChildren: int
-        heigthOfChildren: int
+        nFdotsInTree: int = 0
+        widthOfChildren: int = 0
+        heigthOfChildren: int = 0
         dot: Dot
         arrow: Line = None
         numberLabel: Text
@@ -91,8 +91,8 @@ class FiboScene(MovingCameraScene):
         fiboDot = self.FiboDot(id)
         fiboDot.dot = Dot(point, radius=0.2, color=BLUE)
         fiboDot.numberLabel = Text(str(number), font_size=18 - (number/100)).move_to(fiboDot.dot.get_center()).set_z_index(1)
-        fiboDot.widthOfChildren = 0
-        fiboDot.heigthOfChildren = 0
+        #fiboDot.widthOfChildren = 0
+        #fiboDot.heigthOfChildren = 0
         return fiboDot
 
     #Inserts the dot onto the scene and adds it to a root list, then calls for a repositioning of the nodes.
@@ -162,6 +162,7 @@ class FiboScene(MovingCameraScene):
         if isAnimation:
             self.storedAnimations.append(FadeIn(pointer))
             firstIndexOfChange = min(parenDisplayIndex, childDisplayIndex)
+            print(f"{parenDisplayIndex}, {childDisplayIndex}, {firstIndexOfChange}")
             self.animateTrees(firstIndexOfChange)
         else:
             self.add(pointer)
@@ -369,7 +370,11 @@ class FiboScene(MovingCameraScene):
 
 #############################################################
 ################### Tree Layout functions ###################
-    def animateTrees(self, startIndex: int):
+    def animateTrees(self, startIndex_: int):
+        startIndex = self.updateStartIndex(startIndex_)
+        if startIndex is None:
+            return
+        
         self.rootPackingAlgorithms(startIndex, True)
 
         if self.treeLayout == TreeLayout.RightAlligned:
@@ -421,13 +426,10 @@ class FiboScene(MovingCameraScene):
 
 #####################################################
 ################### Root movement ###################
-    def rootPackingAlgorithms(self, startIndex_: int, isAnimation: bool):
-        if startIndex_ < 0 or startIndex_ >= len(self.rootDisplayOrder) or len(self.root) == 0:
+    def rootPackingAlgorithms(self, startIndex: int, isAnimation: bool):
+        if startIndex < 0 or startIndex >= len(self.rootDisplayOrder) or len(self.root) == 0:
             return
 
-        if self.rootSorting == RootSorting.Heigth_Width:
-            self.sortRootsByWidthHeigth()
-        
         rootRects = self.createRettangels()
 
         resolution = (1920, 1080) #TODO should this be a field connected to quality???
@@ -457,10 +459,6 @@ class FiboScene(MovingCameraScene):
         
         self.newBounds = (boundsX, boundsY)
         self.rootRects = rootRects #TODO delete only for trouble shooting (printing the squares)
-
-        startIndex = startIndex_
-        if self.rootPacking == RootPacking.FFDH or self.rootPacking == RootPacking.Binary_Tree_Packing:
-            startIndex = 0
         
 
         if isAnimation:
@@ -569,6 +567,20 @@ class FiboScene(MovingCameraScene):
 
         return rootRects
         
+    def updateStartIndex(self, startIndex_ :int):
+        if startIndex_ < 0 or startIndex_ >= len(self.rootDisplayOrder) or len(self.root) == 0:
+            return
+
+        startIndex = startIndex_
+        if self.rootPacking == RootPacking.FFDH or self.rootPacking == RootPacking.Binary_Tree_Packing or self.rootSorting == RootSorting.Heigth_Width:
+            startIndex = 0
+
+        if self.rootSorting == RootSorting.Heigth_Width:
+            NodeAtChangeKey = self.rootDisplayOrder[startIndex].id
+            self.sortRootsByWidthHeigth()
+            startIndex = self.get_root_index_from_key(NodeAtChangeKey)
+
+        return startIndex
 
 ##############################################################
 ################### Root Packing functions ###################
@@ -825,6 +837,11 @@ class FiboScene(MovingCameraScene):
             n.arrow.put_start_and_end_on(n.dot.get_center(), parentsCenter)
             self.bal_move_children(n)
 
+#########################################################################################
+################### Balanced Tree Extension - Triangle representation ###################
+
+
+
 ###############################################
 ################### HV-Tree ###################
     def hv_Tree_Animate(self, startIndex: int):
@@ -1025,6 +1042,7 @@ class FiboScene(MovingCameraScene):
                     newBinRoot.append(x)
                     break
         self.rootBinaryTrees = newBinRoot
+
 
 ##############################################
 ################### Camera ###################    
