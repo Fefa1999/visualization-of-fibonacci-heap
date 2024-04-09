@@ -4,14 +4,15 @@ from manim.utils.file_ops import open_file as open_media_file
 from manim import config
 from manim import *
 
+import math
 import time
 
 config.max_files_cached = 300
 config.disable_caching = True
 config.disable_caching_warning = True
 
-#config.quality = "low_quality"
-config.quality = "medium_quality"
+config.quality = "low_quality"
+#config.quality = "medium_quality"
 #config.quality = "high_quality"
 #config.quality = "production_quality"
 #config.quality = "fourk_quality"
@@ -26,29 +27,46 @@ def run():
     #Set animation 
     heap.isAnimation = False
 
-    
     scene.changeRootPackingAndSorting(RootPacking.No_Packing, rootSorting=RootSorting.Heigth_Width, isAnimation=False)
 
-    heap.isAnimation = True
-
-    for i in range(5):
+    for i in range(32):
         heap.insert(i)
 
-    heap.isAnimation = True
     
+
+    heap.isAnimation = True
+
     heap.extract_min()
 
-    #scene.changeTreeLayout(layout=TreeLayout.Balanced, isAnimation=True)
+
+    #For adding the bounds off the root packing:
     
-    scene.wait(2)
+
+    heap.insert(20)
+
+    x = Rectangle(height=scene.bounds[1], width=scene.bounds[0])
+    x.move_to((0+x.width/2, 0-x.height/2, 0))
+    scene.add(x)
+
+    #scene.triangle_balanced_tree_animate(0)
+
+    scene.wait(5)
+
+    # heap.isAnimation = False
     
-    #scene.changeTreeLayout(layout=TreeLayout.H_V, isAnimation=True)
+    # heap.extract_min()
+
+    # scene.changeTreeLayout(layout=TreeLayout.Balanced, isAnimation=True)
     
-    scene.wait(2)
+    # scene.wait(2)
     
-    #cene.changeTreeLayout(layout=TreeLayout.RightAlligned, isAnimation=True)
+    # scene.changeTreeLayout(layout=TreeLayout.H_V, isAnimation=True)
     
-    scene.wait(2)
+    # scene.wait(2)
+    
+    # scene.changeTreeLayout(layout=TreeLayout.RightAlligned, isAnimation=True)
+    
+    # scene.wait(2)
     
     # #For adding bounds of trees
     # for i in scene.rootRects:

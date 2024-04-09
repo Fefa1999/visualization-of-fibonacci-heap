@@ -3,6 +3,7 @@ from manim.typing import Point3D
 from manim.typing import Vector3
 from typing_extensions import Self
 from typing import TypedDict
+import math
 import time
 
 #DO YOU HAVE TO STATE DELETIONS OF OBJECTS IN PYTHON TO HELP GARBAGE COLLECTER
@@ -38,13 +39,15 @@ class FiboScene(MovingCameraScene):
         self.rootSorting = RootSorting(1)
         self.sceneUpToDate = True
         self.showLabels = True
-        self.mobjsToMove = list[self.FiboDot]()
+        self.mobjsToMove = list()
         self.storedAnimations = list[Animation]()
         
         #Unique tree layout 
         self.treeVerticalSpacing = 1.5
+        self.triangleLayer = 0
         self.rootDisplayOrder = list()
         self.rootBinaryTrees = list()
+        self.triangels = dict[int, self.triangle]()
  
         #For Camera #TODO maybe the new rootPacking can create a current and new boundary
         self.bottom_node = None
@@ -68,9 +71,9 @@ class FiboScene(MovingCameraScene):
         id: int
         parentKey: int
         children: list[Self]
-        nFdotsInTree: int = 0
-        widthOfChildren: int = 0
-        heigthOfChildren: int = 0
+        nFdotsInTree: int
+        widthOfChildren: int
+        heigthOfChildren: int
         dot: Dot
         arrow: Line = None
         numberLabel: Text
@@ -79,7 +82,9 @@ class FiboScene(MovingCameraScene):
             self.id = idKey
             self.parentKey = None
             self.children = list[Self]()
-            #self.widthOfChildren = int()
+            self.nFdotsInTree = 0
+            self.widthOfChildren = 0
+            self.heigthOfChildren = 0
             #self.arrow = Line()
             #self.numberLabel = Text("")
 
@@ -91,8 +96,6 @@ class FiboScene(MovingCameraScene):
         fiboDot = self.FiboDot(id)
         fiboDot.dot = Dot(point, radius=0.2, color=BLUE)
         fiboDot.numberLabel = Text(str(number), font_size=18 - (number/100)).move_to(fiboDot.dot.get_center()).set_z_index(1)
-        #fiboDot.widthOfChildren = 0
-        #fiboDot.heigthOfChildren = 0
         return fiboDot
 
     #Inserts the dot onto the scene and adds it to a root list, then calls for a repositioning of the nodes.
@@ -138,6 +141,7 @@ class FiboScene(MovingCameraScene):
         #Calculation new widths.
         self.update_widthOfChildren(parentMobj, childMojb, isAddingNode=True)
         self.update_heigthOfChildren(parentMobj, childMojb, isAddingNode=True)
+        parentMobj.nFdotsInTree += 1+childMojb.nFdotsInTree
 
         #Removeing child from rootobjects
         self.root.remove(childMojb)
@@ -335,13 +339,17 @@ class FiboScene(MovingCameraScene):
     def buildAnimations(self):
         listOfAnimations = list[Animation]()
         for n in self.mobjsToMove:
-            listOfAnimations.append(MoveToTarget(n.dot))
-            if self.showLabels:
-                listOfAnimations.append(n.numberLabel.animate.move_to(n.dot.target.get_center()))
-            if not (n.arrow is None):
-                listOfAnimations.append(n.arrow.animate.put_start_and_end_on(n.dot.target.get_center(), self.nodeDic[n.parentKey].dot.target.get_center()))
-            n.target = None
-        self.mobjsToMove = list[self.FiboDot]()
+            if isinstance(n, self.FiboDot):
+                listOfAnimations.append(MoveToTarget(n.dot))
+                if self.showLabels:
+                    listOfAnimations.append(n.numberLabel.animate.move_to(n.dot.target.get_center()))
+                if not (n.arrow is None):
+                    listOfAnimations.append(n.arrow.animate.put_start_and_end_on(n.dot.target.get_center(), self.nodeDic[n.parentKey].dot.target.get_center()))
+                n.target = None
+            elif isinstance(n, self.triangle):
+                listOfAnimations.append(MoveToTarget(n.mobj))
+                listOfAnimations.append(n.text.animate.move_to(self.mobj.target.get_center_of_mass(), UP))
+        self.mobjsToMove = list()
         self.storedAnimations.extend(listOfAnimations)
         return 
 
@@ -447,7 +455,7 @@ class FiboScene(MovingCameraScene):
         
         while not placedAllRoots:
             if self.rootPacking == RootPacking.No_Packing:
-                placedAllRoots = self.noPacking(boundsX, rootRects)
+                placedAllRoots = self.noPacking(boundsX, boundsY, rootRects)
             elif self.rootPacking == RootPacking.FFDH:
                 placedAllRoots = self.fFDH_Packing(boundsX, boundsY, rootRects)
             elif self.rootPacking == RootPacking.Binary_Tree_Packing:
@@ -584,12 +592,15 @@ class FiboScene(MovingCameraScene):
 
 ##############################################################
 ################### Root Packing functions ###################
-    def noPacking(self, boundX_: int, listOfRects: list):
+    def noPacking(self, boundX_: int, boundY_: int, listOfRects: list):
         xPos = listOfRects[0].x
         yPos = listOfRects[0].y
         boundX = boundX_ + xPos
+        boundY = boundY_ + yPos
         for r in listOfRects:
             if (xPos+r.w)>boundX:
+                return False
+            if (yPos+r.h)>boundY:
                 return False
             r.x = xPos 
             r.y = yPos
@@ -699,7 +710,7 @@ class FiboScene(MovingCameraScene):
                 m2.dot.next_to(m1.dot, direction, (m1.widthOfChildren + m1.dot.radius*2), **kwargs)
         return lst
   
-    def right_align_tree_animate(self, startIndex):#Must be done smart. aka move the lesser tree. Or moving fixed distance if child is at the ends
+    def right_align_tree_animate(self, startIndex):#TODO Must be done smart. aka move the lesser tree. Or moving fixed distance if child is at the ends
         for i in range(len(self.rootDisplayOrder)-startIndex):
             x = self.rootDisplayOrder[i+startIndex]
             self.ra_create_children_animations(x, x.dot.target)
@@ -789,7 +800,7 @@ class FiboScene(MovingCameraScene):
                 m2.dot.next_to(m1.dot, direction, (m1.widthOfChildren/2 + m2.widthOfChildren/2 + m1.dot.radius*2), **kwargs)
         return lst
 
-    def balanced_tree_animate(self, startIndex):#Must be done smart. aka move the lesser tree. Or moving fixed distance if child is at the ends
+    def balanced_tree_animate(self, startIndex):#TODO Must be done smart. aka move the lesser tree. Or moving fixed distance if child is at the ends
         for i in range(len(self.rootDisplayOrder)-startIndex):
             x = self.rootDisplayOrder[i+startIndex]
             self.bal_create_children_animations(x, x.dot.target)
@@ -840,7 +851,107 @@ class FiboScene(MovingCameraScene):
 #########################################################################################
 ################### Balanced Tree Extension - Triangle representation ###################
 
+    def triangle_balanced_tree_animate(self, startIndex):#TODO Must be done smart. aka move the lesser tree. Or moving fixed distance if child is at the ends
+        if self.triangleLayer == 0:
+            for i in range(len(self.rootDisplayOrder)-startIndex):
+                x = self.rootDisplayOrder[i+startIndex]
+                t = self.triangels.get(x.id)
+                t.createTarget()
+                self.mobjsToMove.remove(t.fDot)
+                self.mobjsToMove.append(t.mobj)
+            return
+        else:
+            for i in range(len(self.rootDisplayOrder)-startIndex):
+                x = self.rootDisplayOrder[i+startIndex]
+                self.tbal_create_children_animations(x, x.dot.target, 1)
 
+    def tbal_create_children_animations(self, parentMojb: FiboDot, parentTarget: Dot, layer: int):
+        if len(parentMojb.children)==0:
+            return
+
+        #First child which the other children should be alinged left of
+        baseChild = parentMojb.children[0]
+        baseChild.dot.target = Dot(point=baseChild.dot.get_center(), radius=baseChild.dot.radius, color=baseChild.dot.color).set_y(parentTarget.get_y()-self.treeVerticalSpacing).set_x(parentTarget.get_x()+parentMojb.widthOfChildren/2-baseChild.widthOfChildren/2)
+        self.mobjsToMove.append(baseChild)
+
+        for i in range(len(parentMojb.children)-1):
+            child =  parentMojb.children[i+1]
+            child.dot.target = Dot(point=child.dot.get_center(), radius=child.dot.radius, color=child.dot.color)
+            self.mobjsToMove.append(child)
+        
+        #Arrange based on first child.
+        self.space_children_by_halv_thier_width(parentMojb.children, True)
+
+        for n in range(len(parentMojb.children)):
+            self.bal_create_children_animations(parentMojb.children[n], parentMojb.children[n].dot.target)
+        return
+
+    def triangle_balance_tree_build(self, startIndex: int):
+        for i in range(len(self.rootDisplayOrder)-startIndex):
+            self.bal_move_children(self.rootDisplayOrder[i+startIndex])
+
+    def tbal_move_children(self, parentMojb: FiboDot):
+        if len(parentMojb.children)==0:
+            return
+        
+        #Set first childs new location
+        parentMojb.children[0].dot.set_y(parentMojb.get_y()-self.treeVerticalSpacing).set_x(parentMojb.get_x()+parentMojb.widthOfChildren/2-parentMojb.children[0].widthOfChildren/2)
+        
+        #Arrange rest based on first
+        self.space_children_by_halv_thier_width(parentMojb.children, False)
+
+        #Move arrows and recursively move childrens og children
+        parentsCenter = parentMojb.dot.get_center()
+        for n in parentMojb.children:
+            if self.showLabels:
+                n.numberLabel.move_to(n.dot.get_center())
+            n.arrow.put_start_and_end_on(n.dot.get_center(), parentsCenter)
+            self.bal_move_children(n)
+
+    class triangle():
+        def __init__(self, fDot, point: tuple[float, float, float]) -> None:
+            self.mobj = Triangle().set_fill(BLUE, opacity=1).move_to(point, UP)
+            self.mobj.height = 1.5
+            self.fDot = fDot
+            self.text = Text(str(f"n: {self.fDot.nFdotsInTree}")).scale_to_fit_width(self.mobj.width*0.65).move_to(self.mobj.get_center_of_mass(), UP)
+        def updateText(self, scene: Scene):
+            scene.remove(self.text)
+            self.text = Text(str(f"n: {self.fDot.nFdotsInTree}")).scale_to_fit_width(self.mobj.width*0.65).move_to(self.mobj.get_center_of_mass(), UP)
+            scene.add(self.text)
+        def createTarget(self):
+            self.mobj.target = Triangle().set_fill(BLUE, opacity=1).move_to(self.fDot.dot.target.get_center(), UP)
+
+    def createTriangels(self, dotList: list[FiboDot]):
+        if dotList is None or len(dotList) == 0:
+            return
+
+        for x in dotList:
+            self.removeTreeFromScene(x)
+            t = self.triangle(x, x.dot.get_center())
+            self.add(t.mobj, t.text)
+            self.triangels.update(t.fDot.id, t)
+
+    def removeTreeFromScene(self, fDot: FiboDot):
+        self.removeDotFromScene(fDot)
+        for x in fDot.children:
+            self.removeTreeFromScene(x)
+
+    def removeDotFromScene(self, fDot: FiboDot):
+        if fDot is None:
+            return
+        
+        self.remove(fDot.dot)
+        if fDot.parentKey is not None:
+            self.remove(fDot.arrow)
+        if self.showLabels:
+            self.remove(fDot.numberLabel)
+        
+
+    def triangle_animate_move(self):
+        return
+    
+    def triangle_move(self):
+        return
 
 ###############################################
 ################### HV-Tree ###################
