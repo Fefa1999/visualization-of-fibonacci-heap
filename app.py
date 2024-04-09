@@ -10,13 +10,9 @@ config.max_files_cached = 300
 config.disable_caching = True
 config.disable_caching_warning = True
 
-<<<<<<< Updated upstream
-#config.quality = "low_quality"
-config.quality = "medium_quality"
-=======
+
 config.quality = "low_quality"
 #config.quality = "medium_quality"
->>>>>>> Stashed changes
 #config.quality = "high_quality"
 #config.quality = "production_quality"
 #config.quality = "fourk_quality"
@@ -38,7 +34,7 @@ def run():
     # x.move_to((0+x.width/2, 0-x.height/2, 0))
     # scene.add(x)
     # scene.wait(3)
-    
+
     for i in range(2):
         heap.insert(i)
 
