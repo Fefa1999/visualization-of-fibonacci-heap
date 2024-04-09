@@ -59,6 +59,7 @@ class FiboScene(MovingCameraScene):
         self.adjust_camera(False)
     
     def construct(self):
+        self.wait(1)
         self.clear()
 
     #New class. Contains an ID and a parrentKey for the fibonacci heap to indenfify and modify individual instanses. 
@@ -353,7 +354,7 @@ class FiboScene(MovingCameraScene):
         if isAnimation and not self.sceneUpToDate:
             self.buildTrees(0)
             self.sceneUpToDate = True
-            self.adjust_camera(isAnimation)
+            self.adjust_camera(False)
 
     def finish(self, isAnimation: bool = True):
         self.remove_label_check()
@@ -367,7 +368,8 @@ class FiboScene(MovingCameraScene):
             if self.newBounds[0] < self.prevBounds[0]:
                 self.adjust_camera(isAnimation)
                 self.prevBounds = self.newBounds
-
+        else:
+            self.adjust_camera(isAnimation)
 #############################################################
 ################### Tree Layout functions ###################
     def animateTrees(self, startIndex_: int):
