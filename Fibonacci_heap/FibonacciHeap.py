@@ -33,7 +33,7 @@ class FibonacciHeap:
         if self.min_fib_node is None or fib_node.value <= self.min_fib_node.value:
             self.min_fib_node = fib_node
             if print:
-                self.scene.set_min(fib_node.id)
+                self.scene.set_min(fib_node.id, self.isAnimation)
    
     #iterates the circular doubly linked list and updates min node
     def set_new_min_from_root_list(self):
@@ -43,7 +43,7 @@ class FibonacciHeap:
             if self.root_list == current_node:
                 break
             current_node = current_node.right
-        self.scene.set_min(self.min_fib_node.id)
+        self.scene.set_min(self.min_fib_node.id, self.isAnimation)
 
     #return min node in O(1) time
     def returnMin(self):
@@ -144,7 +144,9 @@ class FibonacciHeap:
     def consolidate(self):
         max_degree = int(math.log(self.total_fib_nodes, (1 + math.sqrt(5)) / 2)) + 1
         array = [None] * (max_degree + 1)
+        #scene_array = self.scene.create_array((max_degree + 1), self.showExplanatoryText)
         array[self.root_list.degree] = self.root_list
+        #self.scene.add_number_to_array(self.root_list.degree, self.root_list.id, scene_array, self.showExplanatoryText)
         end_node = self.root_list.left
         current_node = self.root_list.right
 
@@ -152,18 +154,22 @@ class FibonacciHeap:
             next_node = current_node.right
             if array[current_node.degree] is None:
                 array[current_node.degree] = current_node
+                #self.scene.add_number_to_array(current_node.degree, current_node.id, scene_array, self.showExplanatoryText)
             else:
                 node = self.link_nodes(array[current_node.degree], current_node)
                 array[node.degree-1] = None
+                #self.scene.remove_from_array(node.degree-1, scene_array, self.showExplanatoryText)
                 while node.degree <= max_degree-1 and array[node.degree] is not None:
                     node = self.link_nodes(array[node.degree], node)
                     array[node.degree-1] = None
+                    #self.scene.remove_from_array(node.degree-1, scene_array, self.showExplanatoryText)
                 array[node.degree] = node
+                #self.scene.add_number_to_array(node.degree, node.id, scene_array, self.showExplanatoryText)
             if current_node == end_node:
+                #self.scene.remove_array(scene_array, self.showExplanatoryText)
                 break
             current_node = next_node
 
-        #self.scene.adjust_camera_after_consolidate(self.isAnimation) #TODO should it be used?
 
     #Link to nodes toegether - one will become child, other parent 
     def link_nodes(self, fib_node_one, fib_node_two):

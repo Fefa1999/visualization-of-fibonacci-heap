@@ -1,3 +1,4 @@
+import copy
 from manim import *
 from manim.typing import Point3D
 from manim.typing import Vector3
@@ -29,9 +30,8 @@ class FiboScene(MovingCameraScene):
         self.min_node: self.FiboDot = None
         self.root = list[self.FiboDot]()
         self.nodeDic = dict[int, self.FiboDot]()
-
+        
         #For Animations and Display
-        self.rootSpot = [0.0, 5.0, 0.0]
         self.defaultAddPoint = [0.0, 1.0, 0.0]
         self.treeLayout = TreeLayout(1)
         self.rootPacking = RootPacking(1)
@@ -46,17 +46,17 @@ class FiboScene(MovingCameraScene):
         self.rootDisplayOrder = list()
         self.rootBinaryTrees = list()
  
-        #For Camera #TODO maybe the new rootPacking can create a current and new boundary
-        self.bottom_node = None
+        #For Camera 
         self.minimumheight = 7.993754879000781                                                                                                                                                                                              
         self.minimumwidth = 14.222222222222221
-        self.multp = 0
-        self.bounds = (0,0)
-        self.newBounds = (0,0)
-
+        self.scale_percentage = 0.64
+        self.bounds = (14.222222222222221,7.993754879000781)
+        self.newBounds = (self.bounds[0], self.bounds[1]*self.scale_percentage)
+        self.prevBounds = (0, 0)
 
         self.rootRects = list() #TODO delete only for trouble shooting
         super().__init__(*args, **kwargs)
+        self.adjust_camera(False)
     
     def construct(self):
         self.clear()
@@ -79,10 +79,6 @@ class FiboScene(MovingCameraScene):
             self.id = idKey
             self.parentKey = None
             self.children = list[Self]()
-            #self.widthOfChildren = int()
-            #self.arrow = Line()
-            #self.numberLabel = Text("")
-
 
 ################################################################
 ################### Fibonacci Heap Functions ###################
@@ -167,7 +163,7 @@ class FiboScene(MovingCameraScene):
         else:
             self.add(pointer)
             self.sceneUpToDate = False
-            
+        
         self.finish(isAnimation)
 
         if showExplanatoryText and isAnimation:
@@ -214,7 +210,7 @@ class FiboScene(MovingCameraScene):
 
         self.finish(isAnimation)
     
-    def set_min(self, min_id):#, isAnimation):
+    def set_min(self, min_id, isAnimation):
         min_node_index = self.get_root_index_from_key(min_id)
         if not isinstance(min_node_index, int):
             return
@@ -224,7 +220,7 @@ class FiboScene(MovingCameraScene):
 
         self.min_node = minFiboNode
         minFiboNode.dot.color = RED
-        #self.adjust_camera(isAnimation) #why is this needed????
+        self.adjust_camera(isAnimation)
 
     def change_key(self, nodeId, newValue: int, isAnimation: bool, showExplanatoryText: bool=False):
         self.prepare(isAnimation)
@@ -358,15 +354,18 @@ class FiboScene(MovingCameraScene):
         if isAnimation and not self.sceneUpToDate:
             self.buildTrees(0)
             self.sceneUpToDate = True
-            self.adjust_camera(False)
 
     def finish(self, isAnimation: bool = True):
         self.remove_label_check()
         if isAnimation:
             self.buildAnimations()
+            if self.newBounds[0] > self.bounds[0] and self.newBounds != self.prevBounds: #or self.newBounds[1] < self.bounds[1]:
+                self.adjust_camera(isAnimation)
+                self.prevBounds = self.newBounds
             self.executeStoredAnimations()
-            self.adjust_camera(True)
-
+            if self.newBounds[0] < self.bounds[0] and self.newBounds != self.prevBounds:
+                self.adjust_camera(isAnimation)
+                self.prevBounds = self.newBounds
 
 #############################################################
 ################### Tree Layout functions ###################
@@ -443,6 +442,7 @@ class FiboScene(MovingCameraScene):
             boundsX = self.minimumwidth
             boundsY = self.minimumheight
 
+        boundsY = boundsY*self.scale_percentage
         placedAllRoots = False
         
         while not placedAllRoots:
@@ -1045,46 +1045,31 @@ class FiboScene(MovingCameraScene):
 
 
 ##############################################
-################### Camera ###################    
+################### Camera ################### 
+    
     def adjust_camera(self, isAnimation):
-        if len(self.rootDisplayOrder) < 1:
-            return
+        top_margin = (self.newBounds[1] / self.scale_percentage)-self.newBounds[1]
 
-        self.prepare(isAnimation)
+        if self.newBounds[1] != 0:
+            heap_width = self.newBounds[0]
+            heap_height = self.newBounds[1]
+            new_height = (heap_height + top_margin)
+            
+            new_width = max(heap_width, new_height)
 
-        mostLeftX = self.get_left_most_dot(self.rootDisplayOrder).dot.get_x()
-        xbound = self.newBounds[0]
-        ybound = self.newBounds[1]
-        
-        boarderRight = self.camera.frame.get_right()[0]
-        boarderLeft = self.camera.frame.get_left()[0]
-        screenWidth = boarderRight-boarderLeft
+            new_x = new_width / 2
 
-        newCenter = (((mostLeftX+xbound)/2), 2+((self.rootDisplayOrder[0].dot.get_y()-ybound)/2), 0) #the +2 is a top padding
+            bottom_point = -new_height
+            new_y = bottom_point + (new_height/2)+top_margin
 
-        newWidth = xbound+2
-        if newWidth > screenWidth:
-            self.zoom_out(isAnimation, newCenter, newWidth)
-        elif newWidth > self.minimumwidth and newWidth < screenWidth:
-            self.zoom_in(isAnimation, newCenter, newWidth)
-        else:
+            new_center = [new_x, new_y, 0]
+
             if isAnimation:
-                self.play(self.camera.frame.animate.move_to(newCenter))
+                self.play(self.camera.frame.animate.move_to(new_center).set_width(new_width))
             else:
-                self.camera.frame.move_to(newCenter)
+                self.camera.frame.move_to(new_center).set_width(new_width)
 
-    def zoom_in(self, isAnimation, newCenter, currentWidthOfHeap):
-        if isAnimation:
-            self.play(self.camera.frame.animate.set_width(currentWidthOfHeap).move_to(newCenter))  
-        else:
-            self.camera.frame.set_width(currentWidthOfHeap).move_to(newCenter)         
-
-    def zoom_out(self, isAnimation, newCenter, currentWidthOfHeap):
-        if isAnimation:
-            self.play(self.camera.frame.animate.set_width(currentWidthOfHeap).move_to(newCenter))  
-        else:
-            self.camera.frame.set_width(currentWidthOfHeap).move_to(newCenter) 
-
+            self.defaultAddPoint[0] = self.camera.frame.get_center()[0]
 
 ######################################################
 ################### Util Functions ###################
@@ -1133,24 +1118,66 @@ class FiboScene(MovingCameraScene):
                 return n
         return -1
 
-    def get_left_most_dot(self, group: list[FiboDot]): 
-        if len(group) == 0:
-            return #TODO should it return something to tell it failed??
-        
-        if self.treeLayout == TreeLayout.H_V:
-            return group[0]
-        
-        def aux(a: self.FiboDot):
-            if len(a.children) > 0:
-                return aux(a.children[len(a.children)-1])
-            else:
-                return a
-        
-        return aux(group[0])
-    
-    def get_bottom_most_dot(self): #TODO is it laysensitive? Is it needed?
-        return self.bottom_node
-
-
 #####################################################
 ################### Uncatagorized ###################
+
+#####################################################
+    ########## Explanatory array consolidation ##########
+
+    # class explanatory_array:
+    #     arr: Dict[int, Text]
+    #     rect: Rectangle
+    #     def __init__(self, size, x_value, y_value):
+    #         self.arr = {}
+    #         self.rect = Rectangle(width=size, height=size/10, grid_xstep=1).set_x(x_value).set_y(y_value)
+        
+    # def create_array(self, size, showExplanatoryText):
+    #     if showExplanatoryText:
+    #         textPlacement = [self.camera.frame.get_top()[0], self.camera.frame.get_top()[1]-0.5, 0]
+    #         text = "We  create  an  array  with  a  length  of  the  max  possible  degree  of  a  children  in  the  root  list  after  the  consolidation  process"
+    #         explanatoryText = Text(str(text), font_size=18).move_to(textPlacement)
+    #         self.play(FadeIn(explanatoryText))
+    #         explanatory_array = self.explanatory_array(size, self.camera.frame.get_center()[0], self.camera.frame.get_top()[1]-1.5)
+    #         self.play(FadeIn(explanatory_array.rect))
+    #         self.wait(4)
+    #         self.play(FadeOut(explanatoryText))
+    #         return explanatory_array
+    
+    # def add_number_to_array(self, degree, id, explanatory_array, showExplanatoryText):
+    #     if showExplanatoryText:
+    #         dot_value = Text(self.nodeDic[id].numberLabel.text, font_size=18)
+    #         explanatory_array.arr[degree] = dot_value
+    #         dot_value.set_x(explanatory_array.rect.get_left()[0]+(0.5)+degree).set_y(explanatory_array.rect.get_y())
+
+    #         textPlacement = [self.camera.frame.get_top()[0], self.camera.frame.get_top()[1]-0.5, 0]
+    #         text = self.nodeDic[id].numberLabel.text + "  is  added  to  the  array  at  the  index  of  it's  degree:  " + str(degree)
+    #         explanatoryText = Text(str(text), font_size=18).move_to(textPlacement)
+
+    #         self.play(FadeIn(explanatoryText))
+    #         self.play(FadeIn(dot_value))
+    #         self.wait(2)
+    #         self.play(FadeOut(explanatoryText))
+    #         return
+    
+    # def remove_from_array(self, degree, explanatory_array, showExplanatoryText):
+    #     if showExplanatoryText:
+    #         textPlacement = [self.camera.frame.get_top()[0], self.camera.frame.get_top()[1]-0.5, 0]
+    #         txt = explanatory_array.arr.pop(degree)
+    #         text = "The  node:  " + txt.text + "  at  index:  " + str(degree) + "  is  removed  since  it  has  been  merged"
+    #         explanatoryText = Text(str(text), font_size=18).move_to(textPlacement)
+
+    #         self.play(FadeIn(explanatoryText))
+    #         self.play(FadeOut(txt))
+    #         self.wait(2)
+    #         self.play(FadeOut(explanatoryText))
+    #         return
+    
+    # def remove_array(self, explanatory_array, showExplanatoryText):
+    #     if showExplanatoryText:
+    #         animations = []
+    #         for t in explanatory_array.arr:
+    #             animations.append(FadeOut(explanatory_array.arr.get(t)))
+    #         animations.append(FadeOut(explanatory_array.rect))
+    #         self.play(*animations)
+    #         return
+
