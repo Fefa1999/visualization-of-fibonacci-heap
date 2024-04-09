@@ -9,10 +9,15 @@ import time
 #DO YOU HAVE TO STATE DELETIONS OF OBJECTS IN PYTHON TO HELP GARBAGE COLLECTER
 #HOW DOES MANIM HANDLE REMOVED OBJECTS? ARE THEY DELTED?
 
+ColorPalet = list(map(ManimColor, [(146,43,33), (231,76,60), (142,68,173), (155,89,182), (41,128,185), 
+              (52,152,219), (20,90,50), (30,132,73), (39,174,96), (88,214,141),
+              (211,84,0), (230,126,34), (243,156,18), (241,196,15)]))
+
 class TreeLayout(Enum):
     RightAlligned = 1
     Balanced = 2
-    H_V = 3
+    TriangleBalanced = 3
+    H_V = 4
 
 class RootPacking(Enum):
     No_Packing = 1
@@ -48,6 +53,7 @@ class FiboScene(MovingCameraScene):
         self.rootDisplayOrder = list()
         self.rootBinaryTrees = list()
         self.triangels = dict[int, self.triangle]()
+        self.showDepthColor = False #TODO implement
  
         #For Camera #TODO maybe the new rootPacking can create a current and new boundary
         self.bottom_node = None
@@ -95,7 +101,7 @@ class FiboScene(MovingCameraScene):
     def create_dot(self, point: Point3D, number: int, id: int):
         fiboDot = self.FiboDot(id)
         fiboDot.dot = Dot(point, radius=0.2, color=BLUE)
-        fiboDot.numberLabel = Text(str(number), font_size=18 - (number/100)).move_to(fiboDot.dot.get_center()).set_z_index(1)
+        fiboDot.numberLabel = Text(str(number), font_size=max(1,18 - (number/100))).move_to(fiboDot.dot.get_center()).set_z_index(1)
         return fiboDot
 
     #Inserts the dot onto the scene and adds it to a root list, then calls for a repositioning of the nodes.
@@ -166,7 +172,6 @@ class FiboScene(MovingCameraScene):
         if isAnimation:
             self.storedAnimations.append(FadeIn(pointer))
             firstIndexOfChange = min(parenDisplayIndex, childDisplayIndex)
-            print(f"{parenDisplayIndex}, {childDisplayIndex}, {firstIndexOfChange}")
             self.animateTrees(firstIndexOfChange)
         else:
             self.add(pointer)
@@ -382,7 +387,7 @@ class FiboScene(MovingCameraScene):
         startIndex = self.updateStartIndex(startIndex_)
         if startIndex is None:
             return
-        
+
         self.rootPackingAlgorithms(startIndex, True)
 
         if self.treeLayout == TreeLayout.RightAlligned:
@@ -402,7 +407,7 @@ class FiboScene(MovingCameraScene):
         elif self.treeLayout == TreeLayout.H_V:
             self.hv_Tree_Build(0)
 
-    def changeTreeLayout(self, layout: TreeLayout = TreeLayout.RightAlligned, isAnimation: bool = True):
+    def changeTreeLayout(self, layout: TreeLayout = TreeLayout.RightAlligned, isAnimation: bool = True, affectedLayer: int = 0):
         if self.treeLayout == layout:
             return
 
@@ -420,7 +425,12 @@ class FiboScene(MovingCameraScene):
         if self.treeLayout == TreeLayout.H_V:
             for i in self.rootDisplayOrder:
                 self.recalcTreeDimentions(i)
-       
+            for i in self.nodeDic.values():
+                i.dot.color = BLUE
+
+        if self.treeLayout == TreeLayout.TriangleBalanced:
+            NotImplemented
+
         self.treeLayout = layout
         
         if not isAnimation:
@@ -483,7 +493,7 @@ class FiboScene(MovingCameraScene):
             elif self.treeLayout == TreeLayout(3):
                 for i in range(len(self.rootBinaryTrees)-startIndex): 
                     cDot = self.rootBinaryTrees[i+startIndex][0]
-                    cDot.dot.target = Dot(point=(rootRects[i+startIndex].x, rootRects[i+startIndex].y, 0), radius=cDot.dot.radius, color=cDot.dot.color)
+                    cDot.dot.target = Dot(point=(rootRects[i+startIndex].x+self.rootDisplayOrder[0].dot.radius*4, rootRects[i+startIndex].y, 0), radius=cDot.dot.radius, color=cDot.dot.color)
                     self.mobjsToMove.append(cDot)
         else:
             if self.treeLayout == TreeLayout(1):
@@ -500,7 +510,7 @@ class FiboScene(MovingCameraScene):
                         fDot.numberLabel.move_to(fDot.dot.get_center())
             elif self.treeLayout == TreeLayout(3): #StartIndex doesnt make sense when packing
                 for i in range(len(self.rootBinaryTrees)): 
-                    self.rootBinaryTrees[i][0].dot.move_to((rootRects[i].x, rootRects[i].y, 0))
+                    self.rootBinaryTrees[i][0].dot.move_to((rootRects[i].x+self.rootDisplayOrder[0].dot.radius*4, rootRects[i].y, 0))
 
     def sortRootsByWidthHeigth(self):
         if self.treeLayout == TreeLayout.RightAlligned or self.treeLayout == TreeLayout.Balanced:
@@ -569,7 +579,7 @@ class FiboScene(MovingCameraScene):
             rootRects[0].y = 0
         elif self.treeLayout == TreeLayout(3):
             for r in self.rootBinaryTrees:
-                rootRects.append(Rect(spacing + r[0].heigthOfChildren, spacing+r[0].widthOfChildren))
+                rootRects.append(Rect(spacing*2 + r[0].heigthOfChildren, spacing*2+r[0].widthOfChildren))
             rootRects[0].x = 0
             rootRects[0].y = 0
 
@@ -580,13 +590,16 @@ class FiboScene(MovingCameraScene):
             return
 
         startIndex = startIndex_
-        if self.rootPacking == RootPacking.FFDH or self.rootPacking == RootPacking.Binary_Tree_Packing or self.rootSorting == RootSorting.Heigth_Width:
+        if self.rootPacking == RootPacking.Binary_Tree_Packing:
+            if self.rootSorting == RootSorting.Heigth_Width:
+                self.sortRootsByWidthHeigth()
             startIndex = 0
-
+            return startIndex
+        
         if self.rootSorting == RootSorting.Heigth_Width:
-            NodeAtChangeKey = self.rootDisplayOrder[startIndex].id
+            NodeAtChange = self.rootDisplayOrder[startIndex]
             self.sortRootsByWidthHeigth()
-            startIndex = self.get_root_index_from_key(NodeAtChangeKey)
+            startIndex = self.getIndexForDisplay(NodeAtChange)
 
         return startIndex
 
@@ -855,6 +868,8 @@ class FiboScene(MovingCameraScene):
         if self.triangleLayer == 0:
             for i in range(len(self.rootDisplayOrder)-startIndex):
                 x = self.rootDisplayOrder[i+startIndex]
+                self.removeChildrenFromScene(x)
+
                 t = self.triangels.get(x.id)
                 t.createTarget()
                 self.mobjsToMove.remove(t.fDot)
@@ -882,15 +897,34 @@ class FiboScene(MovingCameraScene):
         #Arrange based on first child.
         self.space_children_by_halv_thier_width(parentMojb.children, True)
 
+        if layer == self.triangleLayer:
+            for x in parentMojb.children:
+                self.removeChildrenFromScene(x)
+
+                t = self.triangels.get(x.id)
+                t.createTarget()
+                self.mobjsToMove.remove(t.fDot)
+                self.mobjsToMove.append(t.mobj)
+            return
+
         for n in range(len(parentMojb.children)):
-            self.bal_create_children_animations(parentMojb.children[n], parentMojb.children[n].dot.target)
+            self.bal_create_children_animations(parentMojb.children[n], parentMojb.children[n].dot.target, (layer+1))
         return
 
     def triangle_balance_tree_build(self, startIndex: int):
-        for i in range(len(self.rootDisplayOrder)-startIndex):
-            self.bal_move_children(self.rootDisplayOrder[i+startIndex])
+        if self.triangleLayer == 0:
+            for i in range(len(self.rootDisplayOrder)-startIndex):
+                x = self.rootDisplayOrder[i+startIndex]
+                self.removeChildrenFromScene(x)
 
-    def tbal_move_children(self, parentMojb: FiboDot):
+                t = self.triangels.get(x.id)
+                t.move_to(x.dot.get_center(), UP)
+                t.updateText()
+            return
+        for i in range(len(self.rootDisplayOrder)-startIndex):
+            self.bal_move_children(self.rootDisplayOrder[i+startIndex], 1)
+
+    def tbal_move_children(self, parentMojb: FiboDot, layer:int):
         if len(parentMojb.children)==0:
             return
         
@@ -906,7 +940,16 @@ class FiboScene(MovingCameraScene):
             if self.showLabels:
                 n.numberLabel.move_to(n.dot.get_center())
             n.arrow.put_start_and_end_on(n.dot.get_center(), parentsCenter)
-            self.bal_move_children(n)
+
+            if layer == self.triangleLayer:
+                self.removeChildrenFromScene(n)
+
+                t = self.triangels.get(n.id)
+                t.createTarget()
+                self.mobjsToMove.remove(t.fDot)
+                self.mobjsToMove.append(t.mobj)
+            else:
+                self.bal_move_children(n, (layer+1))
 
     class triangle():
         def __init__(self, fDot, point: tuple[float, float, float]) -> None:
@@ -926,15 +969,15 @@ class FiboScene(MovingCameraScene):
             return
 
         for x in dotList:
-            self.removeTreeFromScene(x)
+            self.removeChildrenFromScene(x)
             t = self.triangle(x, x.dot.get_center())
             self.add(t.mobj, t.text)
             self.triangels.update(t.fDot.id, t)
 
-    def removeTreeFromScene(self, fDot: FiboDot):
-        self.removeDotFromScene(fDot)
+    def removeChildrenFromScene(self, fDot: FiboDot):
         for x in fDot.children:
-            self.removeTreeFromScene(x)
+            self.removeDotFromScene(x)
+            self.removeChildrenFromScene(x)
 
     def removeDotFromScene(self, fDot: FiboDot):
         if fDot is None:
@@ -945,13 +988,24 @@ class FiboScene(MovingCameraScene):
             self.remove(fDot.arrow)
         if self.showLabels:
             self.remove(fDot.numberLabel)
+  
+    def addChildrenToScene(self, fDot: FiboDot):
+        if fDot is None:
+            return
         
-
-    def triangle_animate_move(self):
-        return
+        for x in fDot.children:
+            self.addDotToScene(x)
+            self.addChildrenToScene(x)
     
-    def triangle_move(self):
-        return
+    def addDotToScene(self, fDot: FiboDot):
+        if fDot is None:
+            return
+        
+        self.add(fDot.dot)
+        if fDot.parentKey is not None:
+            self.add(fDot.arrow)
+        if self.showLabels:
+            self.add(fDot.numberLabel)
 
 ###############################################
 ################### HV-Tree ###################
@@ -959,14 +1013,17 @@ class FiboScene(MovingCameraScene):
         if startIndex < 0 or startIndex >= len(self.rootDisplayOrder):
             return
 
-        def aux(i: int, isLeftIsClosest: bool, x: float, y: float):
+        def aux(i: int, isLeftIsClosest: bool, x: float, y: float, depth_: int):
             currentDot = ba[i]
             if not isinstance(currentDot, self.FiboDot):
                 return
             
-            currentDot.dot.target = Dot(point=(currentDot.dot.get_center()), radius=currentDot.dot.radius, color=currentDot.dot.color)
+            depth = depth_
+
+            currentDot.dot.target = Dot(point=(currentDot.dot.get_center()), radius=currentDot.dot.radius, color=self.getColorFromDepth(depth))
             currentDot.dot.target.set_x(x).set_y(y)
             if currentDot.id != -1:
+                depth += 1
                 self.mobjsToMove.append(currentDot)
 
             if i*2+2>=maxIndex:
@@ -996,8 +1053,8 @@ class FiboScene(MovingCameraScene):
             rightY = dt.get_y()
             leftX = dt.get_x()
 
-            aux(i*2+1, (not isLeftIsClosest), leftX, leftY)
-            aux(i*2+2, (not isLeftIsClosest), rightX, rightY)
+            aux(i*2+1, (not isLeftIsClosest), leftX, leftY, depth)
+            aux(i*2+2, (not isLeftIsClosest), rightX, rightY, depth)
 
         for i in range((len(self.rootDisplayOrder))-startIndex):
             fDot = self.rootDisplayOrder[i+startIndex]
@@ -1015,7 +1072,7 @@ class FiboScene(MovingCameraScene):
             if fDot.dot.target is not None:
                 targetX = fDot.dot.target.get_x()
                 targetY = fDot.dot.target.get_y()
-            aux(0, isLeftIsClosest_, targetX, targetY)
+            aux(0, isLeftIsClosest_, targetX, targetY, 0)
 
         return   
 
@@ -1023,16 +1080,22 @@ class FiboScene(MovingCameraScene):
         if startIndex < 0 or startIndex >= len(self.rootDisplayOrder):
             return
 
-        def aux(i: int, isLeftIsClosest: bool, x: float, y: float):
+        def aux(i: int, isLeftIsClosest: bool, x: float, y: float, depth_: int):
             currentDot = ba[i]
             if not isinstance(currentDot, self.FiboDot):
                 return
+
+            depth = depth_
 
             currentDot.dot.move_to((x,y,0))
             if self.showLabels and currentDot.id != -1:
                 currentDot.numberLabel.move_to(currentDot.dot.get_center())
             if currentDot.arrow is not None:
                 currentDot.arrow.put_start_and_end_on(currentDot.dot.get_center(), self.nodeDic[currentDot.parentKey].dot.get_center())
+            currentDot.dot.color = self.getColorFromDepth(depth)
+
+            if currentDot.id != -1:
+                depth += 1
 
             if i*2+2>=maxIndex:
                 return
@@ -1060,8 +1123,8 @@ class FiboScene(MovingCameraScene):
             rightY = dt.get_y()
             leftX = dt.get_x()
 
-            aux(i*2+1, (not isLeftIsClosest), leftX, leftY)
-            aux(i*2+2, (not isLeftIsClosest), rightX, rightY)
+            aux(i*2+1, (not isLeftIsClosest), leftX, leftY, depth)
+            aux(i*2+2, (not isLeftIsClosest), rightX, rightY, depth)
 
 
         for i in range((len(self.rootDisplayOrder)-startIndex)):
@@ -1072,7 +1135,7 @@ class FiboScene(MovingCameraScene):
                 ba = self.transformToBinary(fDot) 
             maxIndex = len(ba)
             isLeftIsClosest_ = (len(fDot.children)%2==0)
-            aux(0, isLeftIsClosest_, fDot.dot.get_x(), fDot.dot.get_y())
+            aux(0, isLeftIsClosest_, fDot.dot.get_x(), fDot.dot.get_y(), 0)
         
         return 
 
@@ -1154,6 +1217,13 @@ class FiboScene(MovingCameraScene):
                     break
         self.rootBinaryTrees = newBinRoot
 
+    def getColorFromDepth(self, depth: int):
+        if depth < 0:
+            return
+        if depth > 13: 
+            return ColorPalet[13]
+        
+        return ColorPalet[depth]
 
 ##############################################
 ################### Camera ###################    

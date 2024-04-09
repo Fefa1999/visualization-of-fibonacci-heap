@@ -11,10 +11,10 @@ config.max_files_cached = 300
 config.disable_caching = True
 config.disable_caching_warning = True
 
-config.quality = "low_quality"
+#config.quality = "low_quality"
 #config.quality = "medium_quality"
 #config.quality = "high_quality"
-#config.quality = "production_quality"
+config.quality = "production_quality"
 #config.quality = "fourk_quality"
 
 def run():
@@ -27,30 +27,41 @@ def run():
     #Set animation 
     heap.isAnimation = False
 
-    scene.changeRootPackingAndSorting(RootPacking.No_Packing, rootSorting=RootSorting.Heigth_Width, isAnimation=False)
+    scene.changeTreeLayout(TreeLayout.H_V, False)
+    scene.changeRootPackingAndSorting(RootPacking.Binary_Tree_Packing, rootSorting=RootSorting.Heigth_Width, isAnimation=False)
 
-    for i in range(32):
+    for i in range(1025):#4097):
         heap.insert(i)
-
-    
-
-    heap.isAnimation = True
 
     heap.extract_min()
 
+    heap.isAnimation = True
 
-    #For adding the bounds off the root packing:
+    scene.prepare(True)
+
+    scene.wait(3)
+
+    heap.extract_min()
+
+    scene.wait(3)
+
+    scene.changeTreeLayout(TreeLayout.RightAlligned, True)
+
+    scene.wait(3)
     
 
-    heap.insert(20)
+    # heap.isAnimation = True
 
-    x = Rectangle(height=scene.bounds[1], width=scene.bounds[0])
-    x.move_to((0+x.width/2, 0-x.height/2, 0))
-    scene.add(x)
+    #For adding the bounds off the root packing:
+    # heap.insert(0)
+
+    # x = Rectangle(height=scene.bounds[1], width=scene.bounds[0])
+    # x.move_to((0+x.width/2, 0-x.height/2, 0))
+    # scene.add(x)
 
     #scene.triangle_balanced_tree_animate(0)
 
-    scene.wait(5)
+    #scene.wait(5)
 
     # heap.isAnimation = False
     
