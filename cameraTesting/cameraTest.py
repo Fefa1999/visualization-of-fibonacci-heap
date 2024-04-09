@@ -45,26 +45,30 @@ def run():
     heap.extract_min()
 
     heap.isAnimation = False
+
     for i in range(32):
         heap.insert(i)
 
     heap.isAnimation = True
     heap.extract_min()
+    
+    # heap.isAnimation = False
+    # for i in range(32):
+    #     heap.insert(i)
 
-    heap.decrease_value(22, -1)
-    heap.decrease_value(21, -2)
-    heap.decrease_value(18, -1)
+    # heap.isAnimation = True
+    # heap.extract_min()
+    
+    #heap.insert(500)
+    # heap.decrease_value(22, -1)
+    # heap.decrease_value(21, -2)
+    # heap.decrease_value(18, -1)
   
     # scene.remove(x)
     # for i in scene.rootRects:
     #     r = Rectangle(height=i.h, width=i.w)
     #     r.move_to((i.x+(r.width/2), i.y-(r.height/2), -1))
     #     scene.add(r)
-
-    # x = Rectangle(height=scene.bounds[1], width=scene.bounds[0])
-    # x.move_to((0+x.width/2, 0-x.height/2, 0))
-    # scene.add(x)
-    # scene.wait(3)
 
     scene.render()
     print("--- %s seconds ---" % (time.time() - start_time))
