@@ -158,7 +158,7 @@ class FiboScene(MovingCameraScene):
         if isAnimation:
             self.storedAnimations.append(FadeIn(pointer))
             firstIndexOfChange = min(parenDisplayIndex, childDisplayIndex)
-            print(f"{parenDisplayIndex}, {childDisplayIndex}, {firstIndexOfChange}")
+            #print(f"{parenDisplayIndex}, {childDisplayIndex}, {firstIndexOfChange}")
             self.animateTrees(firstIndexOfChange)
         else:
             self.add(pointer)
@@ -220,7 +220,6 @@ class FiboScene(MovingCameraScene):
 
         self.min_node = minFiboNode
         minFiboNode.dot.color = RED
-        self.adjust_camera(isAnimation)
 
     def change_key(self, nodeId, newValue: int, isAnimation: bool, showExplanatoryText: bool=False):
         self.prepare(isAnimation)
@@ -354,16 +353,18 @@ class FiboScene(MovingCameraScene):
         if isAnimation and not self.sceneUpToDate:
             self.buildTrees(0)
             self.sceneUpToDate = True
+            self.adjust_camera(isAnimation)
 
     def finish(self, isAnimation: bool = True):
         self.remove_label_check()
         if isAnimation:
             self.buildAnimations()
-            if self.newBounds[0] > self.bounds[0] and self.newBounds != self.prevBounds: #or self.newBounds[1] < self.bounds[1]:
+            if self.newBounds[0] > self.bounds[0] and self.newBounds != self.prevBounds:
                 self.adjust_camera(isAnimation)
                 self.prevBounds = self.newBounds
+
             self.executeStoredAnimations()
-            if self.newBounds[0] < self.bounds[0] and self.newBounds != self.prevBounds:
+            if self.newBounds[0] < self.prevBounds[0]:
                 self.adjust_camera(isAnimation)
                 self.prevBounds = self.newBounds
 
@@ -447,7 +448,7 @@ class FiboScene(MovingCameraScene):
         
         while not placedAllRoots:
             if self.rootPacking == RootPacking.No_Packing:
-                placedAllRoots = self.noPacking(boundsX, rootRects)
+                placedAllRoots = self.noPacking(boundsX, boundsY, rootRects)
             elif self.rootPacking == RootPacking.FFDH:
                 placedAllRoots = self.fFDH_Packing(boundsX, boundsY, rootRects)
             elif self.rootPacking == RootPacking.Binary_Tree_Packing:
@@ -567,29 +568,35 @@ class FiboScene(MovingCameraScene):
 
         return rootRects
         
-    def updateStartIndex(self, startIndex_ :int):
-        if startIndex_ < 0 or startIndex_ >= len(self.rootDisplayOrder) or len(self.root) == 0:
+    def updateStartIndex(self, startIndex :int):
+        if startIndex < 0 or startIndex >= len(self.rootDisplayOrder) or len(self.root) == 0:
             return
 
-        startIndex = startIndex_
-        if self.rootPacking == RootPacking.FFDH or self.rootPacking == RootPacking.Binary_Tree_Packing or self.rootSorting == RootSorting.Heigth_Width:
+        startIndex = startIndex
+        if self.rootPacking == RootPacking.Binary_Tree_Packing:
+            if self.rootSorting == RootSorting.Heigth_Width:
+                self.sortRootsByWidthHeigth()
             startIndex = 0
+            return startIndex
 
         if self.rootSorting == RootSorting.Heigth_Width:
-            NodeAtChangeKey = self.rootDisplayOrder[startIndex].id
+            NodeAtChange = self.rootDisplayOrder[startIndex]
             self.sortRootsByWidthHeigth()
-            startIndex = self.get_root_index_from_key(NodeAtChangeKey)
+            startIndex = self.getIndexForDisplay(NodeAtChange)
 
         return startIndex
 
 ##############################################################
 ################### Root Packing functions ###################
-    def noPacking(self, boundX_: int, listOfRects: list):
+    def noPacking(self, boundX: int, boundY: int, listOfRects: list):
         xPos = listOfRects[0].x
         yPos = listOfRects[0].y
-        boundX = boundX_ + xPos
+        boundX = boundX + xPos
+        boundY = boundY + yPos
         for r in listOfRects:
             if (xPos+r.w)>boundX:
+                return False
+            if (yPos+r.h)>boundY:
                 return False
             r.x = xPos 
             r.y = yPos
