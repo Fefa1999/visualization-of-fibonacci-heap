@@ -11,10 +11,10 @@ config.max_files_cached = 300
 config.disable_caching = True
 config.disable_caching_warning = True
 
-#config.quality = "low_quality"
+config.quality = "low_quality"
 #config.quality = "medium_quality"
 #config.quality = "high_quality"
-config.quality = "production_quality"
+#config.quality = "production_quality"
 #config.quality = "fourk_quality"
 
 def run():
@@ -25,27 +25,15 @@ def run():
     heap.scene = scene
 
     #Set animation 
-    heap.isAnimation = False
+    heap.isAnimation = True
 
-    scene.changeTreeLayout(TreeLayout.H_V, False)
-    scene.changeRootPackingAndSorting(RootPacking.Binary_Tree_Packing, rootSorting=RootSorting.Heigth_Width, isAnimation=False)
+    scene.changeTreeLayout(TreeLayout.TriangleBalanced, False)
+    #scene.changeRootPackingAndSorting(RootPacking.Binary_Tree_Packing, rootSorting=RootSorting.Heigth_Width, isAnimation=False)
 
-    for i in range(1025):#4097):
+    for i in range(30):#4097):
         heap.insert(i)
 
     heap.extract_min()
-
-    heap.isAnimation = True
-
-    scene.prepare(True)
-
-    scene.wait(3)
-
-    heap.extract_min()
-
-    scene.wait(3)
-
-    scene.changeTreeLayout(TreeLayout.RightAlligned, True)
 
     scene.wait(3)
     

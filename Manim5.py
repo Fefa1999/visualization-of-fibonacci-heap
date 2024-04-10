@@ -394,6 +394,8 @@ class FiboScene(MovingCameraScene):
             self.right_align_tree_animate(startIndex)
         elif self.treeLayout == TreeLayout.Balanced:
             self.balanced_tree_animate(startIndex)
+        elif self.treeLayout == TreeLayout.TriangleBalanced:
+            self.triangle_balanced_tree_animate(startIndex)
         elif self.treeLayout == TreeLayout.H_V:
             self.hv_Tree_Animate(startIndex)
 
@@ -404,6 +406,8 @@ class FiboScene(MovingCameraScene):
             self.right_align_tree_build(startIndex)
         elif self.treeLayout == TreeLayout.Balanced:
             self.balance_tree_build(startIndex)
+        elif self.treeLayout == TreeLayout.TriangleBalanced:
+            self.triangle_balance_tree_build(startIndex)
         elif self.treeLayout == TreeLayout.H_V:
             self.hv_Tree_Build(0)
 
@@ -429,7 +433,12 @@ class FiboScene(MovingCameraScene):
                 i.dot.color = BLUE
 
         if self.treeLayout == TreeLayout.TriangleBalanced:
-            NotImplemented
+            for x in self.triangels:
+                self.addChildrenToScene(x.fDot)
+                self.remove(x.mobj, x.text) 
+
+        if layout == TreeLayout.TriangleBalanced:
+            self.triangleLayer == affectedLayer
 
         self.treeLayout = layout
         
@@ -480,35 +489,39 @@ class FiboScene(MovingCameraScene):
         
 
         if isAnimation:
-            if self.treeLayout == TreeLayout(1):
+            if self.treeLayout == TreeLayout.RightAlligned:
                 for i in range(len(self.rootDisplayOrder)-startIndex): 
                     cDot = self.rootDisplayOrder[i+startIndex]
                     cDot.dot.target = Dot(point=(rootRects[i+startIndex].x + rootRects[i+startIndex].w, rootRects[i+startIndex].y, 0), radius=cDot.dot.radius, color=cDot.dot.color)
                     self.mobjsToMove.append(cDot)   
-            elif self.treeLayout == TreeLayout(2):
+            elif self.treeLayout == TreeLayout.Balanced:
                 for i in range(len(self.rootDisplayOrder)-startIndex): 
                     cDot = self.rootDisplayOrder[i+startIndex]
                     cDot.dot.target = Dot(point=(rootRects[i+startIndex].x + (rootRects[i+startIndex].w/2), rootRects[i+startIndex].y, 0), radius=cDot.dot.radius, color=cDot.dot.color)
                     self.mobjsToMove.append(cDot)
-            elif self.treeLayout == TreeLayout(3):
+            elif self.treeLayout == TreeLayout.TriangleBalanced:
+                NotImplemented
+            elif self.treeLayout == TreeLayout.H_V:
                 for i in range(len(self.rootBinaryTrees)-startIndex): 
                     cDot = self.rootBinaryTrees[i+startIndex][0]
                     cDot.dot.target = Dot(point=(rootRects[i+startIndex].x+self.rootDisplayOrder[0].dot.radius*4, rootRects[i+startIndex].y, 0), radius=cDot.dot.radius, color=cDot.dot.color)
                     self.mobjsToMove.append(cDot)
         else:
-            if self.treeLayout == TreeLayout(1):
+            if self.treeLayout == TreeLayout.RightAlligned:
                 for i in range(len(self.rootDisplayOrder)-startIndex): 
                     fDot = self.rootDisplayOrder[i+startIndex]
                     fDot.dot.move_to((rootRects[i+startIndex].x + rootRects[i+startIndex].w, rootRects[i+startIndex].y, 0))
                     if self.showLabels:
                         fDot.numberLabel.move_to(fDot.dot.get_center())
-            elif self.treeLayout == TreeLayout(2):
+            elif self.treeLayout == TreeLayout.Balanced:
                 for i in range(len(self.rootDisplayOrder)-startIndex): 
                     fDot = self.rootDisplayOrder[i+startIndex]
                     fDot.dot.move_to((rootRects[i+startIndex].x + (rootRects[i+startIndex].w/2), rootRects[i+startIndex].y, 0))
                     if self.showLabels:
                         fDot.numberLabel.move_to(fDot.dot.get_center())
-            elif self.treeLayout == TreeLayout(3): #StartIndex doesnt make sense when packing
+            elif self.treeLayout == TreeLayout.TriangleBalanced:
+                NotImplemented
+            elif self.treeLayout == TreeLayout.H_V: #StartIndex doesnt make sense when packing
                 for i in range(len(self.rootBinaryTrees)): 
                     self.rootBinaryTrees[i][0].dot.move_to((rootRects[i].x+self.rootDisplayOrder[0].dot.radius*4, rootRects[i].y, 0))
 
@@ -565,19 +578,21 @@ class FiboScene(MovingCameraScene):
         rootRects = list()
         spacing = self.rootDisplayOrder[0].dot.radius*4
 
-        if self.treeLayout == TreeLayout(1):
+        if self.treeLayout == TreeLayout.RightAlligned:
             for r in self.rootDisplayOrder:
                 rootRects.append(Rect(spacing+r.heigthOfChildren, spacing+r.widthOfChildren))
             # rootRects[0].x = self.rootDisplayOrder[0].dot.get_x()-(self.rootDisplayOrder[0].widthOfChildren)-spacing #If we want a non moving index 0
             # rootRects[0].y = self.rootDisplayOrder[0].dot.get_y()
             rootRects[0].x = 0#-(self.rootDisplayOrder[0].widthOfChildren)-spacing
             rootRects[0].y = 0
-        elif self.treeLayout == TreeLayout(2):
+        elif self.treeLayout == TreeLayout.Balanced:
             for r in self.rootDisplayOrder:
                 rootRects.append(Rect(spacing+r.heigthOfChildren, spacing+r.widthOfChildren))
             rootRects[0].x = 0#-(self.rootDisplayOrder[0].widthOfChildren/2)-spacing
             rootRects[0].y = 0
-        elif self.treeLayout == TreeLayout(3):
+        elif self.treeLayout == TreeLayout.TriangleBalanced:
+                NotImplemented
+        elif self.treeLayout == TreeLayout.H_V:
             for r in self.rootBinaryTrees:
                 rootRects.append(Rect(spacing*2 + r[0].heigthOfChildren, spacing*2+r[0].widthOfChildren))
             rootRects[0].x = 0
