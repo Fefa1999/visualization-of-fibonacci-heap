@@ -436,6 +436,8 @@ class FiboScene(MovingCameraScene):
             for x in self.triangels:
                 self.addChildrenToScene(x.fDot)
                 self.remove(x.mobj, x.text) 
+            for y in self.rootDisplayOrder:
+                self.recalcTreeDimentions(y)
 
         if layout == TreeLayout.TriangleBalanced:
             self.triangleLayer == affectedLayer
@@ -585,13 +587,11 @@ class FiboScene(MovingCameraScene):
             # rootRects[0].y = self.rootDisplayOrder[0].dot.get_y()
             rootRects[0].x = 0#-(self.rootDisplayOrder[0].widthOfChildren)-spacing
             rootRects[0].y = 0
-        elif self.treeLayout == TreeLayout.Balanced:
+        elif self.treeLayout == TreeLayout.Balanced or self.treeLayout == TreeLayout.TriangleBalanced:
             for r in self.rootDisplayOrder:
                 rootRects.append(Rect(spacing+r.heigthOfChildren, spacing+r.widthOfChildren))
             rootRects[0].x = 0#-(self.rootDisplayOrder[0].widthOfChildren/2)-spacing
             rootRects[0].y = 0
-        elif self.treeLayout == TreeLayout.TriangleBalanced:
-                NotImplemented
         elif self.treeLayout == TreeLayout.H_V:
             for r in self.rootBinaryTrees:
                 rootRects.append(Rect(spacing*2 + r[0].heigthOfChildren, spacing*2+r[0].widthOfChildren))
@@ -1321,7 +1321,6 @@ class FiboScene(MovingCameraScene):
                 Temp_node.widthOfChildren = max(0, width+(Temp_node.dot.radius*4)*(len(Temp_node.children)-1))
                 Temp_node = self.nodeDic.get(Temp_node.parentKey)            
   
-
     def get_root_index_from_key(self, key: int):
         for n in range(len(self.root)):
             a = self.root[n]
