@@ -37,32 +37,25 @@ def run():
 
     #Set animation 
     heap.isAnimation = False
-
-    for i in range(32):
+    scene.display_custom_text("we insert 32 nodes")
+    for i in range(12, 0, -1):
         heap.insert(i)
 
     heap.isAnimation = True
     heap.extract_min()
+    heap.showExplanatoryText = True
+    heap.decrease_value(7, -1)
 
-    heap.isAnimation = False
-
-    for i in range(32):
-        heap.insert(i)
-
-    heap.isAnimation = True
-    heap.extract_min()
-    
     # heap.isAnimation = False
+    # scene.display_custom_text("we will now insert 32 nodes more")
     # for i in range(32):
     #     heap.insert(i)
+    
+    #scene.display_custom_text("hello we will insert 32 nodes more")
 
     # heap.isAnimation = True
+    # heap.showExplanatoryText = True
     # heap.extract_min()
-    
-    #heap.insert(500)
-    # heap.decrease_value(22, -1)
-    # heap.decrease_value(21, -2)
-    # heap.decrease_value(18, -1)
   
     # scene.remove(x)
     # for i in scene.rootRects:

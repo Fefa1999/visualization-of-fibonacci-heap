@@ -47,9 +47,10 @@ class FiboScene(MovingCameraScene):
         self.rootBinaryTrees = list()
  
         #For Camera 
+        self.top_margin = 0
         self.minimumheight = 7.993754879000781                                                                                                                                                                                              
         self.minimumwidth = 14.222222222222221
-        self.scale_percentage = 0.64
+        self.scale_percentage = 0.75
         self.bounds = (14.222222222222221,7.993754879000781)
         self.newBounds = (self.bounds[0], self.bounds[1]*self.scale_percentage)
         self.prevBounds = (0, 0)
@@ -137,6 +138,8 @@ class FiboScene(MovingCameraScene):
         self.update_heigthOfChildren(parentMobj, childMojb, isAddingNode=True)
 
         #Removeing child from rootobjects
+        child_placement = self.get_root_index_from_key(childMojb.id)
+        parent_placement = self.get_root_index_from_key(parentMobj.id)
         self.root.remove(childMojb)
         childDisplayIndex = self.getIndexForDisplay(childMojb)
         parenDisplayIndex = self.getIndexForDisplay(parentMobj)
@@ -151,15 +154,18 @@ class FiboScene(MovingCameraScene):
         childMojb.arrow = pointer
 
         if showExplanatoryText and isAnimation:
-           text = "Compare " + str(parentMobj.id) + " < " + str(childMojb.id) + " and move " + str(childMojb.id) + " as a child of " + str(parentMobj.id)
-           textPlacement = [self.camera.frame.get_top()[0], self.camera.frame.get_top()[1]-1, 0]
-           explanatoryText = Text(str(text), font_size=18).move_to(textPlacement)
-           self.play(FadeIn(explanatoryText))
+            if parent_placement > child_placement:
+                text = "Compare  " + str(parentMobj.numberLabel.text) + "  to  the  next  node  in  the  root  list:  " + str(childMojb.numberLabel.text) + "  and  move  the  node  with  the  highest  value:  " + str(childMojb.numberLabel.text) + "  as  a  child  of  the  other  node:  " + str(parentMobj.numberLabel.text)
+                text = "Compare  " + str(parentMobj.numberLabel.text) + "  to  the  next  node  in  the  root  list:  " + str(childMojb.numberLabel.text) + "  and  move  the  node  with  the  highest  value:  " + str(childMojb.numberLabel.text) + "  as  a  child  of  the  other  node:  " + str(parentMobj.numberLabel.text)
+                self.display_custom_text(text)
+            else:
+                text = "Compare  " + str(childMojb.numberLabel.text) + "  to  the  next  node  in  the  root  list:  " + str(parentMobj.numberLabel.text) + "  and  move  the  node  with  the  highest  value:  " + str(childMojb.numberLabel.text) + "  as  a  child  of  the  other  node:  " + str(parentMobj.numberLabel.text)
+                self.display_custom_text(text)
+
         
         if isAnimation:
             self.storedAnimations.append(FadeIn(pointer))
             firstIndexOfChange = min(parenDisplayIndex, childDisplayIndex)
-            #print(f"{parenDisplayIndex}, {childDisplayIndex}, {firstIndexOfChange}")
             self.animateTrees(firstIndexOfChange)
         else:
             self.add(pointer)
@@ -167,8 +173,6 @@ class FiboScene(MovingCameraScene):
         
         self.finish(isAnimation)
 
-        if showExplanatoryText and isAnimation:
-            self.play(FadeOut(explanatoryText))
 
     def delete(self, deleteDotID: int, isAnimation: bool):
         self.prepare(isAnimation)
@@ -228,12 +232,11 @@ class FiboScene(MovingCameraScene):
         node = self.nodeDic[nodeId]
         new_text = Text(str(newValue), font_size=18 - (newValue/100)).move_to(node.dot.get_center()).set_z_index(1) #TODO why not just change the text???
         if showExplanatoryText:
-            text = "Decrease key of node " + str(node.id) + " to " + str(newValue) #is it alway decrease????
-            self.write_explanatory_text_to_video(text)
+            text = "Decrease key of node " + str(node.numberLabel.text) + " to " + str(newValue) #is it alway decrease????
+            self.display_custom_text(text)
         if isAnimation:
             if self.showLabels:
                 self.play(FadeOut(node.numberLabel), FadeIn(new_text))
-            #self.play(Transform(node.numberLabel, new_text)) #more expensive? and leaves the other the screen
             node.numberLabel = new_text
         else:
             node.numberLabel.become(new_text)
@@ -243,8 +246,8 @@ class FiboScene(MovingCameraScene):
         node_to_cut = self.nodeDic[node_to_cut_ID]
         if showExplanatoryText:
             text = "Cut " + node_to_cut.numberLabel.text + " from parent and move it to the root list"
-            self.write_explanatory_text_to_video(text)
-
+            self.display_custom_text(text)
+            
         parent_node = self.nodeDic[node_to_cut.parentKey]
         arrowToBeRemoved = node_to_cut.arrow
         node_to_cut.arrow = None
@@ -277,7 +280,7 @@ class FiboScene(MovingCameraScene):
 
         if unMark and showExplanatoryText:
             text = "If " + node_to_cut.numberLabel.text + " is marked, unmark it again"
-            self.write_explanatory_text_to_video(text)
+            self.display_custom_text(text)
             if isAnimation:
                 self.play(node_to_cut.dot.animate.set_color(BLUE))
             else:
@@ -290,18 +293,12 @@ class FiboScene(MovingCameraScene):
         self.prepare(isAnimation)
         node = self.nodeDic[decreased_node_parent_id]
         if showExplanatoryText:
-            self.write_explanatory_text_to_video("If parent is unmarked, mark it")
+            text = "If parent is unmarked, mark it"
+            self.display_custom_text(text)
         if isAnimation:
             self.play(node.dot.animate.set_color(ORANGE))
         else:
             node.dot.color = ORANGE
-    
-    def write_explanatory_text_to_video(self, text):
-        textPlacement = [self.camera.frame.get_top()[0], self.camera.frame.get_top()[1]-1, 0]
-        explanatoryText = Text(str(text), font_size=30).move_to(textPlacement)
-        self.play(FadeIn(explanatoryText))
-        self.play(FadeOut(explanatoryText))
-
 
 ##########################################################################
 ################### Preformace functions based on size ###################
@@ -1057,19 +1054,19 @@ class FiboScene(MovingCameraScene):
 ################### Camera ################### 
     
     def adjust_camera(self, isAnimation):
-        top_margin = (self.newBounds[1] / self.scale_percentage)-self.newBounds[1]
+        self.top_margin = (self.newBounds[1] / self.scale_percentage)-self.newBounds[1]
 
         if self.newBounds[1] != 0:
             heap_width = self.newBounds[0]
             heap_height = self.newBounds[1]
-            new_height = (heap_height + top_margin)
+            new_height = (heap_height + self.top_margin)
             
             new_width = max(heap_width, new_height)
 
             new_x = new_width / 2
 
             bottom_point = -new_height
-            new_y = bottom_point + (new_height/2)+top_margin
+            new_y = bottom_point + (new_height/2)+self.top_margin
 
             new_center = [new_x, new_y, 0]
 
@@ -1131,62 +1128,103 @@ class FiboScene(MovingCameraScene):
 ################### Uncatagorized ###################
 
 #####################################################
-    ########## Explanatory array consolidation ##########
+    ########## Explanatory text functions ##########
 
-    # class explanatory_array:
-    #     arr: Dict[int, Text]
-    #     rect: Rectangle
-    #     def __init__(self, size, x_value, y_value):
-    #         self.arr = {}
-    #         self.rect = Rectangle(width=size, height=size/10, grid_xstep=1).set_x(x_value).set_y(y_value)
+    def get_text_placement(self):
+        top_point_screen = self.camera.frame.get_top()[1]
+        bottom_point = top_point_screen-self.top_margin
+
+        height_space = top_point_screen - bottom_point
+
+        x_placement = self.camera.frame.get_top()[0]
+        y_placement = height_space - (height_space / 8) - 0.2
         
-    # def create_array(self, size, showExplanatoryText):
-    #     if showExplanatoryText:
-    #         textPlacement = [self.camera.frame.get_top()[0], self.camera.frame.get_top()[1]-0.5, 0]
-    #         text = "We  create  an  array  with  a  length  of  the  max  possible  degree  of  a  children  in  the  root  list  after  the  consolidation  process"
-    #         explanatoryText = Text(str(text), font_size=18).move_to(textPlacement)
-    #         self.play(FadeIn(explanatoryText))
-    #         explanatory_array = self.explanatory_array(size, self.camera.frame.get_center()[0], self.camera.frame.get_top()[1]-1.5)
-    #         self.play(FadeIn(explanatory_array.rect))
-    #         self.wait(4)
-    #         self.play(FadeOut(explanatoryText))
-    #         return explanatory_array
-    
-    # def add_number_to_array(self, degree, id, explanatory_array, showExplanatoryText):
-    #     if showExplanatoryText:
-    #         dot_value = Text(self.nodeDic[id].numberLabel.text, font_size=18)
-    #         explanatory_array.arr[degree] = dot_value
-    #         dot_value.set_x(explanatory_array.rect.get_left()[0]+(0.5)+degree).set_y(explanatory_array.rect.get_y())
+        textPlacement = [x_placement, y_placement, 0]
+        return textPlacement
 
-    #         textPlacement = [self.camera.frame.get_top()[0], self.camera.frame.get_top()[1]-0.5, 0]
-    #         text = self.nodeDic[id].numberLabel.text + "  is  added  to  the  array  at  the  index  of  it's  degree:  " + str(degree)
-    #         explanatoryText = Text(str(text), font_size=18).move_to(textPlacement)
+    def get_font_size(self, text_length):
+        top_point_screen = self.camera.frame.get_top()[1]
+        bottom_point = top_point_screen-self.top_margin
+        font_size = top_point_screen - bottom_point
+        if text_length > 100:
+            font_size = font_size / (text_length/100)
+        return font_size*10
 
-    #         self.play(FadeIn(explanatoryText))
-    #         self.play(FadeIn(dot_value))
-    #         self.wait(2)
-    #         self.play(FadeOut(explanatoryText))
-    #         return
-    
-    # def remove_from_array(self, degree, explanatory_array, showExplanatoryText):
-    #     if showExplanatoryText:
-    #         textPlacement = [self.camera.frame.get_top()[0], self.camera.frame.get_top()[1]-0.5, 0]
-    #         txt = explanatory_array.arr.pop(degree)
-    #         text = "The  node:  " + txt.text + "  at  index:  " + str(degree) + "  is  removed  since  it  has  been  merged"
-    #         explanatoryText = Text(str(text), font_size=18).move_to(textPlacement)
+    def display_custom_text(self, text):
+        textPlacement = self.get_text_placement()
+        explanatoryText = Text(str(text), weight = BOLD, font="Arial", font_size=self.get_font_size(len(text))).move_to(textPlacement)
+        
+        additional_time = 0
+        if len(text) > 50:
+            additional_time = 2
+        if len(text) > 100:
+            additional_time = 4
 
-    #         self.play(FadeIn(explanatoryText))
-    #         self.play(FadeOut(txt))
-    #         self.wait(2)
-    #         self.play(FadeOut(explanatoryText))
-    #         return
+        self.play(FadeIn(explanatoryText))
+        self.wait(2+additional_time)
+        self.play(FadeOut(explanatoryText))
+
+    def get_array_info(self, size):
+        top_point_screen = self.camera.frame.get_top()[1]
+        bottom_point = top_point_screen-self.top_margin
+        height_space = top_point_screen - bottom_point
+
+        width = self.camera.frame.get_width()/2
+        step = width/size
+        x_placement = self.camera.frame.get_top()[0]
+        height = height_space / 2.5
+        y_placement = (height_space / 8) + 0.2 + (height/2)
+        return (width, height, step, x_placement, y_placement)
+
+    class explanatory_array:
+        arr: Dict[int, Text]
+        rect: Rectangle
+        step: int
+        def __init__(self, info):
+            self.arr = {}
+            self.rect = Rectangle(width=info[0], height=info[1], grid_xstep=info[2]).set_x(info[3]).set_y(info[4])
+            self.step = info[2]
+        
+    def create_array(self, size, showExplanatoryText):
+        if showExplanatoryText:
+            text = "We  create  an  array  with  a  length  of  the  max  possible  degree  of  a  children  in  the  root  list  after  the  consolidation  process"
+            self.display_custom_text(text)
+
+            array_info = self.get_array_info(size)
+
+            explanatory_array = self.explanatory_array(array_info)
+            self.play(FadeIn(explanatory_array.rect))
+            self.wait(4)
+            return explanatory_array
     
-    # def remove_array(self, explanatory_array, showExplanatoryText):
-    #     if showExplanatoryText:
-    #         animations = []
-    #         for t in explanatory_array.arr:
-    #             animations.append(FadeOut(explanatory_array.arr.get(t)))
-    #         animations.append(FadeOut(explanatory_array.rect))
-    #         self.play(*animations)
-    #         return
+    def add_number_to_array(self, degree, id, explanatory_array, showExplanatoryText):
+        if showExplanatoryText:
+            dot_value = Text(self.nodeDic[id].numberLabel.text, font_size=self.get_font_size(1))
+            explanatory_array.arr[degree] = dot_value
+            dot_value.set_x(explanatory_array.rect.get_left()[0]+(explanatory_array.step*(degree+1))-(explanatory_array.step/2)).set_y(explanatory_array.rect.get_y())
+
+            text = self.nodeDic[id].numberLabel.text + "  is  added  to  the  array  at  the  index  of  it's  degree:  " + str(degree)
+            self.display_custom_text(text)
+
+            self.play(FadeIn(dot_value))
+            self.wait(2)
+            return
+    
+    def remove_from_array(self, degree, explanatory_array, showExplanatoryText):
+        if showExplanatoryText:
+            txt = explanatory_array.arr.pop(degree)
+            text = "The  node:  " + txt.text + "  at  index:  " + str(degree) + " in the array  is  removed  since  it  has  been  merged  and  is  no  longer  in  the  root  list"
+            self.display_custom_text(text)
+            self.play(FadeOut(txt))
+            self.wait(2)
+            return
+    
+    def remove_array(self, explanatory_array, showExplanatoryText):
+        if showExplanatoryText:
+            animations = []
+            for t in explanatory_array.arr:
+                animations.append(FadeOut(explanatory_array.arr.get(t)))
+            animations.append(FadeOut(explanatory_array.rect))
+            self.play(*animations)
+            return
 
