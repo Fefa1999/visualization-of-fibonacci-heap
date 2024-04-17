@@ -9,7 +9,12 @@ config.max_files_cached = 300
 config.disable_caching = True
 config.disable_caching_warning = True
 config.media_dir = "./cameraTesting/media"
-config.quality = "low_quality"
+
+#config.quality = "low_quality"
+#config.quality = "medium_quality"
+config.quality = "high_quality"
+#config.quality = "production_quality"
+#config.quality = "fourk_quality"
 
 def run():
     #SETUP 
@@ -42,9 +47,9 @@ def run():
         heap.insert(i)
 
     heap.isAnimation = True
-    heap.extract_min()
     heap.showExplanatoryText = True
-    heap.decrease_value(7, -1)
+    heap.extract_min()
+
 
     # heap.isAnimation = False
     # scene.display_custom_text("we will now insert 32 nodes more")

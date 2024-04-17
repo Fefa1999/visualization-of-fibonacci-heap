@@ -55,6 +55,9 @@ class FiboScene(MovingCameraScene):
         self.newBounds = (self.bounds[0], self.bounds[1]*self.scale_percentage)
         self.prevBounds = (0, 0)
 
+        #For explanatory text
+        self.current_explanatory_parent = None
+
         self.rootRects = list() #TODO delete only for trouble shooting
         super().__init__(*args, **kwargs)
         self.adjust_camera(False)
@@ -154,14 +157,17 @@ class FiboScene(MovingCameraScene):
         childMojb.arrow = pointer
 
         if showExplanatoryText and isAnimation:
+            self.current_explanatory_parent = parentMobj.numberLabel
             if parent_placement > child_placement:
-                text = "Compare  " + str(parentMobj.numberLabel.text) + "  to  the  next  node  in  the  root  list:  " + str(childMojb.numberLabel.text) + "  and  move  the  node  with  the  highest  value:  " + str(childMojb.numberLabel.text) + "  as  a  child  of  the  other  node:  " + str(parentMobj.numberLabel.text)
-                text = "Compare  " + str(parentMobj.numberLabel.text) + "  to  the  next  node  in  the  root  list:  " + str(childMojb.numberLabel.text) + "  and  move  the  node  with  the  highest  value:  " + str(childMojb.numberLabel.text) + "  as  a  child  of  the  other  node:  " + str(parentMobj.numberLabel.text)
+                text = "The  array  is  already  filled  at  the  index  of  the  degree  of  the next  node:  " + str(childMojb.numberLabel.text)
+                self.display_custom_text(text)
+                text =  "So  the  previous  node  " + str(parentMobj.numberLabel.text) + "  is  compared  to  the  current  node:  " + str(childMojb.numberLabel.text) + "  and  the  node  with  the  highest  value:  " + str(childMojb.numberLabel.text) + "  is  moved  as  a  child  of  the  other  node:  " + str(parentMobj.numberLabel.text)
                 self.display_custom_text(text)
             else:
-                text = "Compare  " + str(childMojb.numberLabel.text) + "  to  the  next  node  in  the  root  list:  " + str(parentMobj.numberLabel.text) + "  and  move  the  node  with  the  highest  value:  " + str(childMojb.numberLabel.text) + "  as  a  child  of  the  other  node:  " + str(parentMobj.numberLabel.text)
+                text = "The  array  is  already  filled  at  the  index  of  the  degree  of  the next  node:  " + str(parentMobj.numberLabel.text)
                 self.display_custom_text(text)
-
+                text =  "So  the  previous  node  " + str(childMojb.numberLabel.text) + "  is  compared  to  the  current  node:  " + str(parentMobj.numberLabel.text) + "  and  the  node  with  the  highest  value:  " + str(childMojb.numberLabel.text) + "  is  moved  as  a  child  of  the  other  node:  " + str(parentMobj.numberLabel.text)
+                self.display_custom_text(text)
         
         if isAnimation:
             self.storedAnimations.append(FadeIn(pointer))
@@ -232,7 +238,7 @@ class FiboScene(MovingCameraScene):
         node = self.nodeDic[nodeId]
         new_text = Text(str(newValue), font_size=18 - (newValue/100)).move_to(node.dot.get_center()).set_z_index(1) #TODO why not just change the text???
         if showExplanatoryText:
-            text = "Decrease key of node " + str(node.numberLabel.text) + " to " + str(newValue) #is it alway decrease????
+            text = "Decrease key of node " + str(node.numberLabel.text) + " to " + str(newValue) 
             self.display_custom_text(text)
         if isAnimation:
             if self.showLabels:
@@ -247,7 +253,7 @@ class FiboScene(MovingCameraScene):
         if showExplanatoryText:
             text = "Cut " + node_to_cut.numberLabel.text + " from parent and move it to the root list"
             self.display_custom_text(text)
-            
+
         parent_node = self.nodeDic[node_to_cut.parentKey]
         arrowToBeRemoved = node_to_cut.arrow
         node_to_cut.arrow = None
@@ -1187,7 +1193,7 @@ class FiboScene(MovingCameraScene):
         
     def create_array(self, size, showExplanatoryText):
         if showExplanatoryText:
-            text = "We  create  an  array  with  a  length  of  the  max  possible  degree  of  a  children  in  the  root  list  after  the  consolidation  process"
+            text = "An  array, with  a  length  of  the  max  possible  degree  of  a  children  in  the  final  root  list  after  the  consolidation  process,  is  created"
             self.display_custom_text(text)
 
             array_info = self.get_array_info(size)
@@ -1196,8 +1202,8 @@ class FiboScene(MovingCameraScene):
             self.play(FadeIn(explanatory_array.rect))
             self.wait(4)
             return explanatory_array
-    
-    def add_number_to_array(self, degree, id, explanatory_array, showExplanatoryText):
+
+    def add_number_to_filled_space_in_array(self, degree, id, explanatory_array, showExplanatoryText):
         if showExplanatoryText:
             dot_value = Text(self.nodeDic[id].numberLabel.text, font_size=self.get_font_size(1))
             explanatory_array.arr[degree] = dot_value
@@ -1209,11 +1215,35 @@ class FiboScene(MovingCameraScene):
             self.play(FadeIn(dot_value))
             self.wait(2)
             return
+
+    def add_number_to_empty_space_in_array(self, degree, id, explanatory_array, showExplanatoryText, first_node):
+        if showExplanatoryText:
+            dot_value = Text(self.nodeDic[id].numberLabel.text, font_size=self.get_font_size(1))
+            explanatory_array.arr[degree] = dot_value
+            dot_value.set_x(explanatory_array.rect.get_left()[0]+(explanatory_array.step*(degree+1))-(explanatory_array.step/2)).set_y(explanatory_array.rect.get_y())
+
+            if first_node:
+                text = "The  first  node:  " + self.nodeDic[id].numberLabel.text + "  is  added  to  the  empty  space  in  the   array  at  the  index  of  it's  degree:  " + str(degree)
+            else:
+                text = "The  next  node:  " + self.nodeDic[id].numberLabel.text + "  is  added  to  the  empty  space  in  the  array  at  the  index  of  it's  degree:  " + str(degree)
+
+            self.display_custom_text(text)
+
+            self.play(FadeIn(dot_value))
+            self.wait(2)
+
+            text = "Now we proceed to the next node"
+            self.display_custom_text(text)
+            return
     
     def remove_from_array(self, degree, explanatory_array, showExplanatoryText):
         if showExplanatoryText:
             txt = explanatory_array.arr.pop(degree)
-            text = "The  node:  " + txt.text + "  at  index:  " + str(degree) + " in the array  is  removed  since  it  has  been  merged  and  is  no  longer  in  the  root  list"
+            if txt.text == self.current_explanatory_parent.text:
+                text = "The  node:  " + txt.text + "  at  index:  " + str(degree) + " in the array  is  removed  since  it  has  a  new  degree"
+            else:
+                text = "The  node:  " + txt.text + "  at  index:  " + str(degree) + " in the array  is  removed  since  it  has  become  a  child  and  is  no  longer  in  the  root  list"
+            
             self.display_custom_text(text)
             self.play(FadeOut(txt))
             self.wait(2)
