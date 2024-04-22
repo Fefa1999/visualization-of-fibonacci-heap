@@ -1131,9 +1131,6 @@ class FiboScene(MovingCameraScene):
         return -1
 
 #####################################################
-################### Uncatagorized ###################
-
-#####################################################
     ########## Explanatory text functions ##########
 
     def get_text_placement(self):
