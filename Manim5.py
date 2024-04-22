@@ -284,6 +284,8 @@ class FiboScene(MovingCameraScene):
             self.remove(arrowToBeRemoved)
             self.sceneUpToDate = False
 
+        self.finish(isAnimation)
+        
         if unMark and showExplanatoryText:
             text = "If " + node_to_cut.numberLabel.text + " is marked, unmark it again"
             self.display_custom_text(text)
@@ -293,7 +295,6 @@ class FiboScene(MovingCameraScene):
                 node_to_cut.dot.color = BLUE
         else: 
             node_to_cut.dot.color = BLUE
-        self.finish(isAnimation)
         
     def cascading_cut(self, decreased_node_parent_id, isAnimation, showExplanatoryText):
         self.prepare(isAnimation)
