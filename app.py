@@ -9,16 +9,15 @@ def run():
     node_to_decrease_two = None
 
     for i in range(25):
-        if i == 14:
+        if i == 18:
             node_to_decrease = heap_controller.insert_node(i)
-        elif i ==13:
+        elif i ==19:
             node_to_decrease_two = heap_controller.insert_node(i)
         else:
             heap_controller.insert_node(i)
 
     heap_controller.set_show_animations(True)
     heap_controller.extract_min()
-    heap_controller.set_show_explanatory_text(True)
     heap_controller.decrease_value(node_to_decrease, -1)
     heap_controller.decrease_value(node_to_decrease_two, 0)
 

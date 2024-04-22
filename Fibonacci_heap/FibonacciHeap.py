@@ -224,9 +224,10 @@ class FibonacciHeap:
                 cut_node_info = self.cut(decreased_node_parent)
                 actions.append(cut_node_info)
                 self.cascading_cut(next_parent, actions)
+                return actions
         else:
             return actions
-        
+
     def delete_node(self, node_to_delete):
         self.decrease_value(node_to_delete, -float('inf'))
         self.extract_min()
