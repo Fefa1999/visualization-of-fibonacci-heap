@@ -220,6 +220,8 @@ class FiboScene(MovingCameraScene):
             self.sceneUpToDate = False
 
         self.finish(isAnimation)
+        for n in deleteDot.children:
+            self.unmark(n, isAnimation)
     
     def set_min(self, min_id, isAnimation):
         min_node_index = self.get_root_index_from_key(min_id)
@@ -285,7 +287,7 @@ class FiboScene(MovingCameraScene):
             self.sceneUpToDate = False
 
         self.finish(isAnimation)
-        
+
         if unMark and showExplanatoryText:
             text = "If " + node_to_cut.numberLabel.text + " is marked, unmark it again"
             self.display_custom_text(text)
@@ -306,6 +308,15 @@ class FiboScene(MovingCameraScene):
             self.play(node.dot.animate.set_color(ORANGE))
         else:
             node.dot.color = ORANGE
+
+    def unmark(self, node_to_unmark, isAnimation):
+        if node_to_unmark.dot.color != BLUE:
+            if isAnimation:
+                self.play(node_to_unmark.dot.animate.set_color(BLUE))
+            else:
+                node_to_unmark.dot.color = BLUE
+
+
 
 ##########################################################################
 ################### Preformace functions based on size ###################

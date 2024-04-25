@@ -28,7 +28,7 @@ class Controller():
         self.showExplanatoryText = show
 
     def insert_node(self, value):
-        returned_data = self.heap.insert(value)
+        returned_data = self.heap.real_insert(value)
         node = returned_data[0]
         update_min = returned_data[1]
         self.scene.insert_dot(node.value, self.isAnimation, node.id)

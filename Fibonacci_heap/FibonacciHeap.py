@@ -1,12 +1,10 @@
 import math 
+import time
 class FibonacciHeap:
     root_list = None
     min_fib_node = None
     total_fib_nodes = 0
     id = 0
-    isAnimation = None
-    showExplanatoryText = None
-    scene = None
     class FibonacciHeapNode:
         def __init__(self, value, id):
             self.id = id
@@ -23,6 +21,15 @@ class FibonacciHeap:
         self.merge_node_into_root_list(new_node)
         update = self.update_min_with_single_node(new_node)
         self.total_fib_nodes += 1
+        return (new_node, update)
+
+    def real_insert(self, value):
+        new_node = self.FibonacciHeapNode(value, self.id)
+        new_heap = FibonacciHeap()
+        new_heap.total_fib_nodes = 1
+        new_heap.min_fib_node = new_heap.root_list = new_node
+        update = self.merge_heaps(new_heap)
+        self.id += 1
         return (new_node, update)
 
     #updates min if node is smaller than current min
@@ -43,20 +50,23 @@ class FibonacciHeap:
             current_node = current_node.right
 
     #return min node in O(1) time
-    def returnMin(self):
+    def return_min(self):
         return self.min_fib_node
 
     #Merge two heaps by appending nodes to root list of first heap
     def merge_heaps(self, heap_two):
-        if self.root_list is None:
-            self.root_list = heap_two
-        elif heap_two.root_list is not None:
+        if self.root_list is None and heap_two.root_list is not None:
+            self.root_list = heap_two.root_list
+            self.total_fib_nodes = heap_two.total_fib_nodes
+            self.min_fib_node = heap_two.min_fib_node
+            return True
+        elif self.root_list is not None and heap_two.root_list is not None:
             self.root_list.right.left = heap_two.root_list.right
             heap_two.root_list.right.right = self.root_list.right
             self.root_list.right = heap_two.root_list.left
             heap_two.root_list.left.left = self.root_list
             self.total_fib_nodes += heap_two.total_fib_nodes
-            self.update_min_with_single_node(heap_two.min_fib_node, True)
+            return self.update_min_with_single_node(heap_two.min_fib_node) 
 
     # insert a node in the circular doubly linked list root_list - will be inserted as new root  
     def merge_node_into_root_list(self, node_to_insert):
@@ -81,7 +91,7 @@ class FibonacciHeap:
         fib_node.left = fib_node
 
     # insert a node in the circular doubly linked child list of a parent - will be inserted as new root  
-    def merge_node_with_child_list(self, fib_node_child, fib_node_parent):
+    def meld_node_into_root_list(self, fib_node_child, fib_node_parent):
         if fib_node_parent.child is not None:
             fib_node_child.left = fib_node_parent.child.left 
             fib_node_child.right = fib_node_parent.child 
@@ -89,7 +99,7 @@ class FibonacciHeap:
             fib_node_parent.child.left = fib_node_child 
         fib_node_parent.child = fib_node_child 
     
-     #Removes node from root list 
+    #Removes node from root list 
     def remove_node_from_child_list(self, fib_node):
         if fib_node == fib_node.left:
             fib_node.parent.child = None
@@ -113,8 +123,7 @@ class FibonacciHeap:
                 current_child = min_node.child.right
                 while True:
                     next_child = current_child.right
-                    self.remove_node_from_child_list(current_child)
-                    self.merge_node_into_root_list(current_child)
+                    self.cut(current_child)
                     if min_node.child is None:
                         break
                     current_child = next_child
@@ -125,7 +134,7 @@ class FibonacciHeap:
             #remove min node from root
             self.remove_node_from_root_list(min_node)
             self.total_fib_nodes -= 1
-
+            actions = []
             #Consolidate and set new min unless root_list is only one root or empty - the only child of the removed min
             if self.root_list is not None:
                 if self.root_list != self.root_list.right:
@@ -136,8 +145,9 @@ class FibonacciHeap:
     #Map heap until no root has same degree
     def consolidate(self):
         actions = []
-        max_degree = int(math.log(self.total_fib_nodes, (1 + math.sqrt(5)) / 2)) + 1
+        max_degree = int(math.log(self.total_fib_nodes, (1 + math.sqrt(5)) / 2)) 
         array = [None] * (max_degree + 1)
+        print(self.total_fib_nodes, max_degree+1)
         # if self.scene is not None:
         #     scene_array = self.scene.create_array((max_degree + 1), self.showExplanatoryText)
         array[self.root_list.degree] = self.root_list
@@ -177,12 +187,12 @@ class FibonacciHeap:
 
         return actions
 
-    #Link to nodes toegether - one will become child, other parent 
+    #Link two nodes together - one will become child, other parent 
     def link_nodes(self, fib_node_one, fib_node_two):
             fib_node_child = fib_node_one if fib_node_one.value >= fib_node_two.value else fib_node_two
             fib_node_parent = fib_node_one if fib_node_two.value > fib_node_one.value else fib_node_two
             self.remove_node_from_root_list(fib_node_child)
-            self.merge_node_with_child_list(fib_node_child, fib_node_parent)
+            self.meld_node_into_root_list(fib_node_child, fib_node_parent)
             fib_node_child.parent = fib_node_parent
             fib_node_parent.degree += 1
             return (fib_node_parent, fib_node_child)
@@ -230,7 +240,7 @@ class FibonacciHeap:
 
     def delete_node(self, node_to_delete):
         self.decrease_value(node_to_delete, -float('inf'))
-        self.extract_min()
+        self.extract_min() 
     
     def increaseKey(self, node_to_increase, value):
         self.decrease_value(node_to_increase, -float('inf'))
@@ -278,3 +288,18 @@ class FibonacciHeap:
             if current_node.child is not None:
                 self.recursivePrint(current_node, degree+2)
             current_node = current_node.right
+
+# def run():
+#     heap = FibonacciHeap()
+#     print("--------------------")
+    
+#     for i in range(333):
+#         if i == 123:
+#             x = heap.real_insert(i)
+#         else:
+#             heap.insert(i)
+    
+#     heap.extract_min()
+    
+#     heap.printHeap()
+# run()
