@@ -13,17 +13,9 @@ class FibonacciHeap:
             self.left = self.right = self
             self.degree = 0
             self.marked = False
-    
-    #create and insert a node in the root list in O(1) time
-    def insert(self, value):
-        new_node = self.FibonacciHeapNode(value, self.id)
-        self.id += 1
-        self.merge_node_into_root_list(new_node)
-        update = self.update_min_with_single_node(new_node)
-        self.total_fib_nodes += 1
-        return (new_node, update)
 
-    def real_insert(self, value):
+
+    def insert(self, value):
         new_node = self.FibonacciHeapNode(value, self.id)
         new_heap = FibonacciHeap()
         new_heap.total_fib_nodes = 1
@@ -57,19 +49,20 @@ class FibonacciHeap:
     def merge_heaps(self, heap_two):
         if self.root_list is None and heap_two.root_list is not None:
             self.root_list = heap_two.root_list
-            self.total_fib_nodes = heap_two.total_fib_nodes
             self.min_fib_node = heap_two.min_fib_node
+            self.total_fib_nodes = heap_two.total_fib_nodes
             return True
         elif self.root_list is not None and heap_two.root_list is not None:
-            self.root_list.right.left = heap_two.root_list.right
-            heap_two.root_list.right.right = self.root_list.right
-            self.root_list.right = heap_two.root_list.left
-            heap_two.root_list.left.left = self.root_list
-            self.total_fib_nodes += heap_two.total_fib_nodes
-            return self.update_min_with_single_node(heap_two.min_fib_node) 
+            new_end = heap_two.root_list.left
+            self.root_list.left.right = heap_two.root_list
+            heap_two.root_list.left.right = self.root_list
+            heap_two.root_list.left = self.root_list.left
+            self.root_list.left = new_end
+            self.total_fib_nodes += heap_two.total_fib_nodes 
+            return self.update_min_with_single_node(heap_two.min_fib_node)
 
     # insert a node in the circular doubly linked list root_list - will be inserted as new root  
-    def merge_node_into_root_list(self, node_to_insert):
+    def meld_node_into_root_list(self, node_to_insert):
         if self.root_list is not None:
             node_to_insert.left = self.root_list.left 
             node_to_insert.right = self.root_list  
@@ -91,7 +84,7 @@ class FibonacciHeap:
         fib_node.left = fib_node
 
     # insert a node in the circular doubly linked child list of a parent - will be inserted as new root  
-    def meld_node_into_root_list(self, fib_node_child, fib_node_parent):
+    def meld_node_into_child_list(self, fib_node_child, fib_node_parent):
         if fib_node_parent.child is not None:
             fib_node_child.left = fib_node_parent.child.left 
             fib_node_child.right = fib_node_parent.child 
@@ -147,7 +140,6 @@ class FibonacciHeap:
         actions = []
         max_degree = int(math.log(self.total_fib_nodes, (1 + math.sqrt(5)) / 2)) 
         array = [None] * (max_degree + 1)
-        print(self.total_fib_nodes, max_degree+1)
         # if self.scene is not None:
         #     scene_array = self.scene.create_array((max_degree + 1), self.showExplanatoryText)
         array[self.root_list.degree] = self.root_list
@@ -192,7 +184,7 @@ class FibonacciHeap:
             fib_node_child = fib_node_one if fib_node_one.value >= fib_node_two.value else fib_node_two
             fib_node_parent = fib_node_one if fib_node_two.value > fib_node_one.value else fib_node_two
             self.remove_node_from_root_list(fib_node_child)
-            self.meld_node_into_root_list(fib_node_child, fib_node_parent)
+            self.meld_node_into_child_list(fib_node_child, fib_node_parent)
             fib_node_child.parent = fib_node_parent
             fib_node_parent.degree += 1
             return (fib_node_parent, fib_node_child)
@@ -216,7 +208,7 @@ class FibonacciHeap:
     #Cut node from child list to root 
     def cut(self, node_to_cut):
         self.remove_node_from_child_list(node_to_cut)
-        self.merge_node_into_root_list(node_to_cut)
+        self.meld_node_into_root_list(node_to_cut)
         mark = node_to_cut.marked
         if node_to_cut.marked:
             node_to_cut.marked = False
@@ -248,46 +240,46 @@ class FibonacciHeap:
         self.insert(value)
         
     #Helper functions to print
-    def printHeap(self):
-        if self.root_list is not None:
-            print()
-            print("-----------------------------------------------------")
-            print("|              Fibonacci Heap Structure             |")
-            print("-----------------------------------------------------")
-            print()
-            firstNode = self.root_list
-            current_node = self.root_list.right
-            flag = True
-            while flag:
-                if current_node == firstNode:
-                    flag = False
-                print("|")
-                if current_node.marked:
-                    print("---", current_node.value, "+")
-                else:
-                    print("---", current_node.value)
-                if current_node.child is not None:
-                    self.recursivePrint(current_node, 1)
-                current_node = current_node.right
-                print()
+    # def printHeap(self):
+    #     if self.root_list is not None:
+    #         print()
+    #         print("-----------------------------------------------------")
+    #         print("|              Fibonacci Heap Structure             |")
+    #         print("-----------------------------------------------------")
+    #         print()
+    #         firstNode = self.root_list
+    #         current_node = self.root_list.right
+    #         flag = True
+    #         while flag:
+    #             if current_node == firstNode:
+    #                 flag = False
+    #             print("|")
+    #             if current_node.marked:
+    #                 print("---", current_node.value, "+")
+    #             else:
+    #                 print("---", current_node.value)
+    #             if current_node.child is not None:
+    #                 self.recursivePrint(current_node, 1)
+    #             current_node = current_node.right
+    #             print()
 
-    def recursivePrint(self, node, degree):
-        firstNode = node.child
-        current_node = node.child.right
-        flag = True
-        s = "  "
+    # def recursivePrint(self, node, degree):
+    #     firstNode = node.child
+    #     current_node = node.child.right
+    #     flag = True
+    #     s = "  "
 
-        while flag:
-            if current_node == firstNode:
-                flag = False
-            print(s*degree, "|")
-            if current_node.marked:
-                print(s*degree, "---", current_node.value, "+")
-            else: 
-                print(s*degree, "---", current_node.value)
-            if current_node.child is not None:
-                self.recursivePrint(current_node, degree+2)
-            current_node = current_node.right
+    #     while flag:
+    #         if current_node == firstNode:
+    #             flag = False
+    #         print(s*degree, "|")
+    #         if current_node.marked:
+    #             print(s*degree, "---", current_node.value, "+")
+    #         else: 
+    #             print(s*degree, "---", current_node.value)
+    #         if current_node.child is not None:
+    #             self.recursivePrint(current_node, degree+2)
+    #         current_node = current_node.right
 
 # def run():
 #     heap = FibonacciHeap()
