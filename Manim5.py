@@ -5,6 +5,7 @@ from typing_extensions import Self
 from typing import TypedDict
 import math
 import time
+import copy
 
 #DO YOU HAVE TO STATE DELETIONS OF OBJECTS IN PYTHON TO HELP GARBAGE COLLECTER
 #HOW DOES MANIM HANDLE REMOVED OBJECTS? ARE THEY DELTED?
@@ -499,7 +500,10 @@ class FiboScene(MovingCameraScene):
             elif self.treeLayout == TreeLayout.Balanced:
                 for i in range(len(self.rootDisplayOrder)-startIndex): 
                     cDot = self.rootDisplayOrder[i+startIndex]
-                    cDot.dot.target = Dot(point=(rootRects[i+startIndex].x + (rootRects[i+startIndex].w/2), rootRects[i+startIndex].y, 0), radius=cDot.dot.radius, color=cDot.dot.color)
+                    widthOfLeftMostChild = 0
+                    if len(cDot.children)>0:
+                        widthOfLeftMostChild = cDot.children[-1].widthOfChildren              
+                    cDot.dot.target = Dot(point=(rootRects[i+startIndex].x + rootRects[i+startIndex].w/2 + widthOfLeftMostChild/4, rootRects[i+startIndex].y, 0), radius=cDot.dot.radius, color=cDot.dot.color)
                     self.mobjsToMove.append(cDot)
             elif self.treeLayout == TreeLayout.TriangleBalanced:
                 NotImplemented
@@ -518,7 +522,10 @@ class FiboScene(MovingCameraScene):
             elif self.treeLayout == TreeLayout.Balanced:
                 for i in range(len(self.rootDisplayOrder)-startIndex): 
                     fDot = self.rootDisplayOrder[i+startIndex]
-                    fDot.dot.move_to((rootRects[i+startIndex].x + (rootRects[i+startIndex].w/2), rootRects[i+startIndex].y, 0))
+                    widthOfLeftMostChild = 0
+                    if len(fDot.children)>0:
+                        widthOfLeftMostChild = fDot.children[-1].widthOfChildren
+                    fDot.dot.move_to((rootRects[i+startIndex].x + rootRects[i+startIndex].w/2 + widthOfLeftMostChild/4, rootRects[i+startIndex].y, 0))
                     if self.showLabels:
                         fDot.numberLabel.move_to(fDot.dot.get_center())
             elif self.treeLayout == TreeLayout.TriangleBalanced:
@@ -819,13 +826,19 @@ class FiboScene(MovingCameraScene):
 ###############################################
 ################### Balanced Trees ###################
             
-    def space_children_by_halv_thier_width(self, lst: list[FiboDot], isToTarget: bool = False, direction: Vector3 = LEFT, **kwargs):
-        if isToTarget:
-            for m1, m2 in zip(lst, lst[1:]):
-                m2.dot.target.next_to(m1.dot.target, direction, (m1.widthOfChildren/2 + m2.widthOfChildren/2 + m1.dot.radius*2), **kwargs)
-        else:
-            for m1, m2 in zip(lst, lst[1:]):
-                m2.dot.next_to(m1.dot, direction, (m1.widthOfChildren/2 + m2.widthOfChildren/2 + m1.dot.radius*2), **kwargs)
+    def space_children_by_halv_thier_width(self, lst: list[FiboDot], isToTarget: bool = False, **kwargs):
+        for m1, m2 in zip(lst, lst[1:]): 
+            m1_left_width = m1.widthOfChildren/2
+            m2_rigth_width = m2.widthOfChildren/2
+            if len(m1.children)>0:
+                m1_left_width = m1.widthOfChildren/2+m1.children[-1].widthOfChildren/4
+            if len(m2.children)>0:
+                m2_rigth_width = m2.widthOfChildren/2-m2.children[-1].widthOfChildren/4
+
+            if isToTarget:
+                m2.dot.target.next_to(m1.dot.target, LEFT, (m1_left_width + m2_rigth_width + m1.dot.radius*2), **kwargs)
+            else:
+                m2.dot.next_to(m1.dot, LEFT, (m1_left_width + m2_rigth_width + m1.dot.radius*2), **kwargs)
         return lst
 
     def balanced_tree_animate(self, startIndex):#TODO Must be done smart. aka move the lesser tree. Or moving fixed distance if child is at the ends
@@ -839,7 +852,7 @@ class FiboScene(MovingCameraScene):
 
         #First child which the other children should be alinged left of
         baseChild = parentMojb.children[0]
-        baseChild.dot.target = Dot(point=baseChild.dot.get_center(), radius=baseChild.dot.radius, color=baseChild.dot.color).set_y(parentTarget.get_y()-self.treeVerticalSpacing).set_x(parentTarget.get_x()+parentMojb.widthOfChildren/2-baseChild.widthOfChildren/2)
+        baseChild.dot.target = Dot(point=baseChild.dot.get_center(), radius=baseChild.dot.radius, color=baseChild.dot.color).set_y(parentTarget.get_y()-self.treeVerticalSpacing).set_x(parentMojb.dot.get_x()+parentMojb.widthOfChildren/2-parentMojb.children[-1].widthOfChildren/4-parentMojb.children[0].widthOfChildren/2)
         self.mobjsToMove.append(baseChild)
 
         for i in range(len(parentMojb.children)-1):
@@ -863,7 +876,8 @@ class FiboScene(MovingCameraScene):
             return
         
         #Set first childs new location
-        parentMojb.children[0].dot.set_y(parentMojb.get_y()-self.treeVerticalSpacing).set_x(parentMojb.get_x()+parentMojb.widthOfChildren/2-parentMojb.children[0].widthOfChildren/2)
+        baseChild = parentMojb.children[0]
+        baseChild.dot.set_y(parentMojb.dot.get_y()-self.treeVerticalSpacing).set_x(parentMojb.dot.get_x()+parentMojb.widthOfChildren/2-parentMojb.children[-1].widthOfChildren/4-parentMojb.children[0].widthOfChildren/2)
         
         #Arrange rest based on first
         self.space_children_by_halv_thier_width(parentMojb.children, False)
