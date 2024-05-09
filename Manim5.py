@@ -101,7 +101,6 @@ class FiboScene(MovingCameraScene):
         self.prepare(isAnimation)
 
         fiboDot = self.create_dot(self.defaultAddPoint, number, id)
-        
         self.nodeDic[id] = fiboDot
         self.root.append(fiboDot)
         self.rootDisplayOrder.append(fiboDot)
@@ -220,8 +219,6 @@ class FiboScene(MovingCameraScene):
             self.sceneUpToDate = False
 
         self.finish(isAnimation)
-        for n in deleteDot.children:
-            self.unmark(n, isAnimation)
     
     def set_min(self, min_id, isAnimation):
         min_node_index = self.get_root_index_from_key(min_id)
@@ -232,13 +229,13 @@ class FiboScene(MovingCameraScene):
             self.min_node.dot.color = BLUE
 
         self.min_node = minFiboNode
-        minFiboNode.dot.color = RED
+        minFiboNode.dot.color = RED 
 
     def change_key(self, nodeId, newValue: int, isAnimation: bool, showExplanatoryText: bool=False):
         self.prepare(isAnimation)
-
+        text_size = newValue if isinstance(newValue,int) else 4
         node = self.nodeDic[nodeId]
-        new_text = Text(str(newValue), font_size=18 - (newValue/100)).move_to(node.dot.get_center()).set_z_index(1) #TODO why not just change the text???
+        new_text = Text(str(newValue), font_size=18 - (text_size/100)).move_to(node.dot.get_center()).set_z_index(1) #TODO why not just change the text???
         if showExplanatoryText:
             text = "Decrease key of node " + str(node.numberLabel.text) + " to " + str(newValue) 
             self.display_custom_text(text)
@@ -306,6 +303,7 @@ class FiboScene(MovingCameraScene):
             self.display_custom_text(text)
         if isAnimation:
             self.play(node.dot.animate.set_color(ORANGE))
+            self.play(node.dot.animate.set_stroke(color=ORANGE, width=10))
         else:
             node.dot.color = ORANGE
 
