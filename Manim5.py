@@ -219,6 +219,12 @@ class FiboScene(MovingCameraScene):
             self.sceneUpToDate = False
 
         self.finish(isAnimation)
+        for n in deleteDot.children:
+            if n.dot.color != BLUE:
+                if isAnimation:
+                    self.play(n.dot.animate.set_color(BLUE))
+                else:
+                    n.dot.color = BLUE
     
     def set_min(self, min_id, isAnimation):
         min_node_index = self.get_root_index_from_key(min_id)
@@ -303,7 +309,6 @@ class FiboScene(MovingCameraScene):
             self.display_custom_text(text)
         if isAnimation:
             self.play(node.dot.animate.set_color(ORANGE))
-            self.play(node.dot.animate.set_stroke(color=ORANGE, width=10))
         else:
             node.dot.color = ORANGE
 

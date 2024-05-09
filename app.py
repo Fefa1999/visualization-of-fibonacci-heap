@@ -14,6 +14,7 @@ def run():
     
     heap_controller.extract_min()
     heap_controller.delete(x)
+    heap_controller.extract_min()
 
     heap_controller.export_video()
      
