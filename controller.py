@@ -42,7 +42,8 @@ class Controller():
             self.scene.delete(returned_data[0].id, self.isAnimation)
             for nodes in returned_data[1]:
                 self.scene.create_child(nodes[0].id, nodes[1].id, self.isAnimation, self.showExplanatoryText)
-            self.scene.set_min(returned_data[2].id, self.isAnimation)
+            if returned_data[2] is not None:
+                self.scene.set_min(returned_data[2].id, self.isAnimation)
     
     def decrease_value(self, node, new_value):
         returned_data = self.heap.decrease_value(node, new_value)
@@ -64,5 +65,9 @@ class Controller():
         self.scene.changeRootPackingAndSorting(rp, rs, self.isAnimation)
     
     def export_video(self):
+        # #For adding the bounds off the root packing:
+        # x = Rectangle(height=self.scene.bounds[1], width=self.scene.bounds[0])
+        # x.move_to((0+x.width/2, 0-x.height/2, 0))
+        # self.scene.add(x)
         self.scene.render()
         open_media_file(self.scene.renderer.file_writer.movie_file_path)

@@ -53,7 +53,7 @@ class FiboScene(MovingCameraScene):
         self.scale_percentage = 0.75
         self.bounds = (14.222222222222221,7.993754879000781)
         self.newBounds = (self.bounds[0], self.bounds[1]*self.scale_percentage)
-        self.prevBounds = (0, 0)
+        #self.prevBounds = (0, 0)
 
         #For explanatory text
         self.current_explanatory_parent = None
@@ -361,7 +361,7 @@ class FiboScene(MovingCameraScene):
 
     def executeStoredAnimations(self):
         self.play(*self.storedAnimations)
-        self.bounds = self.newBounds
+        #self.bounds = self.newBounds
         self.storedAnimations = list[Animation]()
         return
 
@@ -378,14 +378,18 @@ class FiboScene(MovingCameraScene):
         self.remove_label_check()
         if isAnimation:
             self.buildAnimations()
-            if self.newBounds[0] > self.bounds[0] and self.newBounds != self.prevBounds:
+            
+            #Zoom out
+            if self.newBounds[0] > self.bounds[0]:
                 self.adjust_camera(isAnimation)
-                self.prevBounds = self.newBounds
+                self.bounds = self.newBounds
 
             self.executeStoredAnimations()
-            if self.newBounds[0] < self.prevBounds[0]:
+
+            #Zoom in 
+            if self.newBounds[0] < self.bounds[0]:
                 self.adjust_camera(isAnimation)
-                self.prevBounds = self.newBounds
+                self.bounds = self.newBounds
         else:
             self.adjust_camera(isAnimation)
 #############################################################
@@ -1075,28 +1079,17 @@ class FiboScene(MovingCameraScene):
 ################### Camera ################### 
     
     def adjust_camera(self, isAnimation):
-        self.top_margin = (self.newBounds[1] / self.scale_percentage)-self.newBounds[1]
+        self.top_margin = (self.newBounds[1] / self.scale_percentage)-self.newBounds[1] 
 
-        if self.newBounds[1] != 0:
-            heap_width = self.newBounds[0]
-            heap_height = self.newBounds[1]
-            new_height = (heap_height + self.top_margin)
-            
-            new_width = max(heap_width, new_height)
+        heap_width = self.newBounds[0] 
+        new_center = [heap_width / 2, -self.top_margin, 0]
 
-            new_x = new_width / 2
+        if isAnimation:
+            self.play(self.camera.frame.animate.move_to(new_center).set_width(heap_width))
+        else:
+            self.camera.frame.move_to(new_center).set_width(heap_width)
 
-            bottom_point = -new_height
-            new_y = bottom_point + (new_height/2)+self.top_margin
-
-            new_center = [new_x, new_y, 0]
-
-            if isAnimation:
-                self.play(self.camera.frame.animate.move_to(new_center).set_width(new_width))
-            else:
-                self.camera.frame.move_to(new_center).set_width(new_width)
-
-            self.defaultAddPoint[0] = self.camera.frame.get_center()[0]
+        self.defaultAddPoint[0] = self.camera.frame.get_center()[0]
 
 ######################################################
 ################### Util Functions ###################
@@ -1181,5 +1174,3 @@ class FiboScene(MovingCameraScene):
         self.play(FadeIn(explanatoryText))
         self.wait(2+additional_time)
         self.play(FadeOut(explanatoryText))
-
-
