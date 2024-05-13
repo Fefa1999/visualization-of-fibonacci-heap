@@ -1243,10 +1243,8 @@ class FiboScene(MovingCameraScene):
     def getColorFromDepth(self, depth: int):
         if depth < 0:
             return
-        if depth > 13: 
-            return ColorPalet[13]
-        
-        return ColorPalet[depth]
+
+        return ColorPalet[depth%14]
 
 ##############################################
 ################### Camera ###################    

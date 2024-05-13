@@ -26,9 +26,31 @@ def run():
 
     #Set animation 
     heap.isAnimation = False
+    scene.changeTreeLayout(layout=TreeLayout.Balanced, isAnimation=False)
 
-    #scene.changeTreeLayout(TreeLayout.Balanced, False)
-    #scene.changeRootPackingAndSorting(RootPacking.Binary_Tree_Packing, rootSorting=RootSorting.Heigth_Width, isAnimation=False)
+    for n in range(64):
+        heap.insert(n)
+
+    heap.extract_min()
+
+    heap.isAnimation = True
+
+    heap.insert(0)
+
+    scene.wait(4)
+
+    scene.changeTreeLayout(layout=TreeLayout.RightAlligned, isAnimation=True)
+
+    scene.wait(4)
+
+    scene.changeTreeLayout(layout=TreeLayout.Balanced, isAnimation=True)
+
+    scene.wait(4)
+
+    scene.changeTreeLayout(layout=TreeLayout.H_V, isAnimation=True)
+
+    scene.wait(4)
+
 
     # Wanted_height = 30
     # n = 500
@@ -40,37 +62,7 @@ def run():
     #     n-=2
     #     heap.extract_min()
     #     heap.decrease_value(indexTodecrease, 0)
-    #     indexTodecrease += 2 
-
-    scene.changeRootPackingAndSorting(rootSorting=RootSorting.Height_Width, isAnimation=False)
-
-    heap.isAnimation = True
-
-    for i in range(16):#4097):
-        heap.insert(i)
-    
-    print("insertDone")
-
-    heap.extract_min()
-    heap.extract_min()
-    print("extractmin Done")
-    #scene.changeTreeLayout(TreeLayout.H_V, isAnimation=True)
-    print("change Done")
-    #heap.isAnimation = True
-    #heap.decrease_value(5, 0)
-    #heap.insert(0)
-    #scene.wait(5)
-    # scene.changeRootPackingAndSorting(RootPacking.FFDH, isAnimation=True)
-    # scene.wait(3)
-    # scene.changeTreeLayout(TreeLayout.Balanced, isAnimation=True)
-    # scene.wait(3)
-    #scene.changeTreeLayout(TreeLayout.H_V, isAnimation=True)
-    #scene.wait(3)
-    # scene.changeRootPackingAndSorting(RootPacking.Binary_Tree_Packing, RootSorting.Heigth_Width, isAnimation=True)
-    # scene.wait(3)
-    
-
-
+    #     indexTodecrease += 2   
     
     # #For adding bounds of trees
     # for i in scene.rootRects:
