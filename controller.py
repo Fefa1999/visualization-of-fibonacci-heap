@@ -8,12 +8,14 @@ config.max_files_cached = 300
 config.disable_caching = True
 config.disable_caching_warning = True
 
-config.quality = "low_quality"
-#config.quality = "medium_quality"
-#config.quality = "high_quality"
-#config.quality = "production_quality"
-#config.quality = "fourk_quality"
-
+config.quality = "low_quality" #(854x480 15FPS)
+# config.quality = "medium_quality" #(1280x720 30FPS)
+# config.quality = "high_quality" # (1920x1080 60FPS)
+# config.quality = "production_quality" # (2560x1440 60FPS)
+# config.quality = "fourk_quality" # (3840x2160 60FPS)
+# config.pixel_height = 720
+# config.pixel_width = 1280
+# config.frame_rate = 10
 class Controller():
     def __init__(self):
         self.heap : FibonacciHeap = FibonacciHeap()
@@ -27,7 +29,7 @@ class Controller():
     def set_show_explanatory_text(self, show):
         self.showExplanatoryText = show
 
-    def insert_node(self, value):
+    def insert(self, value):
         returned_data = self.heap.insert(value)
         node = returned_data[0]
         update_min = returned_data[1]
@@ -61,8 +63,11 @@ class Controller():
         self.decrease_value(node, -float('inf'))
         self.extract_min()
 
-    def change_packing(self, rp: RootPacking = RootPacking.FFDH, rs: RootSorting = RootSorting.Order):
-        self.scene.changeRootPackingAndSorting(rp, rs, self.isAnimation)
+    def change_packing_and_sorting(self, packing, sorting):
+        self.scene.changeRootPackingAndSorting(RootPacking(packing), RootSorting(sorting), self.isAnimation)
+    
+    def change_tree_layout(self, layout):
+        self.scene.changeTreeLayout(TreeLayout(layout))
     
     def export_video(self):
         # #For adding the bounds off the root packing:

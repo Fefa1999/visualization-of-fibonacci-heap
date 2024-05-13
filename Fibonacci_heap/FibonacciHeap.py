@@ -215,7 +215,11 @@ class FibonacciHeap:
                 return actions
         else:
             return actions
-        
+    
+    def delete(self, node):
+        self.decrease_value(node, -float('inf'))
+        self.extract_min()
+
     #Helper functions to print
     def printHeap(self):
         if self.root_list is not None:
