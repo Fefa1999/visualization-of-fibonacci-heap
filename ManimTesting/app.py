@@ -21,7 +21,7 @@ def MoveToTargetvsAlphaFunctionTest(file):
     AlphaFuncTime: float
 
     start_time = time.time()
-    for _ in range(20):
+    for _ in range(50):
         scene = MoveToTargetExample()
         scene.render()
     MoveToTargetTime = (time.time() - start_time)
@@ -29,7 +29,7 @@ def MoveToTargetvsAlphaFunctionTest(file):
     #open_media_file(scene.renderer.file_writer.movie_file_path)
 
     start_time = time.time()
-    for _ in range(20):
+    for _ in range(50):
         scene = AlfaFuncExample()
         scene.render()
     AlphaFuncTime = (time.time() - start_time)
