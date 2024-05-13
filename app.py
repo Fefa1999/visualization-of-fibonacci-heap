@@ -14,8 +14,8 @@ config.disable_caching_warning = True
 #config.quality = "low_quality"
 #config.quality = "medium_quality"
 #config.quality = "high_quality"
-#config.quality = "production_quality"
-config.quality = "fourk_quality"
+config.quality = "production_quality"
+#config.quality = "fourk_quality"
 
 def run():
     #SETUP 
@@ -27,39 +27,63 @@ def run():
     #Set animation 
     heap.isAnimation = False
 
-    scene.changeTreeLayout(TreeLayout.Balanced, False)
+    #scene.changeTreeLayout(TreeLayout.Balanced, False)
     #scene.changeRootPackingAndSorting(RootPacking.Binary_Tree_Packing, rootSorting=RootSorting.Heigth_Width, isAnimation=False)
 
-    for i in range(512):#4097):
+    # Wanted_height = 30
+    # n = 500
+    # indexTodecrease = 1
+    # heap.insert(0)
+    # for i in range(Wanted_height):
+    #     heap.insert(n)
+    #     heap.insert(n-1)
+    #     n-=2
+    #     heap.extract_min()
+    #     heap.decrease_value(indexTodecrease, 0)
+    #     indexTodecrease += 2 
+
+    scene.changeRootPackingAndSorting(rootSorting=RootSorting.Height_Width, isAnimation=False)
+
+    heap.isAnimation = True
+
+    for i in range(16):#4097):
         heap.insert(i)
+    
+    print("insertDone")
 
     heap.extract_min()
-    heap.isAnimation = True
-    heap.insert(100)
+    heap.extract_min()
+    print("extractmin Done")
+    #scene.changeTreeLayout(TreeLayout.H_V, isAnimation=True)
+    print("change Done")
+    #heap.isAnimation = True
+    #heap.decrease_value(5, 0)
+    #heap.insert(0)
+    #scene.wait(5)
     # scene.changeRootPackingAndSorting(RootPacking.FFDH, isAnimation=True)
     # scene.wait(3)
     # scene.changeTreeLayout(TreeLayout.Balanced, isAnimation=True)
     # scene.wait(3)
-    # scene.changeTreeLayout(TreeLayout.H_V, isAnimation=True)
-    # scene.wait(3)
+    #scene.changeTreeLayout(TreeLayout.H_V, isAnimation=True)
+    #scene.wait(3)
     # scene.changeRootPackingAndSorting(RootPacking.Binary_Tree_Packing, RootSorting.Heigth_Width, isAnimation=True)
     # scene.wait(3)
     
 
 
     
-    #For adding bounds of trees
-    for i in scene.rootRects:
-        r = Rectangle(height=i.h, width=i.w)
-        r.move_to((i.x+(r.width/2), i.y-(r.height/2), -1))
-        scene.add(r)
+    # #For adding bounds of trees
+    # for i in scene.rootRects:
+    #     r = Rectangle(height=i.h, width=i.w)
+    #     r.move_to((i.x+(r.width/2), i.y-(r.height/2), -1))
+    #     scene.add(r)
 
-    #For adding the bounds off the root packing:
-    x = Rectangle(height=scene.bounds[1], width=scene.bounds[0])
-    x.move_to((0+x.width/2, 0-x.height/2, 0))
-    scene.add(x)
+    # #For adding the bounds off the root packing:
+    # x = Rectangle(height=scene.bounds[1], width=scene.bounds[0])
+    # x.move_to((0+x.width/2, 0-x.height/2, 0))
+    # scene.add(x)
 
-    scene.wait(4)
+    #scene.wait(4)
     
     scene.render()
     print("--- %s seconds ---" % (time.time() - start_time))
