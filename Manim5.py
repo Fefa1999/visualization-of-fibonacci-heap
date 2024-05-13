@@ -846,7 +846,7 @@ class FiboScene(MovingCameraScene):
 
         #First child which the other children should be alinged left of
         baseChild = parentMojb.children[0]
-        baseChild.dot.target = Dot(point=baseChild.dot.get_center(), radius=baseChild.dot.radius, color=baseChild.dot.color).set_y(parentTarget.get_y()-self.treeVerticalSpacing).set_x(parentMojb.dot.get_x()+parentMojb.widthOfChildren/2-parentMojb.children[-1].widthOfChildren/4-parentMojb.children[0].widthOfChildren/2)
+        baseChild.dot.target = Dot(point=baseChild.dot.get_center(), radius=baseChild.dot.radius, color=baseChild.dot.color).set_y(parentTarget.get_y()-self.treeVerticalSpacing).set_x(parentTarget.get_x()+parentMojb.widthOfChildren/2-parentMojb.children[-1].widthOfChildren/4-parentMojb.children[0].widthOfChildren/2)
         self.mobjsToMove.append(baseChild)
 
         for i in range(len(parentMojb.children)-1):
