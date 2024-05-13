@@ -11,8 +11,10 @@ import copy
 #HOW DOES MANIM HANDLE REMOVED OBJECTS? ARE THEY DELTED?
 
 ColorPalet = list(map(ManimColor, [(146,43,33), (231,76,60), (142,68,173), (155,89,182), (41,128,185), 
-              (52,152,219), (20,90,50), (30,132,73), (39,174,96), (88,214,141),
-              (211,84,0), (230,126,34), (243,156,18), (241,196,15)]))
+                (52,152,219), (20,90,50), (30,132,73), (39,174,96), (88,214,141),
+                (211,84,0), (230,126,34), (243,156,18), (241,196,15)]))
+
+#ColorPalet = list((BLUE, BLUE, BLUE, BLUE, BLUE, BLUE, BLUE, BLUE, BLUE, BLUE, BLUE, BLUE, BLUE, BLUE))
 
 class TreeLayout(Enum):
     RightAlligned = 1
@@ -314,7 +316,7 @@ class FiboScene(MovingCameraScene):
 ##########################################################################
 ################### Preformace functions based on size ###################
     def remove_label_check(self): #low quality: 35 dots - medium: ??- High: 65 dots - Production: 97 - 4k: 110 
-        qualityNumber = 97
+        qualityNumber = 400
         numberOfDots = len(self.nodeDic.values())
         if numberOfDots >= qualityNumber and self.showLabels:
             self.showLabels = False
@@ -566,7 +568,11 @@ class FiboScene(MovingCameraScene):
 
         self.prepare(isAnimation)
         
-        self.animateTrees(0)
+        if self.rootSorting == RootSorting.Height_Width:
+            self.sortRootsByWidthHeight()
+            self.animateTrees(self.getIndexForDisplay(self.rootDisplayOrder[0]))
+        else:
+            self.animateTrees(0)
         
         self.finish(isAnimation)
 
@@ -1163,8 +1169,11 @@ class FiboScene(MovingCameraScene):
         return 
 
     def transformToBinary(self, parrentDot: FiboNode):
-        binaryArray = [None] * (int(len(self.nodeDic)*2*1.2)) #Make proof that there can be at max 20% fake nodes
+        binaryArray = [None] * (max(1,int(math.ceil(parrentDot.nFdotsInTree*1.25*2)))) #Make proof that there can be at max 25% fake nodes
+        #binaryArray = [None] * (int(len(self.nodeDic)*2*1.2)) #Make proof that there can be at max 20% fake nodes
         #TODO to much space of smaller trees... FIX with nDotsInTreeField. Also used in triangle 
+
+        print(f"FDOT {parrentDot.numberLabel.text}, size: {parrentDot.nFdotsInTree}")
 
         def aux(binaryIndex, fDot: self.FiboNode):
             binaryArray[binaryIndex] = fDot

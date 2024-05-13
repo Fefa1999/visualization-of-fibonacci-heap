@@ -14,8 +14,8 @@ config.disable_caching_warning = True
 #config.quality = "low_quality"
 #config.quality = "medium_quality"
 #config.quality = "high_quality"
-config.quality = "production_quality"
-#config.quality = "fourk_quality"
+#config.quality = "production_quality"
+config.quality = "fourk_quality"
 
 def run():
     #SETUP 
@@ -28,24 +28,24 @@ def run():
     heap.isAnimation = False
     scene.changeTreeLayout(layout=TreeLayout.Balanced, isAnimation=False)
 
-    for n in range(64):
+    for n in range(256):
         heap.insert(n)
 
     heap.extract_min()
 
     heap.isAnimation = True
 
-    heap.insert(0)
+    scene.changeRootPackingAndSorting(RootPacking.FFDH, RootSorting.Height_Width, isAnimation=True)
 
-    scene.wait(4)
+    #scene.changeTreeLayout(layout=TreeLayout.RightAlligned, isAnimation=True)
+    
+    #scene.camera.frame.animate.shift(UP*2)
 
-    scene.changeTreeLayout(layout=TreeLayout.RightAlligned, isAnimation=True)
+    #scene.wait(4)
 
-    scene.wait(4)
+    #scene.changeTreeLayout(layout=TreeLayout.Balanced, isAnimation=True)
 
-    scene.changeTreeLayout(layout=TreeLayout.Balanced, isAnimation=True)
-
-    scene.wait(4)
+    #scene.wait(4)
 
     scene.changeTreeLayout(layout=TreeLayout.H_V, isAnimation=True)
 
