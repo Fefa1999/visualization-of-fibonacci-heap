@@ -1,5 +1,5 @@
 from Fibonacci_heap.FibonacciHeap import FibonacciHeap
-from Manim5 import *
+from FiboScene import *
 from manim.utils.file_ops import open_file as open_media_file 
 from manim import config
 from manim import *
