@@ -8,13 +8,13 @@ config.max_files_cached = 300
 config.disable_caching = True
 config.disable_caching_warning = True
 
-config.quality = "low_quality" #(854x480 15FPS)
-# config.quality = "medium_quality" #(1280x720 30FPS)
+# config.quality = "low_quality" #(854x480 15FPS)
+# # config.quality = "medium_quality" #(1280x720 30FPS)
 # config.quality = "high_quality" # (1920x1080 60FPS)
 # config.quality = "production_quality" # (2560x1440 60FPS)
-# config.quality = "fourk_quality" # (3840x2160 60FPS)
-# config.pixel_height = 720
-# config.pixel_width = 1280
+config.quality = "fourk_quality" # (3840x2160 60FPS)
+# config.pixel_height = 2160
+# config.pixel_width = 3840
 # config.frame_rate = 10
 class Controller():
     def __init__(self):
@@ -63,8 +63,8 @@ class Controller():
         self.decrease_value(node, -float('inf'))
         self.extract_min()
 
-    def change_packing_and_sorting(self, packing, sorting):
-        self.scene.changeRootPackingAndSorting(RootPacking(packing), RootSorting(sorting), self.isAnimation)
+    def change_packing_and_sorting(self, packing, sorting, animate):
+        self.scene.changeRootPackingAndSorting(RootPacking(packing), RootSorting(sorting), animate)
     
     def change_tree_layout(self, layout):
         self.scene.changeTreeLayout(TreeLayout(layout))

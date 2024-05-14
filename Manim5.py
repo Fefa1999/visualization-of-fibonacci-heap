@@ -556,8 +556,12 @@ class FiboScene(MovingCameraScene):
             return
 
         self.prepare(isAnimation)
-        
-        self.animateTrees(0)
+
+        if self.rootSorting == RootSorting.Heigth_Width:
+            self.sortRootsByWidthHeigth()
+            self.animateTrees(self.getIndexForDisplay(self.rootDisplayOrder[0]))
+        else:
+            self.animateTrees(0)
         
         self.finish(isAnimation)
 
@@ -855,7 +859,7 @@ class FiboScene(MovingCameraScene):
             return
         
         #Set first childs new location
-        parentMojb.children[0].dot.set_y(parentMojb.get_y()-self.treeVerticalSpacing).set_x(parentMojb.get_x()+parentMojb.widthOfChildren/2-parentMojb.children[0].widthOfChildren/2)
+        parentMojb.children[0].dot.set_y(parentMojb.dot.get_y()-self.treeVerticalSpacing).set_x(parentMojb.dot.get_x()+parentMojb.widthOfChildren/2-parentMojb.children[0].widthOfChildren/2)
         
         #Arrange rest based on first
         self.space_children_by_halv_thier_width(parentMojb.children, False)
@@ -1082,10 +1086,10 @@ class FiboScene(MovingCameraScene):
         self.top_margin = (self.newBounds[1] / self.scale_percentage)-self.newBounds[1] 
 
         heap_width = self.newBounds[0] 
-        new_center = [heap_width / 2, -self.top_margin, 0]
+        new_center = [(heap_width / 2)+0.2, -self.top_margin, 0]
 
         if isAnimation:
-            self.play(self.camera.frame.animate.move_to(new_center).set_width(heap_width))
+            self.play(self.camera.frame.animate.move_to(new_center).set_width(heap_width+0.4))
         else:
             self.camera.frame.move_to(new_center).set_width(heap_width)
 
