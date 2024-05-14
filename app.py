@@ -25,17 +25,27 @@ def run():
     heap.scene = scene
 
     #Set animation 
+    
     heap.isAnimation = False
-    scene.changeTreeLayout(layout=TreeLayout.Balanced, isAnimation=False)
 
-    for n in range(256):
+    #scene.changeTreeLayout(layout=TreeLayout.H_V, isAnimation=False)
+
+    heap.isAnimation = False
+
+    for n in range(33):
         heap.insert(n)
 
     heap.extract_min()
 
     heap.isAnimation = True
 
-    scene.changeRootPackingAndSorting(RootPacking.FFDH, RootSorting.Height_Width, isAnimation=True)
+    heap.decrease_value(14,2)
+    #heap.decrease_value(11,3)
+    #heap.decrease_value(15,4)
+    #heap.decrease_value(130,0)
+    #heap.decrease_value(225,0)
+
+    #scene.changeRootPackingAndSorting(RootPacking.FFDH, RootSorting.Height_Width, isAnimation=True)
 
     #scene.changeTreeLayout(layout=TreeLayout.RightAlligned, isAnimation=True)
     
@@ -47,9 +57,9 @@ def run():
 
     #scene.wait(4)
 
-    scene.changeTreeLayout(layout=TreeLayout.H_V, isAnimation=True)
+    #scene.changeTreeLayout(layout=TreeLayout.H_V, isAnimation=True)
 
-    scene.wait(4)
+    #scene.wait(4)
 
 
     # Wanted_height = 30
