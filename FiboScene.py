@@ -1151,8 +1151,6 @@ class FiboScene(MovingCameraScene):
     def restoreNormalColor(self):
         for x in self.nodeDic.values():
             if isinstance(x, self.FiboNode):
-                print("hit")
-
                 if x.marked:
                     x.dot.color = ORANGE
                 else:

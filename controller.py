@@ -8,9 +8,9 @@ config.max_files_cached = 300
 config.disable_caching = True
 config.disable_caching_warning = True
 
-# config.quality = "low_quality" #(854x480 15FPS)
+#config.quality = "low_quality" #(854x480 15FPS)
 # # config.quality = "medium_quality" #(1280x720 30FPS)
-# config.quality = "high_quality" # (1920x1080 60FPS)
+#config.quality = "high_quality" # (1920x1080 60FPS)
 # config.quality = "production_quality" # (2560x1440 60FPS)
 config.quality = "fourk_quality" # (3840x2160 60FPS)
 # config.pixel_height = 2160
