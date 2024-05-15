@@ -1149,12 +1149,14 @@ class FiboScene(MovingCameraScene):
         return ColorPalet[depth%14]
 
     def restoreNormalColor(self):
-        for x in self.nodeDic.items:
+        for x in self.nodeDic.values():
             if isinstance(x, self.FiboNode):
+                print("hit")
+
                 if x.marked:
                     x.dot.color = ORANGE
                 else:
-                    x.dot.color
+                    x.dot.color = BLUE
 
         self.min_node.dot.color = RED
     
