@@ -1,8 +1,8 @@
 ########### Testing results ###########
 
 --- Testing speed in rendering: MoveToTarget vs AlphaFunciton ---
---- MoveToTarget is fastst with 28.820058345794678 seconds, then AlphaFunc which is 4.394378900527954 seconds slower---
+--- MoveToTarget is fastst with 83.12813639640808 seconds, then AlphaFunc which is 8.15773892402649 seconds slower---
 
 --- Testing speed in rendering: No Z vs z-axes vs z-indexs ---
---- z-axes fastest with 48.78531289100647 seconds, then z-indexs 0.3289315700531006 seconds slower, and last no z 0.3374035358428955 seconds slower than z-axes ---
+--- z-indexs fastest with 53.057050466537476 seconds, then no z 0.06009984016418457 seconds slower, and last z-axes 1.9217064380645752 seconds slower than z-index ---
 
