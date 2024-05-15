@@ -1,8 +1,8 @@
 import math 
 class FibonacciHeap:
-    root_list = None
-    min_fib_node = None
-    total_fib_nodes = 0
+    rootList = None
+    minFibNode = None
+    totalFibNodes = 0
     id = 0
     class FibonacciHeapNode:
         def __init__(self, value, id):
@@ -14,142 +14,142 @@ class FibonacciHeap:
             self.marked = False
 
     def insert(self, value):
-        new_node = self.FibonacciHeapNode(value, self.id)
-        new_heap = FibonacciHeap()
-        new_heap.total_fib_nodes = 1
-        new_heap.min_fib_node = new_heap.root_list = new_node
-        update = self.meld_heaps(new_heap)
+        newNode = self.FibonacciHeapNode(value, self.id)
+        newHeap = FibonacciHeap()
+        newHeap.totalFibNodes = 1
+        newHeap.minFibNode = newHeap.rootList = newNode
+        update = self.meld_heaps(newHeap)
         self.id += 1
-        return (new_node, update)
+        return (newNode, update)
 
     #updates min if node is smaller than current min
-    def update_min_with_single_node(self, fib_node):
-        if self.min_fib_node is None or fib_node.value <= self.min_fib_node.value:
-            self.min_fib_node = fib_node
+    def update_min_with_single_node(self, fibNode):
+        if self.minFibNode is None or fibNode.value <= self.minFibNode.value:
+            self.minFibNode = fibNode
             return True
         else: 
             return False
    
     #iterates the circular doubly linked list and updates min node
     def set_new_min_from_root_list(self):
-        current_node = self.root_list.right
+        currentNode = self.rootList.right
         while True: 
-            self.update_min_with_single_node(current_node)
-            if self.root_list == current_node:
+            self.update_min_with_single_node(currentNode)
+            if self.rootList == currentNode:
                 break
-            current_node = current_node.right
+            currentNode = currentNode.right
 
     #return min node in O(1) time
     def return_min(self):
-        return self.min_fib_node
+        return self.minFibNode
 
     #Merge two heaps by appending nodes to root list of first heap
     def meld_heaps(self, heap_two):
-        if self.root_list is None and heap_two.root_list is not None:
-            self.root_list = heap_two.root_list
-            self.min_fib_node = heap_two.min_fib_node
-            self.total_fib_nodes = heap_two.total_fib_nodes
+        if self.rootList is None and heap_two.rootList is not None:
+            self.rootList = heap_two.rootList
+            self.minFibNode = heap_two.minFibNode
+            self.totalFibNodes = heap_two.totalFibNodes
             return True
-        elif self.root_list is not None and heap_two.root_list is not None:
-            new_end = heap_two.root_list.left
-            self.root_list.left.right = heap_two.root_list
-            heap_two.root_list.left.right = self.root_list
-            heap_two.root_list.left = self.root_list.left
-            self.root_list.left = new_end
-            self.total_fib_nodes += heap_two.total_fib_nodes 
-            return self.update_min_with_single_node(heap_two.min_fib_node)
+        elif self.rootList is not None and heap_two.rootList is not None:
+            new_end = heap_two.rootList.left
+            self.rootList.left.right = heap_two.rootList
+            heap_two.rootList.left.right = self.rootList
+            heap_two.rootList.left = self.rootList.left
+            self.rootList.left = new_end
+            self.totalFibNodes += heap_two.totalFibNodes 
+            return self.update_min_with_single_node(heap_two.minFibNode)
 
-    # insert a node in the circular doubly linked list root_list - will be inserted as new root  
+    # insert a node in the circular doubly linked list rootList - will be inserted as new root  
     def meld_node_into_root_list(self, node_to_insert):
-        if self.root_list is not None:
-            node_to_insert.left = self.root_list.left 
-            node_to_insert.right = self.root_list
-            self.root_list.left.right = node_to_insert
-            self.root_list.left = node_to_insert 
+        if self.rootList is not None:
+            node_to_insert.left = self.rootList.left 
+            node_to_insert.right = self.rootList
+            self.rootList.left.right = node_to_insert
+            self.rootList.left = node_to_insert 
         else:
-            self.root_list = node_to_insert
+            self.rootList = node_to_insert
     
     #Removes node from root list 
-    def remove_node_from_root_list(self, fib_node):
-        if fib_node == fib_node.left:
-            self.min_fib_node = None
-            self.root_list = None
+    def remove_node_from_root_list(self, fibNode):
+        if fibNode == fibNode.left:
+            self.minFibNode = None
+            self.rootList = None
         else:
-            fib_node.left.right = fib_node.right
-            fib_node.right.left = fib_node.left
-            self.root_list = fib_node.right if fib_node == self.root_list else self.root_list
+            fibNode.left.right = fibNode.right
+            fibNode.right.left = fibNode.left
+            self.rootList = fibNode.right if fibNode == self.rootList else self.rootList
         #reset linked nodes to itself 
-        fib_node.right = fib_node
-        fib_node.left = fib_node
+        fibNode.right = fibNode
+        fibNode.left = fibNode
 
     # insert a node in the circular doubly linked child list of a parent - will be inserted as new root  
-    def meld_node_into_child_list(self, fib_node_child, fib_node_parent):
-        if fib_node_parent.child is not None:
-            fib_node_child.left = fib_node_parent.child.left 
-            fib_node_child.right = fib_node_parent.child 
-            fib_node_parent.child.left.right = fib_node_child 
-            fib_node_parent.child.left = fib_node_child
+    def meld_node_into_child_list(self, fibNodeChild, fibNodeParent):
+        if fibNodeParent.child is not None:
+            fibNodeChild.left = fibNodeParent.child.left 
+            fibNodeChild.right = fibNodeParent.child 
+            fibNodeParent.child.left.right = fibNodeChild 
+            fibNodeParent.child.left = fibNodeChild
         else:
-            fib_node_parent.child = fib_node_child 
+            fibNodeParent.child = fibNodeChild 
     
     #Removes node from child list 
-    def remove_node_from_child_list(self, fib_node):
-        if fib_node == fib_node.left:
-            fib_node.parent.child = None
+    def remove_node_from_child_list(self, fibNode):
+        if fibNode == fibNode.left:
+            fibNode.parent.child = None
         else:
-            fib_node.left.right = fib_node.right
-            fib_node.right.left = fib_node.left
-            if fib_node == fib_node.parent.child:
-                fib_node.parent.child = fib_node.right
-        fib_node.parent.degree -= 1
+            fibNode.left.right = fibNode.right
+            fibNode.right.left = fibNode.left
+            if fibNode == fibNode.parent.child:
+                fibNode.parent.child = fibNode.right
+        fibNode.parent.degree -= 1
         #reset linked nodes to itself and update parent
-        fib_node.right = fib_node
-        fib_node.left = fib_node
-        fib_node.parent = None
+        fibNode.right = fibNode
+        fibNode.left = fibNode
+        fibNode.parent = None
 
     #Extract min and update heap
     def extract_min(self):
-        if self.root_list is not None:
-            min_node = self.min_fib_node
+        if self.rootList is not None:
+            minNode = self.minFibNode
             #Add all children to to root list if any
-            if min_node.child is not None:
-                current_child = min_node.child
+            if minNode.child is not None:
+                current_child = minNode.child
                 while True:
                     next_child = current_child.right
                     self.cut(current_child)
-                    if min_node.child is None:
+                    if minNode.child is None:
                         break
                     current_child = next_child
 
             #set new min to next 
-            self.min_fib_node = min_node.right
+            self.minFibNode = minNode.right
 
             #remove min node from root
-            self.remove_node_from_root_list(min_node)
-            self.total_fib_nodes -= 1
+            self.remove_node_from_root_list(minNode)
+            self.totalFibNodes -= 1
             actions = []
-            #Consolidate and set new min unless root_list is only one root or empty - the only child of the removed min
-            if self.root_list is not None:
-                if self.root_list != self.root_list.right:
+            #Consolidate and set new min unless rootList is only one root or empty - the only child of the removed min
+            if self.rootList is not None:
+                if self.rootList != self.rootList.right:
                     actions = self.consolidate()
                 self.set_new_min_from_root_list()
-            return (min_node, actions, self.min_fib_node)
+            return (minNode, actions, self.minFibNode)
 
     #Map heap until no root has same degree
     def consolidate(self):
         actions = []
-        max_degree = int(math.log(self.total_fib_nodes, (1 + math.sqrt(5)) / 2)) 
+        max_degree = int(math.log(self.totalFibNodes, (1 + math.sqrt(5)) / 2)) 
         array = [None] * (max_degree + 1)
-        array[self.root_list.degree] = self.root_list
-        end_node = self.root_list.left
-        current_node = self.root_list.right
+        array[self.rootList.degree] = self.rootList
+        end_node = self.rootList.left
+        currentNode = self.rootList.right
 
         while True: 
-            next_node = current_node.right
-            if array[current_node.degree] is None:
-                array[current_node.degree] = current_node
+            next_node = currentNode.right
+            if array[currentNode.degree] is None:
+                array[currentNode.degree] = currentNode
             else:
-                nodes = self.link_nodes(array[current_node.degree], current_node)
+                nodes = self.link_nodes(array[currentNode.degree], currentNode)
                 node = nodes[0]
                 actions.append((nodes[0], nodes[1]))
                 array[node.degree-1] = None
@@ -159,58 +159,58 @@ class FibonacciHeap:
                     actions.append((nodes[0], nodes[1]))
                     array[node.degree-1] = None
                 array[node.degree] = node
-            if current_node == end_node:
+            if currentNode == end_node:
                 break
-            current_node = next_node
+            currentNode = next_node
 
         return actions
 
     #Link two nodes together - one will become child, other parent 
-    def link_nodes(self, fib_node_one, fib_node_two):
-            fib_node_child = fib_node_one if fib_node_one.value >= fib_node_two.value else fib_node_two
-            if fib_node_child.marked: 
-                fib_node_child.marked = False
-            fib_node_parent = fib_node_one if fib_node_two.value > fib_node_one.value else fib_node_two
-            self.remove_node_from_root_list(fib_node_child)
-            self.meld_node_into_child_list(fib_node_child, fib_node_parent)
-            fib_node_child.parent = fib_node_parent
-            fib_node_parent.degree += 1
-            return (fib_node_parent, fib_node_child)
+    def link_nodes(self, fibNodeOne, fibNodeTwo):
+            fibNodeChild = fibNodeOne if fibNodeOne.value >= fibNodeTwo.value else fibNodeTwo
+            if fibNodeChild.marked: 
+                fibNodeChild.marked = False
+            fibNodeParent = fibNodeOne if fibNodeTwo.value > fibNodeOne.value else fibNodeTwo
+            self.remove_node_from_root_list(fibNodeChild)
+            self.meld_node_into_child_list(fibNodeChild, fibNodeParent)
+            fibNodeChild.parent = fibNodeParent
+            fibNodeParent.degree += 1
+            return (fibNodeParent, fibNodeChild)
 
     #function to decrease value of a node - eg. 46 -> 12 FIX IF HEAP PROP NOT VIOLATED
-    def decrease_value(self, node_to_decrease, new_value):
-        if node_to_decrease.value > new_value:
-            node_to_decrease.value = new_value
-            parent = node_to_decrease.parent
+    def decrease_value(self, nodetoDecrease, newValue):
+        if nodetoDecrease.value > newValue:
+            nodetoDecrease.value = newValue
+            parent = nodetoDecrease.parent
             actions = []
-            if parent is not None and parent.value > new_value:
-                cut_node_info = self.cut(node_to_decrease)
-                actions.append(cut_node_info)
+            if parent is not None and parent.value > newValue:
+                cutNodeInfo = self.cut(nodetoDecrease)
+                actions.append(cutNodeInfo)
                 actions = self.cascading_cut(parent, actions)
 
-            update = self.update_min_with_single_node(node_to_decrease) 
-            return (node_to_decrease, actions, update)
+            update = self.update_min_with_single_node(nodetoDecrease) 
+            return (nodetoDecrease, actions, update)
 
     #Cut node from child list to root 
-    def cut(self, node_to_cut):
-        self.remove_node_from_child_list(node_to_cut)
-        self.meld_node_into_root_list(node_to_cut)
-        mark = node_to_cut.marked
-        if node_to_cut.marked:
-            node_to_cut.marked = False
-        return (node_to_cut, mark)
+    def cut(self, nodeToCut):
+        self.remove_node_from_child_list(nodeToCut)
+        self.meld_node_into_root_list(nodeToCut)
+        mark = nodeToCut.marked
+        if nodeToCut.marked:
+            nodeToCut.marked = False
+        return (nodeToCut, mark)
         
     # handle parent of cut node in decreasing a value
-    def cascading_cut(self, decreased_node_parent, actions):
-        if decreased_node_parent.parent is not None:
-            if not decreased_node_parent.marked:
-                decreased_node_parent.marked = True
-                actions.append(decreased_node_parent)
+    def cascading_cut(self, decreasedNodeParent, actions):
+        if decreasedNodeParent.parent is not None:
+            if not decreasedNodeParent.marked:
+                decreasedNodeParent.marked = True
+                actions.append(decreasedNodeParent)
                 return actions
             else:
-                next_parent = decreased_node_parent.parent
-                cut_node_info = self.cut(decreased_node_parent)
-                actions.append(cut_node_info)
+                next_parent = decreasedNodeParent.parent
+                cutNodeInfo = self.cut(decreasedNodeParent)
+                actions.append(cutNodeInfo)
                 self.cascading_cut(next_parent, actions)
                 return actions
         else:
@@ -220,44 +220,44 @@ class FibonacciHeap:
         self.decrease_value(node, -float('inf'))
         self.extract_min()
 
-    #Helper functions to print
-    def printHeap(self):
-        if self.root_list is not None:
+    #Helper functions to print heap to console
+    def print_heap(self):
+        if self.rootList is not None:
             print()
             print("-----------------------------------------------------")
             print("|              Fibonacci Heap Structure             |")
             print("-----------------------------------------------------")
             print()
-            firstNode = self.root_list
-            current_node = self.root_list.right
+            firstNode = self.rootList
+            currentNode = self.rootList.right
             flag = True
             while flag:
-                if current_node == firstNode:
+                if currentNode == firstNode:
                     flag = False
                 print("|")
-                if current_node.marked:
-                    print("---", current_node.value, "+")
+                if currentNode.marked:
+                    print("---", currentNode.value, "+")
                 else:
-                    print("---", current_node.value)
-                if current_node.child is not None:
-                    self.recursivePrint(current_node, 1)
-                current_node = current_node.right
+                    print("---", currentNode.value)
+                if currentNode.child is not None:
+                    self.recursive_print(currentNode, 1)
+                currentNode = currentNode.right
                 print()
 
-    def recursivePrint(self, node, degree):
+    def recursive_print(self, node, degree):
         firstNode = node.child
-        current_node = node.child.right
+        currentNode = node.child.right
         flag = True
         s = "  "
 
         while flag:
-            if current_node == firstNode:
+            if currentNode == firstNode:
                 flag = False
             print(s*degree, "|")
-            if current_node.marked:
-                print(s*degree, "---", current_node.value, "+")
+            if currentNode.marked:
+                print(s*degree, "---", currentNode.value, "+")
             else: 
-                print(s*degree, "---", current_node.value)
-            if current_node.child is not None:
-                self.recursivePrint(current_node, degree+2)
-            current_node = current_node.right
+                print(s*degree, "---", currentNode.value)
+            if currentNode.child is not None:
+                self.recursive_print(currentNode, degree+2)
+            currentNode = currentNode.right
