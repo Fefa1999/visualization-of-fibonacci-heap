@@ -7,11 +7,14 @@ def run():
     heap_controller = Controller()
     heap_controller.isAnimation = False
     nodes = []
-    for n in range(4097):
+    for n in range(1025):#(4097):
         nodes.append(heap_controller.insert(n))
 
     heap_controller.extract_min()
-    heap_controller.change_tree_layout(3)
+    heap_controller.change_tree_layout(2,animate=True)
+    heap_controller.wait(5)
+    heap_controller.change_tree_layout(3,animate=True,isColor=False)
+    heap_controller.change_tree_layout(3,animate=True,isColor=True)
 
 
     # heap_controller.decrease_value(nodes[30],2)

@@ -66,8 +66,11 @@ class Controller():
     def change_packing_and_sorting(self, packing, sorting, animate=True):
         self.scene.changeRootPackingAndSorting(RootPacking(packing), RootSorting(sorting), animate)
     
-    def change_tree_layout(self, layout, animate=True):
-        self.scene.changeTreeLayout(TreeLayout(layout), animate)
+    def change_tree_layout(self, layout, animate=True, isColor=False):
+        self.scene.changeTreeLayout(TreeLayout(layout), animate, isColor)
+
+    def wait(self, t:int):
+        self.scene.wait(t)
     
     def export_video(self):
         # #For adding the bounds off the root packing:

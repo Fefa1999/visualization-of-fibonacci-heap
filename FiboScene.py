@@ -435,13 +435,12 @@ class FiboScene(MovingCameraScene):
             
         self.prepare(isAnimation)
 
-
         self.rootBinaryTrees = list()
         if layout == TreeLayout.H_V:
             for r in self.rootDisplayOrder:
                 self.rootBinaryTrees.append(self.transformToBinary(r))
                 
-        if self.treeLayout == TreeLayout.H_V:
+        if self.treeLayout == TreeLayout.H_V and layout != TreeLayout.H_V:
             for i in self.rootDisplayOrder:
                 self.recalcTreeDimentions(i)
 
@@ -495,11 +494,12 @@ class FiboScene(MovingCameraScene):
                 boundsY += boundsY*0.2
                 boundsX += boundsX*0.2
         
-        if isAnimation:
-            self.newBounds = (boundsX, boundsY)
-        else:
-            self.bounds = (boundsX, boundsY)
-            
+        self.newBounds = (boundsX, boundsY)
+        # if isAnimation:
+        #     self.newBounds = (boundsX, boundsY)
+        # else:
+        #     self.bounds = (boundsX, boundsY)
+
         self.rootRects = rootRects #TODO delete only for trouble shooting (printing the squares)
         
 
