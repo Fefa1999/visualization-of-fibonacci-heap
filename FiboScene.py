@@ -59,12 +59,12 @@ class FiboScene(MovingCameraScene):
         self.scale_percentage = 0.75
         self.bounds = (14.222222222222221,7.993754879000781)
         self.newBounds = (self.bounds[0], self.bounds[1]*self.scale_percentage)
-        #self.prevBounds = (0, 0)
+
 
         #For explanatory text
         self.current_explanatory_parent = None
 
-        self.rootRects = list() #TODO delete only for trouble shooting
+        self.rootRects = list()
         super().__init__(*args, **kwargs)
         self.adjust_camera(False)
     
@@ -213,7 +213,7 @@ class FiboScene(MovingCameraScene):
                 if self.treeLayout == TreeLayout.H_V:
                     self.rootBinaryTrees.append(self.transformToBinary(n))
 
-        self.nodeDic.pop(deleteDot.id)  #TODO No test if it works
+        self.nodeDic.pop(deleteDot.id)
         if isAnimation:
             for n in childrenArrows:
                 self.storedAnimations.append(FadeOut(n))
@@ -252,7 +252,7 @@ class FiboScene(MovingCameraScene):
         self.prepare(isAnimation)
         text_size = newValue if isinstance(newValue,int) else 4
         node = self.nodeDic[nodeId]
-        new_text = Text(str(newValue), font_size=18 - (text_size/100)).move_to(node.dot.get_center()).set_z_index(1) #TODO why not just change the text???
+        new_text = Text(str(newValue), font_size=18 - (text_size/100)).move_to(node.dot.get_center()).set_z_index(1)
         if showExplanatoryText:
             text = "Decrease key of node " + str(node.numberLabel.text) + " to " + str(newValue) 
             self.display_custom_text(text)
@@ -468,7 +468,7 @@ class FiboScene(MovingCameraScene):
 
         rootRects = self.createRettangels()
 
-        resolution = (1920, 1080) #TODO should this be a field connected to quality???
+        resolution = (1920, 1080)
         boundsY = rootRects[0].h
         boundsX = boundsY * (resolution[0]/resolution[1])
         if boundsX < rootRects[0].w:
@@ -493,14 +493,13 @@ class FiboScene(MovingCameraScene):
             if not placedAllRoots:
                 boundsY += boundsY*0.2
                 boundsX += boundsX*0.2
-        
-        self.newBounds = (boundsX, boundsY)
-        # if isAnimation:
-        #     self.newBounds = (boundsX, boundsY)
-        # else:
-        #     self.bounds = (boundsX, boundsY)
 
-        self.rootRects = rootRects #TODO delete only for trouble shooting (printing the squares)
+        if isAnimation:
+            self.newBounds = (boundsX, boundsY)
+        else:
+            self.bounds = (boundsX, boundsY)
+
+        self.rootRects = rootRects 
         
 
         if isAnimation:
@@ -694,7 +693,7 @@ class FiboScene(MovingCameraScene):
                 self.w = w_
                 self.h = h_
         
-        freeSpaceNodes = list() #TODO preformace is propperly better if not useing list
+        freeSpaceNodes = list()
         freeSpaceNodes.append(Node(listOfRects[0].x, listOfRects[0].y, boundX, boundY))
 
         for r in listOfRects:
@@ -757,7 +756,7 @@ class FiboScene(MovingCameraScene):
                 m2.dot.next_to(m1.dot, direction, (m1.widthOfChildren + m1.dot.radius*2), **kwargs)
         return lst
   
-    def right_align_tree_animate(self, startIndex):#TODO Must be done smart. aka move the lesser tree. Or moving fixed distance if child is at the ends
+    def right_align_tree_animate(self, startIndex):
         for i in range(len(self.rootDisplayOrder)-startIndex):
             x = self.rootDisplayOrder[i+startIndex]
             self.ra_create_children_animations(x, x.dot.target)
@@ -805,7 +804,7 @@ class FiboScene(MovingCameraScene):
             n.arrow.put_start_and_end_on(n.dot.get_center(), parentsCenter)
             self.ra_move_children(n)
 
-    def recalcTreeDimentions(self, rootDot: FiboNode):    #TODO NOT TAIL RECURSIVE!!!
+    def recalcTreeDimentions(self, rootDot: FiboNode):
         distance = self.root[0].dot.radius*4
 
         def updated(fDot: self.FiboNode):
@@ -853,7 +852,7 @@ class FiboScene(MovingCameraScene):
                 m2.dot.next_to(m1.dot, LEFT, (m1_left_width + m2_rigth_width + m1.dot.radius*2), **kwargs)
         return lst
 
-    def centered_tree_animate(self, startIndex):#TODO Must be done smart. aka move the lesser tree. Or moving fixed distance if child is at the ends
+    def centered_tree_animate(self, startIndex):
         for i in range(len(self.rootDisplayOrder)-startIndex):
             x = self.rootDisplayOrder[i+startIndex]
             self.cen_create_children_animations(x, x.dot.target)
