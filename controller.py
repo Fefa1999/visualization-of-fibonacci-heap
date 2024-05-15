@@ -1,5 +1,5 @@
 from Fibonacci_heap.FibonacciHeap import FibonacciHeap
-from Manim5 import *
+from FiboScene import *
 from manim import config
 from manim.utils.file_ops import open_file as open_media_file 
 from manim import *
@@ -63,11 +63,11 @@ class Controller():
         self.decrease_value(node, -float('inf'))
         self.extract_min()
 
-    def change_packing_and_sorting(self, packing, sorting, animate):
+    def change_packing_and_sorting(self, packing, sorting, animate=True):
         self.scene.changeRootPackingAndSorting(RootPacking(packing), RootSorting(sorting), animate)
     
-    def change_tree_layout(self, layout):
-        self.scene.changeTreeLayout(TreeLayout(layout))
+    def change_tree_layout(self, layout, animate=True):
+        self.scene.changeTreeLayout(TreeLayout(layout), animate)
     
     def export_video(self):
         # #For adding the bounds off the root packing:
