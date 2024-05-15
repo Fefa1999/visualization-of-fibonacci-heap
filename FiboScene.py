@@ -412,11 +412,11 @@ class FiboScene(MovingCameraScene):
 
 
         self.rootBinaryTrees = list()
-        if layout == TreeLayout.H_V and self.treeLayout != layout:
+        if layout == TreeLayout.H_V:
             for r in self.rootDisplayOrder:
                 self.rootBinaryTrees.append(self.transformToBinary(r))
                 
-        if self.treeLayout == TreeLayout.H_V and self.treeLayout != layout:
+        if self.treeLayout == TreeLayout.H_V:
             for i in self.rootDisplayOrder:
                 self.recalcTreeDimentions(i)
 
