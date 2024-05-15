@@ -28,7 +28,7 @@ def run():
     
     heap.isAnimation = False
 
-    #scene.changeTreeLayout(layout=TreeLayout.H_V, isAnimation=False)
+    scene.changeTreeLayout(layout=TreeLayout.H_V, isAnimation=False)
 
     heap.isAnimation = False
 
@@ -39,7 +39,11 @@ def run():
 
     heap.isAnimation = True
 
-    heap.decrease_value(14,2)
+
+    scene.changeTreeLayout(layout=TreeLayout.H_V, isAnimation=True, showColorDepth=True)
+
+
+    #heap.decrease_value(14,2)
     #heap.decrease_value(11,3)
     #heap.decrease_value(15,4)
     #heap.decrease_value(130,0)
