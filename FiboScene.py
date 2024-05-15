@@ -406,7 +406,6 @@ class FiboScene(MovingCameraScene):
         if startIndex is None:
             return
 
-        print("helllloooo")
         self.rootPackingAlgorithms(startIndex, True)
 
         if self.treeLayout == TreeLayout.RightAlligned:
@@ -496,7 +495,11 @@ class FiboScene(MovingCameraScene):
                 boundsY += boundsY*0.2
                 boundsX += boundsX*0.2
         
-        self.newBounds = (boundsX, boundsY)
+        if isAnimation:
+            self.newBounds = (boundsX, boundsY)
+        else:
+            self.bounds = (boundsX, boundsY)
+            
         self.rootRects = rootRects #TODO delete only for trouble shooting (printing the squares)
         
 
