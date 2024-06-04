@@ -28,6 +28,9 @@ class Layout_Interface:
         #Set the targets of all FiboNodes in affected trees. Return a list of Nodes that have changed position.
         pass
 
+    def spaceRootTrees(self, rootList: list[FiboScene.FiboScene.FiboNode], isAnimation: bool) -> None:
+        pass
+
 
 ##########################################################################
 ################### Allign with parent right - Layout. ###################

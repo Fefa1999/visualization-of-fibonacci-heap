@@ -3,6 +3,7 @@ from manim.typing import Point3D
 from manim.typing import Vector3
 from typing_extensions import Self
 from typing import TypedDict
+from layouts import *
 import math
 
 
@@ -31,7 +32,7 @@ class FiboScene(MovingCameraScene):
 
         #For Animations and Display
         self.defaultAddPoint = [0.0, 1.0, 0.0]
-        self.treeLayout = TreeLayout(1)
+        self.treeLayout = Layout_Interface #TreeLayout(1)
         self.rootPacking = RootPacking(1)
         self.rootSorting = RootSorting(1)
         self.sceneUpToDate = True
@@ -456,13 +457,13 @@ class FiboScene(MovingCameraScene):
             self.bounds = (boundsX, boundsY)
 
         self.rootRects = rootRects 
-        
 
         if isAnimation:
             if self.treeLayout == TreeLayout.RightAlligned:
                 for i in range(len(self.rootDisplayOrder)-startIndex): 
                     cDot = self.rootDisplayOrder[i+startIndex]
-                    cDot.dot.target = Dot(point=(rootRects[i+startIndex].x + rootRects[i+startIndex].w, rootRects[i+startIndex].y, 0), radius=cDot.dot.radius, color=cDot.dot.color)
+                    cDot.dot.target = Dot(point=(rootRects[i+startIndex].x + rootRects[i+startIndex].w, rootRects[i+startIndex].y, 0), 
+                                          radius=cDot.dot.radius, color=cDot.dot.color)
                     self.mobjsToMove.append(cDot)   
             elif self.treeLayout == TreeLayout.Centered:
                 for i in range(len(self.rootDisplayOrder)-startIndex): 
@@ -470,12 +471,14 @@ class FiboScene(MovingCameraScene):
                     widthOfLeftMostChild = 0
                     if len(cDot.children)>0:
                         widthOfLeftMostChild = cDot.children[-1].widthOfChildren              
-                    cDot.dot.target = Dot(point=(rootRects[i+startIndex].x + rootRects[i+startIndex].w/2 + widthOfLeftMostChild/4, rootRects[i+startIndex].y, 0), radius=cDot.dot.radius, color=cDot.dot.color)
+                    cDot.dot.target = Dot(point=(rootRects[i+startIndex].x + rootRects[i+startIndex].w/2 + widthOfLeftMostChild/4, 
+                                                 rootRects[i+startIndex].y, 0), radius=cDot.dot.radius, color=cDot.dot.color)
                     self.mobjsToMove.append(cDot)
             elif self.treeLayout == TreeLayout.H_V:
                 for i in range(len(self.rootBinaryTrees)-startIndex): 
                     cDot = self.rootBinaryTrees[i+startIndex][0]
-                    cDot.dot.target = Dot(point=(rootRects[i+startIndex].x+self.rootDisplayOrder[0].dot.radius*4, rootRects[i+startIndex].y, 0), radius=cDot.dot.radius, color=cDot.dot.color)
+                    cDot.dot.target = Dot(point=(rootRects[i+startIndex].x+self.rootDisplayOrder[0].dot.radius*4, 
+                                                 rootRects[i+startIndex].y, 0), radius=cDot.dot.radius, color=cDot.dot.color)
                     self.mobjsToMove.append(cDot)
         else:
             if self.treeLayout == TreeLayout.RightAlligned:
